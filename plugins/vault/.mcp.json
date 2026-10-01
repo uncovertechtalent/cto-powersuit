@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "vault-search": {
+      "command": "uv",
+      "args": ["run", "${CLAUDE_PLUGIN_ROOT}/search/vsearch.py", "serve"],
+      "env": { "VAULT_PATH": "${user_config.vault_path}" }
+    }
+  }
+}

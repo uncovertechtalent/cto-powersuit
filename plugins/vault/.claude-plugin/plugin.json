@@ -1,0 +1,17 @@
+{
+  "name": "vault",
+  "version": "0.1.0",
+  "description": "Plain-Markdown vault for Claude Code: a starter vault, seed and atomize skills, and hybrid keyword plus semantic search as an MCP server, with a private boundary that keeps listed folders out of the index.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/vault-kit",
+  "license": "MIT",
+  "keywords": ["vault", "memory", "search", "mcp", "obsidian"],
+  "userConfig": {
+    "vault_path": {
+      "type": "string",
+      "title": "Vault path",
+      "description": "Folder that holds your vault. The search server indexes and reads only this folder.",
+      "default": "~/vault"
+    }
+  }
+}

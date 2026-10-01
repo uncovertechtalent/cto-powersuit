@@ -1,0 +1,15 @@
+# Private boundary for vault search.
+# Anything matched here is never indexed, never returned by search or ask,
+# and cannot be fetched through the vault_read tool.
+#
+# A name without a slash matches a file or folder of that name at any depth:
+#   journal
+#   *.private.md
+# A path with a slash is anchored at the vault root and covers everything below:
+#   personal/medical
+#   work/clients/*
+#
+# Atoms tagged `private`, `status/private` or `status/sensitive` are excluded
+# wherever they live. Change that list with the VSEARCH_EXCLUDE_TAGS variable.
+#
+# /seed writes your real private folders below this line.

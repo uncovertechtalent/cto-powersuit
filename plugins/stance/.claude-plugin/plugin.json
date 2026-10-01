@@ -1,0 +1,8 @@
+{
+  "name": "stance",
+  "version": "0.1.0",
+  "description": "Stance filters for Claude Code: professional-b2 (plain B2 register, no politeness vestiges), good-chad (holds position under pushback, no grovel), a receipts standard, poles for decisions, and a mode-leak check for speech devices in writing.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "license": "MIT",
+  "keywords": ["sycophancy", "stance", "register", "style", "hooks"]
+}

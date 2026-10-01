@@ -1,0 +1,9 @@
+{
+  "name": "vestige",
+  "version": "0.1.0",
+  "description": "Fit-it-yourself output filter. Derive your own catalog of trained-in politeness patterns with /calibrate; hooks scan every reply and every Markdown write against it.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/vestige-kit",
+  "license": "MIT",
+  "keywords": ["output-filter", "sycophancy", "style", "hooks"]
+}
