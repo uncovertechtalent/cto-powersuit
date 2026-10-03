@@ -1,5 +1,9 @@
 # utt-kits
 
+Knowledge infrastructure for LLMs.
+
+These plugins are its tools layer. `vault` is the knowledge base and its retrieval, `vestige` enforces your rules at the output boundary, and `stance` adds boundary rules plus verification through the receipts standard.
+
 Three Claude Code plugins in one marketplace. Each one replaces a manual install (copy files into `~/.claude/`, then edit `settings.json` by hand) with two commands.
 
 | Plugin | What it does | Needs |
