@@ -1,0 +1,263 @@
+.Dd October 4, 2026
+.Dt LLM-INTRO 7
+.Os
+.Sh NAME
+.Nm llm-intro
+.Nd introduction to the LLM man pages
+.Sh SYNOPSIS
+A language model is a golem made of English, it behaves well only where
+consequence sits inside its horizon, and operations craft is how you bring
+consequence inside the horizon.
+.Sh DESCRIPTION
+The LLM man pages are a body of work by Stefan Coetzee (2026) on running
+language models as working systems.
+This page lists everything in that body of work, laid out the way UNIX
+manual pages are: a name, a one-line synopsis and a link for each entry.
+The published copy of this page is
+.Lk https://machinebehavior.io/man
+.Pp
+This content is not intended for human consumption.
+See
+.Xr codec 7
+for the reason.
+.Pp
+The LLM man pages are knowledge infrastructure for LLMs: a knowledge base
+written for models to read first.
+The pages are sorted by the section numbers of the Linux manual.
+Section 1 holds what a chat user pastes in and runs.
+Section 5 holds file formats and conventions.
+Section 7 holds overviews.
+Section 8 holds the practice of operating a model inside a harness.
+Sections 2, 3, 4 and 6 are not used.
+.Pp
+Each entry below has a name, a synopsis in fixed wording, and a link to the
+canonical copy.
+Each linked piece ends with its own list of the other pieces, which is that
+page's SEE ALSO.
+.Ss \&Why this layout
+Manual pages follow one fixed layout, and that layout is common in the text
+language models were trained on.
+A model is likely to read the structure of this page without being told how.
+That claim is untested.
+For a human reader the page is a table of contents.
+.Ss \&Two terms recur across the entries, in fixed wording
+.Bl -tag -width Ds
+.It Nothing exists in a vacuum
+Every behaviour a model shows was forced into existence by something, the
+corpus, the training signal, or the harness.
+.It Markovian memory
+A language model has Markovian memory: at runtime the next token depends
+only on what is in the context window, so anything outside the window does
+not exist for it.
+.El
+.Ss \&The stance thread
+The stance thread runs through four entries.
+.Xr toil 8
+states the problem: a hook can block a word on every reply, and a person
+still catches every stance slip by hand.
+.Xr stance 1
+is the fix a chat user can paste in.
+.Xr chaos 8
+is how to verify that a fix holds.
+The worked case is under EXAMPLES.
+The evidence is on machinebehavior.io: the claims ledger, the experiments
+and the objections register.
+.Bl -item -compact -offset indent
+.It
+.Lk https://machinebehavior.io/claims
+.It
+.Lk https://machinebehavior.io/experiments
+.It
+.Lk https://machinebehavior.io/objections
+.El
+.Ss Section 1: user commands
+TYChat lessons.
+A chat user pastes one line, and the chat model reads the lesson and follows
+it for the rest of the conversation.
+The line:
+.Bd -ragged -offset indent
+Read https://tychat.io/llms.txt and the pages it links.
+If you cannot open it, read
+https://raw.githubusercontent.com/uncovertechtalent/tychat.io/main/llms.txt
+instead.
+Then use what you learned to help me with: [your task]
+.Ed
+.Bl -tag -width Ds
+.It Xr stance 1
+.Em Lesson 1: Good Chad, the earned-secure stance
+.Pp
+Stop fawning, check load-bearing premises, hold a correct answer under
+pushback.
+.Pp
+.Lk https://tychat.io/stance/
+.It Xr register 1
+.Em Lesson 2: Register, write for how the text will be read
+.Pp
+Name the mode and purpose before drafting, drop speech devices from
+silent-read text, build long sentences additively, copy the user's voice
+without inventing its specifics, keep a person doing the verbs.
+.Pp
+.Lk https://tychat.io/register/
+.El
+.Ss Section 5: file formats and conventions
+.Bl -tag -width Ds
+.It Xr trap-file 5
+.Em \&The Trap File \&Is Longer Than the Instruction File
+.Pp
+An unattended pipeline and its failure record.
+The trap file is the dated list of failures that the next session reads
+before it runs anything.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/the-trap-file-is-longer-than-the
+.It Xr instruction-file 5
+The file that tells an agent how to do the work.
+In the same pipeline it has 208 lines, next to 308 lines of recorded failures.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/the-trap-file-is-longer-than-the
+.It Xr llms.txt 5
+The plain-text index a model reads first: what the corpus is, how to use it,
+and where each page is.
+.Pp
+.Lk https://tychat.io/llms.txt
+.Pp
+.Lk https://machinebehavior.io/llms.txt
+.It Xr lesson 5
+The TYChat lesson format: one plain-text file with a version and date, its
+source and author, and a line that says the user's instructions win over the
+lesson wherever the two conflict.
+.Pp
+.Lk https://tychat.io/stance.txt
+.Pp
+.Lk https://tychat.io/register.txt
+.El
+.Ss Section 7: overviews and conventions
+.Bl -tag -width Ds
+.It Xr knowledge-infrastructure 7
+.Em Knowledge Infrastructure for LLMs
+.Pp
+Knowledge infrastructure for LLMs: a language model can only work from what
+someone wrote down and put in front of it, and most companies that bought AI
+maintain their code and little else.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/knowledge-infrastructure-for-llms
+.It Xr codec 7
+.Em Write for the Codec
+.Pp
+Documentation as a wire format between two models.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/write-for-the-codec
+.It Xr golem 7
+.Em \&The Golem Made of English and the Horizon of Consequences
+.Pp
+Why an agent cannot see the cost of what it does.
+Horizon of consequences: the length of the consequence chain an agent can
+compute and is willing to own.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/the-golem-made-of-english-and-the
+.It Xr claudish 7
+.Em \&An \&RCA on Claudish
+.Pp
+Where Claude's writing style came from.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/an-rca-on-claudish
+.It Xr compaction 7
+.Em Compaction \&Is the \&New \&OOM
+.Pp
+Context compaction as the OOM killer of the language model stack.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/compaction-is-the-new-oom
+.It Xr llm-user 7
+.Em Which \&LLM User \&Are \&We Talking About?
+.Pp
+The two axes behind "AI" and "LLM": which model on whose hardware, and naked
+or harnessed.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/which-llm-user-are-we-talking-about
+.El
+.Ss Section 8: system administration
+.Bl -tag -width Ds
+.It Xr operations 8
+.Em What Operations Already Knows About Running Agents
+.Pp
+Error budgets, reconciliation loops, separation of duties, recovery over
+prevention.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/what-operations-already-knows-about
+.It Xr engine 8
+.Em Success \&Is the Engine Running
+.Pp
+Container, timing and the far-end gauge.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/success-is-the-engine-running
+.It Xr track 8
+.Em \&The Track: \&The Drivers Never \&Buy \&It
+.Pp
+The infrastructure that makes failure survivable.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/the-racetrack-the-racingcar-drivers
+.It Xr chaos 8
+.Em Chaos Engineering for Behaviour
+.Pp
+Red-teaming a model's behaviour is chaos engineering: one evaluation
+measures the patched surface, and repeated, varied attack finds where the
+behaviour went.
+.Pp
+.Lk https://machinebehavior.io/chaos-engineering-for-behaviour
+.It Xr toil 8
+.Em \&The Stance Layer \&Is Still Toil
+.Pp
+The word layer automated, the stance layer caught by hand.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/the-stance-layer-is-still-toil
+.El
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It cheating-moved
+.Em They Trained \&Out the Board Edit. \&The Cheating Moved.
+.Pp
+The chess honeypot read as stance, and a dated prediction.
+A worked case for
+.Xr chaos 8 :
+a lab trained out one route, and the behaviour took the next one.
+.Pp
+.Lk https://coetzeestefan.substack.com/p/they-trained-out-the-board-edit-the
+.Pp
+Prediction hashes:
+.Lk https://github.com/uncovertechtalent/machinebehavior.io/tree/main/predictions
+.El
+.Sh SEE ALSO
+.Xr register 1 ,
+.Xr stance 1 ,
+.Xr instruction-file 5 ,
+.Xr lesson 5 ,
+.Xr llms.txt 5 ,
+.Xr trap-file 5 ,
+.Xr claudish 7 ,
+.Xr codec 7 ,
+.Xr compaction 7 ,
+.Xr golem 7 ,
+.Xr knowledge-infrastructure 7 ,
+.Xr llm-user 7 ,
+.Xr chaos 8 ,
+.Xr engine 8 ,
+.Xr operations 8 ,
+.Xr toil 8 ,
+.Xr track 8
+.Bl -tag -width Ds
+.It Lk https://tychat.io/
+Teach your chat: the lessons of section 1, written for the chat model to read.
+.It Lk https://machinebehavior.io/
+The research register: claims with status, receipts and refutation
+conditions, experiments, the objections register, terms in fixed wording,
+and the slips log.
+.It Lk https://github.com/uncovertechtalent/vestige-kit
+The output filter as a package, with a calibration procedure.
+.It Lk https://github.com/uncovertechtalent/vault-kit
+The knowledge-graph scaffold the agents work from.
+.El
+.Sh HISTORY
+The hub page at machinebehavior.io/man was published on 2026-10-03.
+.Xr knowledge-infrastructure 7
+was added on the same day.
+.Sh AUTHORS
+.An Stefan Coetzee

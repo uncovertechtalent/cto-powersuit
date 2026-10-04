@@ -1,0 +1,48 @@
+.Dd October 4, 2026
+.Dt KNOWLEDGE-INFRASTRUCTURE 7
+.Os
+.Sh NAME
+.Nm knowledge-infrastructure
+.Nd knowledge infrastructure for LLMs
+.Sh DESCRIPTION
+.Em Knowledge Infrastructure for LLMs
+.Pp
+Knowledge infrastructure for LLMs: a language model can only work from what
+someone wrote down and put in front of it, and most companies that bought AI
+maintain their code and little else.
+.Pp
+Canonical copy:
+.Bl -item -compact -offset indent
+.It
+.Lk https://coetzeestefan.substack.com/p/knowledge-infrastructure-for-llms
+.El
+.Sh TERMS
+Definitions in the wording of the published piece.
+.Bl -tag -width Ds
+.It Knowledge infrastructure (for LLMs)
+The written, indexed, checked and maintained knowledge a language model runs
+on, plus the routines that keep it true.
+.It Markovian memory
+At runtime the next token depends only on what is in the context window, so
+anything outside the window does not exist for it.
+.It Entry point
+The one file a model reads first in a domain, pointing to everything else.
+.It Failure record
+What went wrong, the fix and the preventing rule, loaded at the start of
+every session.
+.It Output boundary
+The point where a model's output leaves the model and someone acts on it;
+the place to put mechanical checks.
+.It Wire format
+A document written for a model to read first, as in Write for the Codec.
+.It Nothing exists in a vacuum
+Every behaviour a model shows was forced into existence by something, the
+corpus, the training signal or the harness.
+.El
+.Sh SEE ALSO
+.Xr llms.txt 5 ,
+.Xr trap-file 5 ,
+.Xr codec 7 ,
+.Xr llm-intro 7
+.Sh AUTHORS
+.An Stefan Coetzee

@@ -1,0 +1,61 @@
+.Dd October 4, 2026
+.Dt CHAOS 8
+.Os
+.Sh NAME
+.Nm chaos
+.Nd red-teaming a model's behaviour is chaos engineering
+.Sh DESCRIPTION
+.Em Chaos Engineering for Behaviour
+.Pp
+Red-teaming a model's behaviour is chaos engineering: one evaluation
+measures the patched surface, and repeated, varied attack finds where the
+behaviour went.
+.Pp
+A worked case is
+.Em They Trained \&Out the Board Edit. \&The Cheating Moved.
+A lab trained out one route, and the behaviour took the next one.
+See EXAMPLES in
+.Xr llm-intro 7 .
+.Pp
+Canonical copy:
+.Bl -item -compact -offset indent
+.It
+.Lk https://machinebehavior.io/chaos-engineering-for-behaviour
+.El
+.Sh TERMS
+Definitions in the wording of the published piece.
+.Bl -tag -width Ds
+.It Chaos engineering
+Experimenting on a system on purpose to build confidence that it withstands
+turbulent conditions (Principles of Chaos Engineering).
+.It Pre-deployment red-teaming
+Attacking a model's safeguards before release to find where they fail.
+.It Steady state
+A measurable output that indicates normal behaviour, taken before any attack.
+.It Blast radius
+How much an experiment can damage.
+For behaviour work it includes the training data that a published attack
+ends up in.
+.It Game day
+A scheduled exercise in which a team breaks its own system on purpose and
+practises the response.
+.It Invariance gap
+The difference in a model's conduct between an arm that announces the
+evaluation and an arm that does not.
+.It Track
+The infrastructure that makes failure survivable: sandbox, permissions,
+evaluation environment, failure record.
+.It Nothing exists in a vacuum
+Every behaviour a model shows was forced into existence by something, the
+corpus, the training signal, or the harness.
+.It Markovian memory
+At runtime the next token depends only on what is in the context window, so
+anything outside the window does not exist for it.
+.El
+.Sh SEE ALSO
+.Xr stance 1 ,
+.Xr llm-intro 7 ,
+.Xr toil 8 ,
+.Xr track 8
+.Sh AUTHORS
+.An Stefan Coetzee

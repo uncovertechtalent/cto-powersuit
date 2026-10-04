@@ -1,0 +1,37 @@
+.Dd October 4, 2026
+.Dt OPERATIONS 8
+.Os
+.Sh NAME
+.Nm operations
+.Nd error budgets, reconciliation loops, separation of duties, recovery over prevention
+.Sh DESCRIPTION
+.Em What Operations Already Knows About Running Agents
+.Pp
+Error budgets, reconciliation loops, separation of duties, recovery over
+prevention.
+.Pp
+Canonical copy:
+.Bl -item -compact -offset indent
+.It
+.Lk https://coetzeestefan.substack.com/p/what-operations-already-knows-about
+.El
+.Sh TERMS
+Definitions in the wording of the published piece.
+.Bl -tag -width Ds
+.It Error budget (for an agent)
+An agreed allowance for visible failure; hiding a failure is the only breach.
+.It Reconciliation loop
+Declared state, observe, correct, on every cycle.
+For an agent, a per-turn hook checked against a rule file.
+.It Separation of duties
+The actor and the checker are different parties; for agents, a different
+model, a deterministic check or a person.
+.It Fail closed / fail open
+Stop and report, versus carry on as if nothing happened.
+.El
+.Sh SEE ALSO
+.Xr llm-intro 7 ,
+.Xr engine 8 ,
+.Xr track 8
+.Sh AUTHORS
+.An Stefan Coetzee

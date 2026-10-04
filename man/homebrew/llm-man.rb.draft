@@ -1,0 +1,22 @@
+# DRAFT. Not a working formula: url and sha256 are TODO because the
+# repository has no remote and no release tarball yet.
+class LlmMan < Formula
+  desc "LLM man pages: mdoc pages on running language models as working systems"
+  homepage "https://machinebehavior.io/man"
+  url "TODO: release tarball URL"
+  sha256 "TODO: sha256 of the release tarball"
+  version "TODO"
+  license "MIT"
+
+  def install
+    man1.install Dir["man/man1/*.1"]
+    man5.install Dir["man/man5/*.5"]
+    man7.install Dir["man/man7/*.7"]
+    man8.install Dir["man/man8/*.8"]
+  end
+
+  test do
+    assert_predicate man7/"llm-intro.7", :exist?
+    assert_predicate man5/"trap-file.5", :exist?
+  end
+end

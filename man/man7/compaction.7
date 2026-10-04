@@ -1,0 +1,47 @@
+.Dd October 4, 2026
+.Dt COMPACTION 7
+.Os
+.Sh NAME
+.Nm compaction
+.Nd context compaction as the OOM killer of the language model stack
+.Sh DESCRIPTION
+.Em Compaction \&Is the \&New \&OOM
+.Pp
+Context compaction as the OOM killer of the language model stack.
+.Pp
+Canonical copy:
+.Bl -item -compact -offset indent
+.It
+.Lk https://coetzeestefan.substack.com/p/compaction-is-the-new-oom
+.El
+.Sh TERMS
+Definitions in the wording of the published piece.
+.Bl -tag -width Ds
+.It Compaction
+The harness summarising a full context window and discarding the original
+history so the session can continue.
+.It \&OOM killer
+The part of the Linux kernel that picks and kills a process when RAM and
+swap are both exhausted.
+.It Registers
+Here, the context window; the only memory the model works on directly.
+.It Swap, paging out
+Moving state from the context window to a durable tier (tracker, vault,
+instruction file) during the work, so that losing the window loses nothing
+that matters.
+.It Error-and-fix pair
+A failed attempt together with what worked instead; the unit of knowledge a
+session builds up and a summary tends to drop.
+.It Hibernation file
+The session handover; the state written to durable storage before a session
+ends, read by the next one at start.
+.It \&Wet, cured, re-wetted
+A session at cold start, a session that holds its line after running for a
+while, and a session after compaction.
+.El
+.Sh SEE ALSO
+.Xr instruction-file 5 ,
+.Xr golem 7 ,
+.Xr llm-intro 7
+.Sh AUTHORS
+.An Stefan Coetzee

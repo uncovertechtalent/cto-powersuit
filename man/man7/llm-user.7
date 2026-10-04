@@ -1,0 +1,41 @@
+.Dd October 4, 2026
+.Dt LLM-USER 7
+.Os
+.Sh NAME
+.Nm llm-user
+.Nd the two axes behind "AI" and "LLM"
+.Sh DESCRIPTION
+.Em Which \&LLM User \&Are \&We Talking About?
+.Pp
+The two axes behind "AI" and "LLM": which model on whose hardware, and naked
+or harnessed.
+.Pp
+Canonical copy:
+.Bl -item -compact -offset indent
+.It
+.Lk https://coetzeestefan.substack.com/p/which-llm-user-are-we-talking-about
+.El
+.Sh TERMS
+Definitions in the wording of the published piece.
+.Bl -tag -width Ds
+.It Naked model
+A model used with only its maker's defaults around it.
+.It Harness
+Everything a user puts around a model on purpose: instruction files, hooks,
+tools, memory, a knowledge graph.
+.It Frontier model
+The largest current models from the main labs, usually used through the
+maker's app or API.
+.It Nothing exists in a vacuum
+Every behaviour a model shows was forced into existence by something, the
+corpus, the training signal or the harness.
+.It Markovian memory
+At run time the next token depends only on what is in the context window, so
+anything outside the window does not exist for the model; the weights are
+fixed rules, the window is the only state.
+.El
+.Sh SEE ALSO
+.Xr instruction-file 5 ,
+.Xr llm-intro 7
+.Sh AUTHORS
+.An Stefan Coetzee

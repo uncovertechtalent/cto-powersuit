@@ -1,0 +1,47 @@
+.Dd October 4, 2026
+.Dt ENGINE 8
+.Os
+.Sh NAME
+.Nm engine
+.Nd container, timing and the far-end gauge
+.Sh DESCRIPTION
+.Em Success \&Is the Engine Running
+.Pp
+Container, timing and the far-end gauge.
+.Pp
+Canonical copy:
+.Bl -item -compact -offset indent
+.It
+.Lk https://coetzeestefan.substack.com/p/success-is-the-engine-running
+.El
+.Sh TERMS
+Definitions in the wording of the published piece.
+.Bl -tag -width Ds
+.It Container, timing, measured output
+The three parts that turn something violent or shapeless into output you can
+repeat.
+For a language model: the harness, the hook, and observability.
+.It Harness
+Everything a company controls around a model: the instruction file,
+permissions, sandbox, hooks and failure record.
+.It Hook
+A small program that fires at a fixed point in every cycle, such as after
+every reply, and checks the output against written rules.
+.It Far-end measure
+A gauge placed where the value reaches the customer, as opposed to a count
+of incidents.
+.It Tuning history
+The dated record of failures and the fixes they caused; the asset that makes
+the same model run well for one team and badly for another.
+.It Teach your chat
+Changing the workshop around a model (rules, hooks, failure record,
+corrected examples) when the weights cannot be changed.
+.El
+.Sh SEE ALSO
+.Xr instruction-file 5 ,
+.Xr trap-file 5 ,
+.Xr llm-intro 7 ,
+.Xr operations 8 ,
+.Xr track 8
+.Sh AUTHORS
+.An Stefan Coetzee
