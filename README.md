@@ -1,4 +1,4 @@
-# utt-kits
+# conformity-controls
 
 Knowledge infrastructure for LLMs.
 
@@ -17,15 +17,15 @@ The plugins are independent. Install one, two or all three.
 ## Install
 
 ```bash
-claude plugin marketplace add uncovertechtalent/utt-kits
-claude plugin install vestige@utt-kits
-claude plugin install vault@utt-kits
-claude plugin install stance@utt-kits
+claude plugin marketplace add uncovertechtalent/conformity-controls
+claude plugin install vestige@conformity-controls
+claude plugin install vault@conformity-controls
+claude plugin install stance@conformity-controls
 ```
 
 Inside Claude Code the same works as `/plugin marketplace add ...` and `/plugin install ...`. Restart Claude Code after installing.
 
-From a local clone: `claude plugin marketplace add /path/to/utt-kits`.
+From a local clone: `claude plugin marketplace add /path/to/conformity-controls`.
 
 ## vestige
 
@@ -44,7 +44,7 @@ Hooks: a Stop hook scans each reply (`vestige-scan.js`) and checks the paths it 
 2. `/vault:seed` interviews you and builds the structure from your own domains.
 3. The `vault-search` MCP server gives Claude `vault_search`, `vault_read`, `vault_ask`, `vault_reindex` and `vault_list_tags`.
 
-For a vault somewhere else, set the plugin option: `/plugin configure vault@utt-kits` in Claude Code, or `claude plugin install vault@utt-kits --config vault_path=/path/to/vault`. Restart Claude Code after changing it.
+For a vault somewhere else, set the plugin option: `/plugin configure vault@conformity-controls` in Claude Code, or `claude plugin install vault@conformity-controls --config vault_path=/path/to/vault`. Restart Claude Code after changing it.
 
 The private boundary: folders listed in `.vsearchignore` at the vault root, and notes tagged `private`, `status/private` or `status/sensitive`, are never indexed, never returned and refused by `vault_read`. The first search run downloads about 130 MB of embedding weights. Details: [vault-kit](https://github.com/uncovertechtalent/vault-kit).
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "utt-kits",
+  "name": "conformity-controls",
   "description": "Fit-it-yourself kits for Claude Code: an output filter you calibrate to yourself, a plain-Markdown vault with local search, and stance filters against the trained accommodation reflex.",
   "owner": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
   "plugins": [
