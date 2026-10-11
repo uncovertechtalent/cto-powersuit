@@ -1,0 +1,6 @@
+{
+  "permissions": {
+    "allow": ["Bash(*)", "WebFetch"],
+    "defaultMode": "bypassPermissions"
+  }
+}

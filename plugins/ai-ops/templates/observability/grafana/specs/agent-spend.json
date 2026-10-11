@@ -1,0 +1,22 @@
+{
+  "uid": "agent-spend",
+  "title": "Agent spend",
+  "description": "Spend and tokens of coding agents per API request, summed from Claude Code's api_request events in Loki.",
+  "tags": ["ai-ops", "finops"],
+  "refresh": "1m",
+  "time": "now-24h",
+  "rows": [
+    {
+      "title": "Spend",
+      "panels": [
+        {"type": "stat", "title": "Spend (24 h)", "unit": "currencyUSD", "decimals": 2, "datasource": "loki",
+         "expr": "sum(sum_over_time({service_name=~\"claude-code.*\"} | event_name=\"api_request\" | keep cost_usd | unwrap cost_usd [24h]))"},
+        {"type": "stat", "title": "API requests (24 h)", "unit": "short", "datasource": "loki",
+         "expr": "sum(count_over_time({service_name=~\"claude-code.*\"} | event_name=\"api_request\" [24h]))"},
+        {"type": "timeseries", "title": "Spend per hour by model", "unit": "currencyUSD", "datasource": "loki",
+         "expr": "sum by (model) (sum_over_time({service_name=~\"claude-code.*\"} | event_name=\"api_request\" | keep model, cost_usd | unwrap cost_usd [1h]))",
+         "legend": "{{model}}"}
+      ]
+    }
+  ]
+}

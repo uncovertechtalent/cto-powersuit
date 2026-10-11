@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "tickets": {"command": "tickets-mcp", "env": {"TICKETS_API_TOKEN": "${TICKETS_API_TOKEN}"}}
+  }
+}

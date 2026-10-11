@@ -12,6 +12,7 @@ Each skill also reads a private overlay when one exists: your own data for that 
 
 | Plugin | What it does | Needs |
 |---|---|---|
+| `ai-ops` | Operations for a team's coding agents: a shared harness with narrow permissions, agent spend metered per API request with a budget alert, and a coordinator pattern with state in files. `vestige`, `stance` and `vault` are its optional parts. A gate check that shared agent settings carry no secrets and no wildcard permissions. | Python 3.9+; `observability` for metering |
 | `compliance` | A control map to ISO 27001, TISAX, NIS2 and GDPR by clause and article number, an AI Act triage, and a legal baseline for a website (Impressum, privacy page, security.txt, no third-party requests on page load). Gate checks for security.txt and third-party requests. | Python 3.9+ |
 | `decisions` | RFCs, architecture decision records (ADRs) and a review of the decision log. Templates for both records and a gate check that every ADR has a status, an owner and a date. | Python 3.9+ for the gate check |
 | `docs` | A docs tree where every page has an owner and review dates, runbooks, and a sweep for stale pages. A static docs build and a gate check on the review fields. | Python 3.9+ |
@@ -23,7 +24,7 @@ Each skill also reads a private overlay when one exists: your own data for that 
 
 ## Knowledge infrastructure
 
-These three plugins are the knowledge infrastructure layer ([what knowledge infrastructure for LLMs means](https://coetzeestefan.substack.com/p/knowledge-infrastructure-for-llms)). `vault` is the knowledge base and its retrieval, `vestige` enforces your rules at the output boundary, and `stance` adds boundary rules plus verification through the receipts standard. Each one replaces a manual install (copy files into `~/.claude/`, then edit `settings.json` by hand) with two commands.
+These three plugins are the knowledge infrastructure layer and the optional parts of the `ai-ops` module ([what knowledge infrastructure for LLMs means](https://coetzeestefan.substack.com/p/knowledge-infrastructure-for-llms)). `vault` is the knowledge base and its retrieval, `vestige` enforces your rules at the output boundary, and `stance` adds boundary rules plus verification through the receipts standard. Each one replaces a manual install (copy files into `~/.claude/`, then edit `settings.json` by hand) with two commands.
 
 | Plugin | What it does | Needs |
 |---|---|---|
@@ -37,6 +38,7 @@ The plugins are independent. Install the ones you need. Each module works withou
 
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
+claude plugin install ai-ops@cto-powersuit
 claude plugin install compliance@cto-powersuit
 claude plugin install decisions@cto-powersuit
 claude plugin install docs@cto-powersuit

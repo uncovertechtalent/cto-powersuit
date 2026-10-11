@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": ["Bash(git status:*)", "Bash(git diff:*)", "Bash(npm test:*)", "Read(./docs/**)"],
+    "ask": ["Bash(git push:*)"],
+    "deny": ["Read(./.env)", "Read(./.env.*)"]
+  },
+  "env": {"PROFESSIONAL_B2_DEFAULT_MODE": "full"}
+}

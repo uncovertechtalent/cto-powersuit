@@ -1,0 +1,15 @@
+# Agent spend alert, evaluated by the Loki ruler on Claude Code's api_request events.
+# Set the hourly budget in the expression before you enable the rule.
+groups:
+  - name: agent-spend
+    rules:
+      - alert: AgentSpendAboveBudget
+        expr: |
+          sum(sum_over_time({service_name=~"claude-code.*"} | event_name="api_request" | keep cost_usd | unwrap cost_usd [1h])) > <hourly budget in USD>
+        for: 15m
+        labels:
+          severity: ticket
+          route: platform
+        annotations:
+          summary: "Agent spend in the last hour is above the hourly budget."
+          runbook_url: docs/fin/agent-spend.md

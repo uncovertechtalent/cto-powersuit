@@ -1,0 +1,13 @@
+# Merge this block into observability/loki/loki.yml, then mount
+# observability/loki/rules at /loki/rules in the loki service of docker-compose.yml.
+# The ruler evaluates observability/loki/rules/fake/*.yml ("fake" is the tenant id
+# when auth is off) and sends alerts to Alertmanager.
+# Check before use: Loki ruler keys for the pinned Loki version.
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /tmp/loki-rules-scratch
+  alertmanager_url: http://alertmanager:9093
+  enable_api: true

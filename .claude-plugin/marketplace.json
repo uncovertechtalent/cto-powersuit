@@ -8,6 +8,17 @@
   },
   "plugins": [
     {
+      "name": "ai-ops",
+      "source": "./plugins/ai-ops",
+      "description": "Operations for a team's coding agents: shared harness, spend per API request with a budget alert, coordinator pattern; gate check on agent settings.",
+      "category": "development",
+      "skills": [
+        "./skills/agent-harness",
+        "./skills/coordinator",
+        "./skills/metering"
+      ]
+    },
+    {
       "name": "compliance",
       "source": "./plugins/compliance",
       "description": "Control map to ISO 27001, TISAX, NIS2 and GDPR by number, AI Act triage and a website legal baseline, with gate checks for security.txt and third-party requests.",

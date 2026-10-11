@@ -1,0 +1,8 @@
+{
+  "name": "ai-ops",
+  "version": "0.1.0",
+  "description": "Operations for a team's coding agents: a shared harness with narrow permissions, spend metered per API request with a budget alert, and a coordinator pattern with state in files; vestige, stance and vault are its optional parts.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "license": "MIT",
+  "keywords": ["ai-ops", "agents", "permissions", "metering", "coordinator"]
+}
