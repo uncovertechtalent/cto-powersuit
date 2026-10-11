@@ -1,0 +1,17 @@
+{
+  "about": "Allocation rules for showback. Read by scripts/focus_export.py showback. Order of precedence: shared costs first, then rules from top to bottom (the first match wins), then the value of the team_tag tag. A row that matches nothing is unallocated and shows as its own line. A rule matches when all its conditions hold: tags (key to list of values), sub_accounts (SubAccountId or SubAccountName), services (ServiceName) and providers (ServiceProviderName). A shared cost is split proportional to each team's direct cost, evenly, or by fixed weights such as {\"<team>\": 60, \"<team>\": 40}.",
+  "team_tag": "<tag key whose value names the team, for example team>",
+  "teams": [
+    {"team": "<team>", "owner": "<person who answers for this team's cost>"},
+    {"team": "<team>", "owner": "<person who answers for this team's cost>"}
+  ],
+  "rules": [
+    {"team": "<team>", "sub_accounts": ["<sub-account id or name>"]},
+    {"team": "<team>", "tags": {"<tag key>": ["<tag value>", "<tag value>"]}},
+    {"team": "<team>", "providers": ["<ServiceProviderName>"], "services": ["<ServiceName>"]}
+  ],
+  "shared": [
+    {"name": "<shared cost, for example the support plan>", "services": ["<ServiceName>"], "split": "proportional"},
+    {"name": "<shared cost, for example the network>", "tags": {"<tag key>": ["shared"]}, "split": "even"}
+  ]
+}

@@ -15,6 +15,7 @@ Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eige
 | `compliance` | Eine Control-Map zu ISO 27001, TISAX, NIS2 und DSGVO nach Klausel- und Artikelnummer, eine Triage nach dem AI Act und eine rechtliche Grundausstattung für eine Website (Impressum, Datenschutzseite, security.txt, keine Anfragen an Dritte beim Laden der Seite). Gate-Checks für security.txt und Anfragen an Dritte. | Python 3.9+ |
 | `decisions` | RFCs, Architecture Decision Records (ADRs) und ein Review des Entscheidungslogs. Vorlagen für beide Dokumente und ein Gate-Check, der prüft, dass jeder ADR einen Status, einen Owner und ein Datum hat. | Python 3.9+ für den Gate-Check |
 | `docs` | Ein Docs-Baum, in dem jede Seite einen Owner und Review-Daten hat, Runbooks und eine Suche nach veralteten Seiten. Ein statischer Docs-Build und ein Gate-Check auf die Review-Felder. | Python 3.9+ |
+| `finops` | Eine Kosten-Baseline aus Rechnungen und Billing-Exporten, Showback pro Team oder Service, Stückkosten, ein Audit des SaaS-Bestands (behalten, kündigen oder ersetzen) und ein FOCUS-Export. Ein Gate-Check, der prüft, dass jede Kostenangabe in den Docs einen Zeitraum und eine Quelle nennt. | Python 3.9+ |
 | `gate` | Ein Deploy-Gate: ein Regelordner mit Pass- und Fail-Fixtures pro Regel, Laufprotokolle, Befunde, die sich erst mit einem bestandenen späteren Lauf schließen, und ein Workflow, dessen Deploy-Job auf das Gate wartet. Die Checks der anderen Module laufen darin. | Python 3.9+, GitHub Actions für den Workflow |
 | `observability` | Alloy, Prometheus, Loki, Grafana und Alertmanager mit Docker Compose, Dashboards als Code und Alert-Routen. Ein Gate-Check, der prüft, dass jede Alert-Regel eine Route und ein Runbook nennt. | Docker, Python 3.9+ |
 | `sdlc` | Der Lebenszyklus, der die Module verbindet: ein Audit, das die fehlenden Phasen eines Repositorys ohne Prozess nach Dringlichkeit ordnet, die Übersicht der Phasen, Tickets, Review für Änderungen von Agenten, Teststrategie und Release mit Rollback. Ein Gate-Check, der prüft, dass jede Änderung ein Ticket oder eine Entscheidung nennt. | Python 3.9+, git |
@@ -38,6 +39,7 @@ claude plugin marketplace add uncovertechtalent/cto-powersuit
 claude plugin install compliance@cto-powersuit
 claude plugin install decisions@cto-powersuit
 claude plugin install docs@cto-powersuit
+claude plugin install finops@cto-powersuit
 claude plugin install gate@cto-powersuit
 claude plugin install observability@cto-powersuit
 claude plugin install sdlc@cto-powersuit

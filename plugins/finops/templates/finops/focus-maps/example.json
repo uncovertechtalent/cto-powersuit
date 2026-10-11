@@ -1,0 +1,39 @@
+{
+  "about": "Column map for one billing CSV format, read by scripts/focus_export.py convert. Copy it to <provider>-<format>.json and replace every placeholder; the script stops while a placeholder is left. columns: FOCUS column to the column name in the billing file. constants: values for every row; a mapped column overrides a constant when the cell is not empty. values: translations of cell values, per FOCUS column. tags: tag key to source column, written as a JSON object into Tags. extra: custom columns, with the x_ prefix. date_format: iso, or a strptime format such as %d.%m.%Y. decimal: . or , for the decimal mark. granularity: day or month, for rows without an end date.",
+  "source": "<provider> <name of the export or invoice series>",
+  "delimiter": ",",
+  "decimal": ".",
+  "date_format": "iso",
+  "granularity": "day",
+  "columns": {
+    "ChargePeriodStart": "<column with the charge date>",
+    "BilledCost": "<column with the billed amount>",
+    "BillingCurrency": "<column with the currency code>",
+    "ServiceName": "<column with the product or service>",
+    "ChargeDescription": "<column with the line description>",
+    "ChargeCategory": "<column with the line type>",
+    "SubAccountId": "<column with the account or project>",
+    "PricingQuantity": "<column with the quantity>",
+    "PricingUnit": "<column with the unit>"
+  },
+  "constants": {
+    "ServiceProviderName": "<provider>",
+    "HostProviderName": "<provider>",
+    "InvoiceIssuerName": "<provider>",
+    "ChargeCategory": "Usage"
+  },
+  "values": {
+    "ChargeCategory": {
+      "<line type for usage>": "Usage",
+      "<line type for tax>": "Tax",
+      "<line type for a one-time purchase>": "Purchase",
+      "<line type for a credit>": "Credit"
+    }
+  },
+  "tags": {
+    "<tag key, for example team>": "<column with the tag value>"
+  },
+  "extra": {
+    "x_InvoiceId": "<column with the invoice number>"
+  }
+}

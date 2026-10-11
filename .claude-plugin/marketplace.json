@@ -41,6 +41,19 @@
       ]
     },
     {
+      "name": "finops",
+      "source": "./plugins/finops",
+      "description": "Cost baseline, showback, unit costs, SaaS stack audit and FOCUS export, with a gate check that cost figures carry a period and a source.",
+      "category": "development",
+      "skills": [
+        "./skills/cost-baseline",
+        "./skills/focus-export",
+        "./skills/saas-stack-audit",
+        "./skills/showback",
+        "./skills/unit-costs"
+      ]
+    },
+    {
       "name": "gate",
       "source": "./plugins/gate",
       "description": "Deploy gate: rules with pass and fail fixtures, run records, findings that close only on a passing rerun, and a workflow that deploys after the gate.",

@@ -1,0 +1,9 @@
+{
+  "name": "finops",
+  "version": "0.1.0",
+  "description": "FinOps for a repository: a monthly cost baseline from invoices and billing exports, showback per team, unit costs, a SaaS stack audit, a FOCUS export script, and a gate check that every cost figure on a docs page names its period and source.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
+  "license": "MIT",
+  "keywords": ["finops", "cost", "focus", "showback", "unit-economics", "saas", "billing"]
+}
