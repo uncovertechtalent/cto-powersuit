@@ -21,6 +21,7 @@ Sets up the gate in the repository the user is working in. After setup, every pu
 | `.github/actions/gate/run.py` | The runner. Python 3.9+, standard library only, no network |
 | `.github/actions/gate/action.yml` | Composite action: runs `run.py`, uploads the run record as an artifact |
 | `.github/actions/gate/rules/` | One file per rule, plus `README.md` with the rule contract |
+| `.github/actions/gate/reporters/oscal.py` | Optional reporter for an OSCAL-shaped record per run; off until listed in `gate.json` |
 | `.github/workflows/gate.yml` | Gate job on push to main, weekly and by hand; the deploy job has `needs: gate` |
 | `gate/gate.json` | Which rules run, in which tier, with which options |
 | `gate/fixtures/` | A pass tree and a fail tree for each blocking rule |

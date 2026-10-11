@@ -33,12 +33,13 @@ jobs:
         with:
           config: gate/gate.json
 
-      - name: Commit latest.json and summary.md
-        # Keeps the run history in git. Delete this step to keep the history in the run artifacts only.
+      - name: Commit latest.json, summary.md and reporter output
+        # Keeps the run history in git. gate/.gitignore keeps runs/ and .result out; pages that
+        # reporters write into gate/ are committed too. Delete this step to keep the history in the run artifacts only.
         run: |
           git config user.name "gate-bot"
           git config user.email "gate-bot@users.noreply.github.com"
-          git add gate/latest.json gate/summary.md
+          git add gate/
           if git diff --cached --quiet; then
             echo "no change to commit"
           else
