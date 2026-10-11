@@ -3,7 +3,7 @@ name: gate-init
 description: >
   Set up a deploy gate in the current repository: a rules folder, a runner that
   writes run records, a GitHub Actions workflow whose deploy job waits for the
-  gate, and three starter rules. Use when a repository has no deploy gate yet
+  gate, and four starter rules. Use when a repository has no deploy gate yet
   and the team wants checks to run before every deploy. Copies templates and
   never overwrites a file. Activates on "/gate-init", "set up the gate", "add a
   deploy gate", "gate the deploy".
@@ -29,7 +29,7 @@ Sets up the gate in the repository the user is working in. After setup, every pu
 
 Each run writes `gate/latest.json` (history and findings; the workflow commits it), `gate/summary.md`, `gate/runs/<timestamp>-<id>.json` (kept as a workflow artifact for 90 days) and `gate/.result`.
 
-Starter rules: `gate.placeholders` (`TODO`, `TBD` and fill-in markers in Markdown and HTML), `gate.schedule` (the weekly run happened) and `gate.rule-fixtures` (every blocking rule passes its pass fixture, fails its fail fixture and has a recorded false-positive test).
+Starter rules: `gate.placeholders` (`TODO`, `TBD` and fill-in markers in Markdown and HTML), `gate.schedule` (the weekly run happened), `gate.actions-pinned` (every action from outside the repository is pinned to a full commit SHA) and `gate.rule-fixtures` (every blocking rule passes its pass fixture, fails its fail fixture and has a recorded false-positive test).
 
 ## Steps
 
@@ -38,11 +38,12 @@ Starter rules: `gate.placeholders` (`TODO`, `TBD` and fill-in markers in Markdow
 
    ```bash
    rsync -a --ignore-existing "${CLAUDE_PLUGIN_ROOT}/templates/" ./
-   cp -n "${CLAUDE_PLUGIN_ROOT}/checks/rule_fixtures.py" .github/actions/gate/rules/
+   cp -n "${CLAUDE_PLUGIN_ROOT}/checks/rule_fixtures.py" "${CLAUDE_PLUGIN_ROOT}/checks/actions_pinned.py" .github/actions/gate/rules/
+   mkdir -p gate/fixtures/gate.actions-pinned && cp -Rn "${CLAUDE_PLUGIN_ROOT}/checks/fixtures/gate.actions-pinned/." gate/fixtures/gate.actions-pinned/
    ```
 
    Without rsync, use `cp -Rn "${CLAUDE_PLUGIN_ROOT}/templates/." ./`. Hidden folders (`.github`) and `gate/.gitignore` must come across. Report the files copied and the files skipped because they existed.
-3. **Fill the config.** In `gate/gate.json`, set `name` to the repository name and `owner` to the person who keeps the gate true (ask). Keep the starter tiers: `gate.placeholders` and `gate.schedule` on `warn`, `gate.rule-fixtures` on `block`.
+3. **Fill the config.** In `gate/gate.json`, set `name` to the repository name and `owner` to the person who keeps the gate true (ask). Keep the starter tiers: `gate.placeholders` and `gate.schedule` on `warn`, `gate.actions-pinned` and `gate.rule-fixtures` on `block`.
 4. **Wire the deploy.** The deploy must run only after the gate passes. Pick one and show the change before you make it:
    - No deploy workflow yet: put the deploy steps in the `deploy` job of `gate.yml`.
    - A deploy workflow exists: move its deploy steps into the `deploy` job of `gate.yml`, or change its trigger to `workflow_run` on the `Gate` workflow and add `if: github.event.workflow_run.conclusion == 'success'` to its job.
@@ -54,7 +55,7 @@ Starter rules: `gate.placeholders` (`TODO`, `TBD` and fill-in markers in Markdow
    python3 .github/actions/gate/run.py --dry-run
    ```
 
-   Expect `overall=pass`. `gate.placeholders` may print warnings; go through them with the user and fix them or leave them on `warn`. `gate.rule-fixtures` reports `n/a` until a second blocking rule exists.
+   Expect `overall=pass`. `gate.placeholders` may print warnings; go through them with the user and fix them or leave them on `warn`. `gate.actions-pinned` fails when a workflow uses an action by tag or branch. For each hit, read the commit SHA from the action's release tag (`gh api repos/<owner>/<repo>/commits/<tag> -q .sha`), show the pinned line (`uses: <owner>/<repo>@<sha> # <tag>`) and pin it on the user's yes. If the user wants to pin later, set `gate.actions-pinned` to `warn` and say that the deploy then runs on unpinned actions. `gate.rule-fixtures` runs `gate.actions-pinned` against its fixtures in `gate/fixtures/gate.actions-pinned/`.
 6. **Record the first run.** `python3 .github/actions/gate/run.py --trigger manual` writes `gate/latest.json` and `gate/summary.md`. Commit the new files when the user says so.
 7. **Next.** Add rules with `/gate:add-rule`. Installed modules ship their own checks, for example `decisions.adr-fields` and `docs.review`. Tell the user to mark the `Gate checks` job as a required status check in the branch protection settings; that is a repository setting the user changes.
 

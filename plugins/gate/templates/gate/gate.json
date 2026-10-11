@@ -8,6 +8,7 @@
   "rules": {
     "gate.placeholders": {"tier": "warn"},
     "gate.schedule": {"tier": "warn"},
+    "gate.actions-pinned": {"tier": "block", "false_positive_test": {"date": "2026-10-11", "corpus": "workflows and composite actions of 7 repositories, 39 references to actions outside the repository", "hits": 36, "legitimate": 0, "decision": "block: every hit was a tag or branch reference; an independent scan of the same files found no missed reference"}},
     "gate.rule-fixtures": {"tier": "block"}
   }
 }

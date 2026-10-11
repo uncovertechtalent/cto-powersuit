@@ -8,7 +8,7 @@ Demo: [machinebehavior.io/inside/docs/eng/conformity-gate/](https://machinebehav
 
 | Skill | What it does |
 |---|---|
-| `/gate:gate-init` | Copies the runner, the action, the workflow, the config and three starter rules into the repository, wires the deploy behind the gate and records the first run |
+| `/gate:gate-init` | Copies the runner, the action, the workflow, the config and four starter rules into the repository, wires the deploy behind the gate and records the first run |
 | `/gate:add-rule` | Installs a check from another module or writes a new rule, with pass and fail fixtures, a false-positive test, and promotion from `warn` to `block` |
 | `/gate:run-record` | Reports from the run records: why a deploy was blocked, open and closed findings, rule or content changes between runs, schedule health |
 
@@ -40,19 +40,31 @@ Exit codes: 0 run complete, 1 overall fail (with `--exit-code`), 2 config error,
 - `warn`: a `fail` is recorded as `warn` and stops nothing.
 - `off`: the rule does not run.
 
-Every new rule starts on `warn`, in the starter config and in `/gate:add-rule`, and checks from other modules too. A rule moves to `block` only after its false-positive test is recorded in `gate.json`, its fixtures behave and the repository has no real hits left. `gate.rule-fixtures` is the one exception: `/gate:gate-init` installs it on `block`, because it only reads the gate's own config and fixtures.
+Every new rule starts on `warn`, in the starter config and in `/gate:add-rule`, and checks from other modules too. A rule moves to `block` only after its false-positive test is recorded in `gate.json`, its fixtures behave and the repository has no real hits left. Two rules are the exception: `/gate:gate-init` installs them on `block`. `gate.rule-fixtures` only reads the gate's own config and fixtures. `gate.actions-pinned` checks one syntax with no judgement in it, its false-positive test is recorded in the starter config, and its fix is mechanical: on the first run `/gate:gate-init` pins each hit on the user's yes, or sets the rule to `warn` until the user pins them.
 
 `partial`, `pending`, `warn` and `n/a` results never fail the run.
 
 A `fail` in either tier opens one finding per hit. The finding closes only when a later run of the same rule no longer sees the hit, and the record names the closing commit. Turning a rule off or moving it to `warn` closes nothing. Rules with `PHASE = "after"` run once the findings are built, read them, and open none.
 
-## Gate check
+## Gate checks
 
 `checks/rule_fixtures.py`, id `gate.rule-fixtures`: every rule in the `block` tier passes its pass fixture, fails its fail fixture and has a recorded false-positive test in `gate.json`. `/gate:gate-init` installs it on `block`. Its own fixtures are in `checks/fixtures/gate.rule-fixtures/`.
 
+`checks/actions_pinned.py`, id `gate.actions-pinned`: workflows (`.github/workflows/`) and composite actions (`.github/actions/**/action.yml`, a root `action.yml`) reference every action and reusable workflow from outside the repository by a full 40-character commit SHA, and every `docker://` image by a sha256 digest. A tag or a branch can be moved to other code; a commit SHA cannot. Local actions (`./...`) are exempt; the `allow` option exempts reference prefixes such as your own organisation (empty by default). Hit kinds: `tag-or-branch`, `short-sha`, `no-ref`, `docker-tag`. `/gate:gate-init` installs it on `block`. Its fixtures are in `checks/fixtures/gate.actions-pinned/`.
+
+To pin a reference, read the commit SHA from the action's own release tag, not from memory, and keep the tag as a comment:
+
+```bash
+gh api repos/<owner>/<repo>/commits/<tag> -q .sha
+```
+
+```yaml
+- uses: <owner>/<repo>@<40-character sha> # <tag>
+```
+
 ## Tests
 
-`tests/test_run.py` runs the runner against small repositories built in a temporary folder: results, finding ids and closure, migration of findings written by run.py 0.1, the shared cache, after-phase rules, requirement states, reporters and their limits, `write_summary` and the warnings count.
+`tests/test_run.py` runs the runner against small repositories built in a temporary folder: results, finding ids and closure, migration of findings written by run.py 0.1, the shared cache, after-phase rules, requirement states, reporters and their limits, `write_summary` and the warnings count. Two cases cover the starter set: the copy steps of `/gate:gate-init` give a passing run that an unpinned action then fails, and each fail fixture of `gate.actions-pinned` gives exactly one hit of its kind.
 
 ## Other CI systems
 

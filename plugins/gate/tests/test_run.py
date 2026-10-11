@@ -6,7 +6,7 @@ and checks the files it writes. Standard library only, Python 3.9+.
 
 Usage: python3 plugins/gate/tests/test_run.py [-v]
 """
-import hashlib, json, subprocess, sys, tempfile, textwrap
+import hashlib, json, shutil, subprocess, sys, tempfile, textwrap
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -284,6 +284,44 @@ def rules_import_helpers_from_their_folder(tmp):
 def unknown_phase_is_a_config_error(tmp):
     r = Repo(tmp, {"x.py": rule("t.x", "return {'result': 'pass', 'detail': ''}", extra='PHASE = "later"')}, {"rules": {"t.x": {}}})
     assert r.run().returncode == 2
+
+
+@case
+def starter_install_passes_and_blocks_an_unpinned_action(tmp):
+    # the copy steps of /gate:gate-init: templates, the two checks, the actions-pinned fixtures
+    root = Path(tmp)
+    shutil.copytree(GATE / "templates", root, dirs_exist_ok=True)
+    for name in ("rule_fixtures.py", "actions_pinned.py"):
+        shutil.copy(GATE / "checks" / name, root / ".github/actions/gate/rules")
+    shutil.copytree(GATE / "checks/fixtures/gate.actions-pinned", root / "gate/fixtures/gate.actions-pinned")
+
+    def run():
+        return subprocess.run([sys.executable, str(root / ".github/actions/gate/run.py"), "--root", str(root), "--config", "gate/gate.json",
+                               "--sha", "c1", "--dry-run", "--exit-code"], capture_output=True, text=True)
+    p = run()
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "gate.actions-pinned:pass" in p.stdout and "gate.rule-fixtures:pass" in p.stdout, p.stdout
+    (root / ".github/workflows/deploy.yml").write_text("jobs:\n  deploy:\n    steps:\n      - uses: actions/deploy-pages@v4\n")
+    p = run()
+    assert p.returncode == 1 and "gate.actions-pinned:fail" in p.stdout, p.stdout
+
+
+@case
+def actions_pinned_reports_each_kind_once(tmp):
+    # one fail-fixture file per kind of hit; the fixture test sees only the overall result
+    want = {"tag.yml": "tag-or-branch", "branch.yml": "tag-or-branch", "short-sha.yml": "short-sha", "reusable.yml": "tag-or-branch",
+            "docker.yml": "docker-tag", "flow-style.yml": "tag-or-branch", "action.yml": "tag-or-branch"}
+    fixture = GATE / "checks/fixtures/gate.actions-pinned"
+    cfg = Path(tmp) / "gate.json"
+    cfg.write_text(json.dumps({"name": "t", "rules_dir": str(GATE / "checks"),
+                               "rules": {"gate.actions-pinned": {"tier": "block"}}}))
+    p = subprocess.run([sys.executable, str(RUNNER), "--root", str(fixture / "fail"), "--config", str(cfg), "--sha", "c1"],
+                       capture_output=True, text=True)
+    runs = sorted((Path(tmp) / "runs").glob("*.json"))
+    assert runs, p.stdout + p.stderr
+    hits = json.loads(runs[-1].read_text())["checks"]["gate.actions-pinned"]["hits"]
+    got = {Path(h["file"]).name: h["rule"] for h in hits}
+    assert len(hits) == len(want) and got == want, hits
 
 
 def main():

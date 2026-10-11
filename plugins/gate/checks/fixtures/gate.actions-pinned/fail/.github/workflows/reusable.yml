@@ -1,0 +1,4 @@
+on: [push]
+jobs:
+  shared:
+    uses: example-org/workflows/.github/workflows/release.yml@v2

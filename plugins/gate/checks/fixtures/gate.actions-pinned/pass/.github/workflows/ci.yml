@@ -1,0 +1,16 @@
+name: ci
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      # uses: actions/checkout@v4 is the unpinned form; a comment line is not a reference
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02" # v4.6.2
+        with:
+          name: report
+          path: report/
+      - uses: ./.github/actions/build
+      - uses: docker://alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000
+  shared:
+    uses: example-org/workflows/.github/workflows/release.yml@0123456789abcdef0123456789abcdef01234567
