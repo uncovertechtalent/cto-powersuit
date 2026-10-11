@@ -1,11 +1,29 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "conformity-controls",
-  "description": "Fit-it-yourself kits for Claude Code: an output filter you calibrate to yourself, a plain-Markdown vault with local search, and stance filters against the trained accommodation reflex.",
-  "owner": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "name": "cto-powersuit",
+  "description": "CTO Powersuit: agent skills for the work of a CTO, one plugin per function. Includes an output filter you calibrate to yourself, a plain-Markdown vault with local search, and stance filters against the trained accommodation reflex.",
+  "owner": {
+    "name": "Stefan Coetzee",
+    "url": "https://github.com/uncovertechtalent"
+  },
   "plugins": [
-    { "name": "vestige", "source": "./plugins/vestige", "description": "Output filter you calibrate to yourself. Hooks scan every reply and every Markdown write.", "category": "productivity" },
-    { "name": "vault", "source": "./plugins/vault", "description": "Plain-Markdown vault with hybrid local search as an MCP server, plus seed and atomize skills.", "category": "productivity" },
-    { "name": "stance", "source": "./plugins/stance", "description": "Stance filters: professional-b2, good-chad, receipts, poles, mode-leak.", "category": "productivity" }
+    {
+      "name": "vestige",
+      "source": "./plugins/vestige",
+      "description": "Output filter you calibrate to yourself. Hooks scan every reply and every Markdown write.",
+      "category": "productivity"
+    },
+    {
+      "name": "vault",
+      "source": "./plugins/vault",
+      "description": "Plain-Markdown vault with hybrid local search as an MCP server, plus seed and atomize skills.",
+      "category": "productivity"
+    },
+    {
+      "name": "stance",
+      "source": "./plugins/stance",
+      "description": "Stance filters: professional-b2, good-chad, receipts, poles, mode-leak.",
+      "category": "productivity"
+    }
   ]
 }

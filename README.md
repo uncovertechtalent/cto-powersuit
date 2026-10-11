@@ -1,10 +1,10 @@
-# conformity-controls
+# cto-powersuit
 
-Knowledge infrastructure for LLMs.
+Agent skills for the work of a CTO, one plugin per function, in one Claude Code plugin marketplace. A team installs the modules it needs and runs them on generic defaults.
 
-These plugins are its tools layer ([what knowledge infrastructure for LLMs means](https://coetzeestefan.substack.com/p/knowledge-infrastructure-for-llms)). `vault` is the knowledge base and its retrieval, `vestige` enforces your rules at the output boundary, and `stance` adds boundary rules plus verification through the receipts standard.
+The first three plugins are the knowledge infrastructure layer ([what knowledge infrastructure for LLMs means](https://coetzeestefan.substack.com/p/knowledge-infrastructure-for-llms)). `vault` is the knowledge base and its retrieval, `vestige` enforces your rules at the output boundary, and `stance` adds boundary rules plus verification through the receipts standard.
 
-Three Claude Code plugins in one marketplace. Each one replaces a manual install (copy files into `~/.claude/`, then edit `settings.json` by hand) with two commands.
+Each plugin replaces a manual install (copy files into `~/.claude/`, then edit `settings.json` by hand) with two commands.
 
 | Plugin | What it does | Needs |
 |---|---|---|
@@ -12,20 +12,20 @@ Three Claude Code plugins in one marketplace. Each one replaces a manual install
 | `vault` | A plain-Markdown vault with hybrid keyword and semantic search, served to Claude as an MCP server. Skills to create the vault, seed it from an interview and atomize documents into it. | [uv](https://docs.astral.sh/uv/) (Python 3.12+) |
 | `stance` | Stance filters against the trained accommodation reflex: `professional-b2` (plain register, no politeness vestiges), `good-chad` (holds position under pushback, no grovel), `receipts` (probe before you assert), `poles` (decisions without the hedge) and `mode-leak` (speech devices in writing). | Node 14+, bash |
 
-The plugins are independent. Install one, two or all three.
+The plugins are independent. Install one, two or all of them.
 
 ## Install
 
 ```bash
-claude plugin marketplace add uncovertechtalent/conformity-controls
-claude plugin install vestige@conformity-controls
-claude plugin install vault@conformity-controls
-claude plugin install stance@conformity-controls
+claude plugin marketplace add uncovertechtalent/cto-powersuit
+claude plugin install vestige@cto-powersuit
+claude plugin install vault@cto-powersuit
+claude plugin install stance@cto-powersuit
 ```
 
 Inside Claude Code the same works as `/plugin marketplace add ...` and `/plugin install ...`. Restart Claude Code after installing.
 
-From a local clone: `claude plugin marketplace add /path/to/conformity-controls`.
+From a local clone: `claude plugin marketplace add /path/to/cto-powersuit`.
 
 ## vestige
 
@@ -44,7 +44,7 @@ Hooks: a Stop hook scans each reply (`vestige-scan.js`) and checks the paths it 
 2. `/vault:seed` interviews you and builds the structure from your own domains.
 3. The `vault-search` MCP server gives Claude `vault_search`, `vault_read`, `vault_ask`, `vault_reindex` and `vault_list_tags`.
 
-For a vault somewhere else, set the plugin option: `/plugin configure vault@conformity-controls` in Claude Code, or `claude plugin install vault@conformity-controls --config vault_path=/path/to/vault`. Restart Claude Code after changing it.
+For a vault somewhere else, set the plugin option: `/plugin configure vault@cto-powersuit` in Claude Code, or `claude plugin install vault@cto-powersuit --config vault_path=/path/to/vault`. Restart Claude Code after changing it.
 
 The private boundary: folders listed in `.vsearchignore` at the vault root, and notes tagged `private`, `status/private` or `status/sensitive`, are never indexed, never returned and refused by `vault_read`. The first search run downloads about 130 MB of embedding weights. Details: [vault-kit](https://github.com/uncovertechtalent/vault-kit).
 
