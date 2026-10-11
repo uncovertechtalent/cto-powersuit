@@ -1,0 +1,8 @@
+{
+  "name": "fit",
+  "version": "0.1.0",
+  "description": "Estate assessment: reads a repository, builds on the sdlc audit and recommends which modules of the suit to fit, in which order and why, with a gate check that every module marked fitted is present.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "license": "MIT",
+  "keywords": ["fit", "assessment", "estate", "roadmap", "onboarding", "modules"]
+}

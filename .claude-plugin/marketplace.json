@@ -77,6 +77,15 @@
       ]
     },
     {
+      "name": "fit",
+      "source": "./plugins/fit",
+      "description": "Estate assessment: runs the sdlc audit and recommends which modules to fit and in which order, with a gate check that fitted modules are installed.",
+      "category": "development",
+      "skills": [
+        "./skills/estate-assessment"
+      ]
+    },
+    {
       "name": "gate",
       "source": "./plugins/gate",
       "description": "Deploy gate: rules with pass and fail fixtures, run records, findings that close only on a passing rerun, and a workflow that deploys after the gate.",

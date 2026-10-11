@@ -18,6 +18,7 @@ Each skill also reads a private overlay when one exists: your own data for that 
 | `decisions` | RFCs, architecture decision records (ADRs) and a review of the decision log. Templates for both records and a gate check that every ADR has a status, an owner and a date. | Python 3.9+ for the gate check |
 | `docs` | A docs tree where every page has an owner and review dates, runbooks, and a sweep for stale pages. A static docs build and a gate check on the review fields. | Python 3.9+ |
 | `finops` | A cost baseline from invoices and billing exports, showback per team or service, unit costs, a SaaS stack audit (keep, cut or replace) and a FOCUS export. A gate check that every cost figure in the docs carries a date range and a source. | Python 3.9+ |
+| `fit` | The entry assessment: reads a repository and its docs, runs the sdlc audit, and recommends which modules to fit and in which order. A gate check that every module marked fitted is installed. | `sdlc` |
 | `gate` | A deploy gate: a rules folder with pass and fail fixtures per rule, run records, findings that close only on a passing rerun, and a workflow whose deploy job waits for the gate. The checks of the other modules run in it. | Python 3.9+, GitHub Actions for the workflow |
 | `hiring` | An interview loop where each stage collects one signal, rubrics with anchored levels, debriefs with evidence before votes, and the profile of the person who takes over the platform. A gate check that every rubric dimension has anchored levels. | Python 3.9+ for the gate check |
 | `observability` | Alloy, Prometheus, Loki, Grafana and Alertmanager with docker compose, dashboards as code, and alert routes. A gate check that every alert rule names a route and a runbook. | Docker, Python 3.9+ |
@@ -47,6 +48,7 @@ claude plugin install compliance@cto-powersuit
 claude plugin install decisions@cto-powersuit
 claude plugin install docs@cto-powersuit
 claude plugin install finops@cto-powersuit
+claude plugin install fit@cto-powersuit
 claude plugin install gate@cto-powersuit
 claude plugin install hiring@cto-powersuit
 claude plugin install observability@cto-powersuit
