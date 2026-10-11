@@ -6,6 +6,8 @@
 
 **Der CTO-Powersuit ist ein Satz Agent-Skills, ein Modul pro CTO-Funktion vom Deploy-Gate bis zur Übergabe, mit dem eine einzelne Person die gesamte Engineering-Plattform eines Unternehmens betreibt.**
 
+> The CTO powersuit is a set of agent skills, one module per CTO function from the deploy gate to the hand-over, that one person uses to run a company's whole engineering platform.
+
 von [Stefan Coetzee](https://machinebehavior.io/your-next-cto/)
 
 Die Module kommen als ein Plugin-Marketplace für Claude Code, ein Plugin pro Funktion, und lassen sich auch mit der skills CLI installieren. Ein Team installiert die Module, die es braucht, und betreibt sie mit allgemeinen Standardwerten.
