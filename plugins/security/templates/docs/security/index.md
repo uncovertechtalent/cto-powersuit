@@ -7,13 +7,13 @@ reviewed: <YYYY-MM-DD>
 review_by: <YYYY-MM-DD, 90 days after reviewed>
 type: reference
 ---
-This space holds the security pages of the repository: the provenance log of every third-party action, agent skill and MCP server, the key-rotation runbooks, the threat models of risky changes, the access reviews, and the vulnerability policy with its fix-by windows.
+This space holds the security pages of the repository: the provenance log of every third-party action, agent skill, MCP server, and tool, the key-rotation runbooks, the threat models of risky changes, the access reviews, and the vulnerability policy with its fix-by windows.
 
 ## Pages
 
 | Page | What it holds |
 |---|---|
-| [Provenance log](provenance-log.md) | One row per third-party action, agent skill and MCP server: source, owner check, pinned version, verdict, date, reviewer |
+| [Provenance log](provenance-log.md) | One row per third-party action, agent skill, MCP server, and tool: source, owner check, install path, pinned version, source risk, data exposure, decision, date, and reviewer |
 | [Vulnerability policy](vuln-policy.md) | Severity levels, fix-by windows, exceptions, and who decides |
 | `runbook-key-rotation-<secret>.md` | One rotation runbook per secret, from `_templates/` via `/security:secrets` |
 | `threat-model-<rfc or change>.md` | One threat model per RFC or risky change, from `_templates/threat-model.md` via `/security:threat-model` |

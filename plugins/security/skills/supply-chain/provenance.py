@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-"""Provenance check for a GitHub repository before you install an agent skill or an MCP server from it.
+"""Provenance check for a GitHub repository before you install an agent skill, an MCP server or a tool from it.
 
-Reads public metadata with `gh api` (read only, nothing is downloaded or run) and rates it:
-owner against the owner the registry or the vendor names, fork status, account and repository age,
-the share of recent commits that touch only the README, README links to archives or executables,
-and release assets. Any red signal gives "stop", any amber signal "check", none "proceed".
+Reads public metadata with `gh api` (read only, nothing is downloaded or run) and grades it on two axes.
+Source risk (low, medium, high) comes from the signals: owner against the owner the registry or the
+vendor names, fork status, account and repository age, copied history, the share of recent commits that
+touch only the README, README links to archives or executables, and release assets. Any red signal gives
+high, any amber signal medium, none low. Exposure (low, medium, high) comes from --data-scope, what the
+tool will read once installed. Both go into the recommendation.
 
 Usage:
-  provenance.py <owner/repo or URL> [--expected-owner NAME] [--commits 20] [--today YYYY-MM-DD]
-                [--observations-out FILE] [--json]
-  provenance.py --from-observations FILE [--json]
+  provenance.py <owner/repo or URL> [--expected-owner NAME] [--data-scope SCOPE] [--commits 20]
+                [--today YYYY-MM-DD] [--observations-out FILE] [--json]
+  provenance.py --from-observations FILE [--data-scope SCOPE] [--json]
 
-Exit codes: 0 proceed, 1 check, 2 stop, 3 the metadata could not be read.
+Data scope: none, repo (the working repository), home (files across the home folder), agent-data (agent
+transcripts, settings or memory, such as ~/.claude/projects), secrets (credentials, tokens or keys), or
+unknown (the default).
+
+Exit codes: 0 low, 1 medium, 2 high source risk, 3 the metadata could not be read.
 Standard library only, Python 3.9+.
 """
 import argparse, datetime, json, re, subprocess, sys
@@ -25,9 +31,12 @@ THRESHOLDS = {
 }
 README = re.compile(r"(^|/)readme(\.[a-z0-9]+)?$", re.I)
 LINK = re.compile(r"""(https?://[^\s)"'<>\]]+)|\]\(([^)\s]+)\)|href=["']([^"']+)["']""", re.I)
-ARCHIVE = re.compile(r"\.(zip|rar|7z|exe|msi|dmg|pkg|scr|bat|cmd|ps1|vbs|jar|apk)(\?[^\s)\"'<>]*)?$", re.I)
+ARCHIVE = re.compile(r"\.(zip|rar|7z|tgz|tar\.gz|vsix|exe|msi|dmg|pkg|scr|bat|cmd|ps1|vbs|jar|apk)(\?[^\s)\"'<>]*)?$", re.I)
 ASSET_DOWNLOAD = re.compile(r"/releases/(latest/)?download/", re.I)
-BINARY_ASSET = re.compile(r"\.(zip|rar|7z|exe|msi|dmg|pkg|tar\.gz|tgz|tar\.xz|appimage|deb|rpm|jar)$", re.I)
+BINARY_ASSET = re.compile(r"\.(zip|rar|7z|exe|msi|dmg|pkg|tar\.gz|tgz|tar\.xz|vsix|appimage|deb|rpm|jar)$", re.I)
+EXPOSURE = {"none": "low", "repo": "medium", "home": "high", "agent-data": "high", "secrets": "high", "unknown": "unknown"}
+SCOPE_TEXT = {"home": "files across the home folder", "agent-data": "agent transcripts, settings or memory",
+              "secrets": "credentials, tokens or keys"}
 
 
 def gh(path, raw=False):
@@ -75,7 +84,7 @@ def days(since, today):
 
 
 def assess(obs, today, t=THRESHOLDS):
-    """Signals as (level, id, evidence), with level red or amber, and the verdict."""
+    """Signals as (level, id, evidence), with level red or amber, the source risk, the exposure, and the recommendation."""
     s = []
     exp = (obs.get("expected_owner") or "").strip().lower()
     owner = obs["owner"].lower()
@@ -111,23 +120,44 @@ def assess(obs, today, t=THRESHOLDS):
     links = sorted({next(g for g in m.groups() if g) for m in LINK.finditer(obs.get("readme", ""))})
     downloads = [u for u in links if ARCHIVE.search(u) or ASSET_DOWNLOAD.search(u)]
     if downloads:
-        s.append(("red", "download-link", f"README links to {len(downloads)} archive or executable downloads: {', '.join(downloads[:3])}"))
+        s.append(("amber", "download-link", f"README links to {len(downloads)} archive or executable downloads: {', '.join(downloads[:3])}"))
+        if any(i == "readme-only-commits" for _, i, _ in s):
+            s.append(("red", "archive-lure", "README-only commits and an archive download link together: the FakeGit pattern"))
     binaries = [a for a in obs.get("release_assets", []) if BINARY_ASSET.search(a)]
     if binaries:
         s.append(("amber", "release-binaries", f"{len(binaries)} archive or binary release assets, e.g. {', '.join(binaries[:3])}; verify checksums or signatures"))
     if obs.get("archived"):
         s.append(("amber", "archived", "the repository is archived; it gets no fixes"))
     levels = {lvl for lvl, _, _ in s}
-    verdict = "stop" if "red" in levels else "check" if "amber" in levels else "proceed"
+    risk = "high" if "red" in levels else "medium" if "amber" in levels else "low"
+    scope = obs.get("data_scope") or "unknown"
+    exposure = EXPOSURE.get(scope, "unknown")
     head = obs["commits"][0]["sha"] if obs.get("commits") else None
-    return {"repo": obs["repo"], "verdict": verdict, "pin": head,
-            "signals": [{"level": lvl, "id": i, "evidence": e} for lvl, i, e in s]}
+    archive = any(i in ("download-link", "release-binaries") for _, i, _ in s)
+    advice = {
+        "high": "Do not install from this source. Get it from the registry entry or the vendor's own repository.",
+        "medium": "The user decides with these signals, and the reason goes into the provenance log.",
+        "low": f"Install pinned to commit {head} or to an exact package version." if head else "Install pinned to an exact version.",
+    }[risk]
+    rec = [advice]
+    if archive:
+        rec.append("Prefer the marketplace or registry install, or a build from a pinned commit, over release archives: an archive "
+                   "can be swapped in a fork, through a link in a comment, or in a compromised release. A marketplace install is no "
+                   "guarantee either, so pin the version.")
+    if exposure == "high":
+        rec.append(f"Once installed it reads {SCOPE_TEXT[scope]}. Read the code that reads it before you install, and give it the narrowest "
+                   "access you can.")
+    elif exposure == "unknown":
+        rec.append("Data scope unknown: find out from the code or the docs what it reads, then run again with --data-scope.")
+    return {"repo": obs["repo"], "risk": risk, "exposure": exposure, "data_scope": scope, "pin": head,
+            "signals": [{"level": lvl, "id": i, "evidence": e} for lvl, i, e in s], "recommendation": rec}
 
 
 def main():
     ap = argparse.ArgumentParser(description="Provenance check before installing a skill or an MCP server")
     ap.add_argument("target", nargs="?")
     ap.add_argument("--expected-owner", default=None, help="the owner the registry entry or the vendor's own docs name")
+    ap.add_argument("--data-scope", choices=sorted(EXPOSURE), default=None, help="what the tool reads once installed")
     ap.add_argument("--commits", type=int, default=20)
     ap.add_argument("--today", default=None)
     ap.add_argument("--observations-out", default=None)
@@ -150,6 +180,8 @@ def main():
         obs["today"] = today.isoformat()
     else:
         ap.error("give a repository or --from-observations")
+    if a.data_scope:
+        obs["data_scope"] = a.data_scope
     if a.observations_out:
         with open(a.observations_out, "w", encoding="utf-8") as f:
             json.dump(obs, f, indent=1)
@@ -157,10 +189,13 @@ def main():
     if a.json:
         print(json.dumps(r, indent=1))
     else:
-        print(f"{r['repo']}: {r['verdict']}" + (f" (pin {r['pin']})" if r["pin"] else ""))
+        print(f"{r['repo']}: source risk {r['risk']}, exposure {r['exposure']} (data scope {r['data_scope']})"
+              + (f", head {r['pin']}" if r["pin"] else ""))
         for sig in r["signals"]:
             print(f"  {sig['level']:5} {sig['id']}: {sig['evidence']}")
-    sys.exit({"proceed": 0, "check": 1, "stop": 2}[r["verdict"]])
+        for line in r["recommendation"]:
+            print(f"  -> {line}")
+    sys.exit({"low": 0, "medium": 1, "high": 2}[r["risk"]])
 
 
 if __name__ == "__main__":

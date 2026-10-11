@@ -70,11 +70,11 @@
   "scan-tool_SHA256SUMS"
  ],
  "expect": {
-  "verdict": "check",
   "red": [],
   "amber": [
    "release-binaries"
-  ]
+  ],
+  "risk": "medium"
  },
  "today": "2026-10-11"
 }

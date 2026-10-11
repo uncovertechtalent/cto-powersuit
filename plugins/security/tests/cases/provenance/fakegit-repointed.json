@@ -97,14 +97,15 @@
   "sql-tool-win64.zip"
  ],
  "expect": {
-  "verdict": "stop",
   "red": [
    "readme-only-commits",
-   "download-link"
+   "archive-lure"
   ],
   "amber": [
-   "release-binaries"
-  ]
+   "release-binaries",
+   "download-link"
+  ],
+  "risk": "high"
  },
  "today": "2026-10-11"
 }

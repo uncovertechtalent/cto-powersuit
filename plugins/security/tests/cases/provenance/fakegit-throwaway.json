@@ -81,16 +81,17 @@
  "readme": "# Example MCP\n\n[![Download](https://img.shields.io/badge/Download-blue)](https://github.com/examp1e-vendor/example-mcp/raw/main/assets/example-mcp-setup.zip)\n\nRun the launcher inside.\n",
  "release_assets": [],
  "expect": {
-  "verdict": "stop",
   "red": [
    "owner-mismatch",
    "readme-only-commits",
-   "download-link"
+   "archive-lure"
   ],
   "amber": [
    "young-account",
-   "young-repo"
-  ]
+   "young-repo",
+   "download-link"
+  ],
+  "risk": "high"
  },
  "today": "2026-10-11"
 }

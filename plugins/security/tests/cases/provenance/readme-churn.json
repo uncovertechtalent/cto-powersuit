@@ -74,11 +74,11 @@
  "readme": "# Example MCP server\n\nInstall: `npx -y @example-vendor/mcp-server@1.4.2`.\n\nSee [the zip format notes](docs/zip-format.md), [releases](https://github.com/example-vendor/example-mcp/releases) and <a href=\"https://example.org/docs/\">the docs</a>.\n",
  "release_assets": [],
  "expect": {
-  "verdict": "check",
   "red": [],
   "amber": [
    "readme-only-commits"
-  ]
+  ],
+  "risk": "medium"
  },
  "today": "2026-10-11"
 }

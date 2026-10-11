@@ -14,7 +14,7 @@ claude plugin install security@cto-powersuit
 
 | Skill | What it does |
 |---|---|
-| `/security:supply-chain` | Pins actions by commit SHA through the gate's `gate.actions-pinned` rule, sets the action-owner allowlist, adds Dependabot for actions and lock files, scans the lock files with osv-scanner (or the OSV database without an install), builds an SBOM, and checks the provenance of an agent skill or MCP server before anyone installs it. |
+| `/security:supply-chain` | Pins actions by commit SHA through the gate's `gate.actions-pinned` rule, sets the action-owner allowlist, adds Dependabot for actions and lock files, scans the lock files with osv-scanner (or the OSV database without an install), builds an SBOM, and grades the provenance and the data exposure of an agent skill, MCP server, or tool before anyone installs it, with a worked example of an honest project that trips two FakeGit signals. |
 | `/security:secrets` | Installs the blocking `security.secrets` check, gives a one-line scan for repositories without the gate, and writes one key-rotation runbook per exposed secret: snapshot, generate inside the target, never print, verify, search for the old value, commit only redacted references. |
 | `/security:access-review` | Read-only review of admins, collaborators, outside collaborators, deploy keys, visible token lists, rulesets and bypass actors, and every merge or push in the window that went past a rule, such as a merge with the admin bypass instead of the required review. |
 | `/security:threat-model` | One page per RFC or risky change: assets, entry points including the text and tools of coding agents, threats by category, mitigations as tickets, and residual risk accepted by name. Linked from the RFC of `/decisions:rfc`. |
@@ -24,11 +24,11 @@ Every skill checks the overlay first: `$POWERSUIT_OVERLAY/security/` (see the ro
 
 ## Scripts
 
-Python 3.9+, standard library only. Each prints a verdict or a list and changes nothing.
+Python 3.9+, standard library only. Each prints a grade or a list and changes nothing.
 
 | Script | What it does |
 |---|---|
-| `skills/supply-chain/provenance.py` | Rates a GitHub repository before an install: owner against the registry or vendor, fork, account and repository age, copied history, the share of recent commits that touch only the README, README links to archives or executables, and release binaries. Verdict `proceed`, `check` or `stop` (exit 0, 1, 2), with the commit SHA to pin. Reads through `gh api`; downloads nothing. |
+| `skills/supply-chain/provenance.py` | Grades a GitHub repository before an install on two axes. Source risk (low, medium, high; exit 0, 1, 2) from the signals: owner against the registry or vendor, fork, account and repository age, copied history, the share of recent commits that touch only the README, README links to archives or executables, and release binaries. Exposure from what the tool reads once installed (`--data-scope`). Prints a recommendation and the commit SHA to pin; the user decides. Reads through `gh api`; downloads nothing. |
 | `skills/supply-chain/osv_query.py` | Reads the package URLs of an SPDX or CycloneDX SBOM and asks the public OSV database for known vulnerabilities, with severity and fixed versions. For teams without a scanner installed. |
 | `skills/access-review/access_review.py` | The access review: GET requests through `gh api` only. Maps every rule suite with result `bypass` to its pull request, and falls back to approvals per merged pull request when rule suites are not visible. |
 | `skills/vuln-intake/intake.py` | Ticket drafts from Dependabot alerts and OSV results, one per advisory and package, with fix-by dates from `docs/security/vuln-policy.md` and the already-tracked findings left out. |
@@ -41,7 +41,7 @@ The skills copy these files into the client repository on first use. An existing
 |---|---|---|
 | `templates/.github/dependabot.yml` | `.github/dependabot.yml` | Monthly grouped updates for actions in workflows and composite actions; a commented block per package ecosystem |
 | `templates/docs/security/index.md` | `docs/security/index.md` | Home page of the Security space: pages and records |
-| `templates/docs/security/provenance-log.md` | `docs/security/provenance-log.md` | One row per third-party action, skill and MCP server with its provenance verdict |
+| `templates/docs/security/provenance-log.md` | `docs/security/provenance-log.md` | One row per third-party action, skill, MCP server, and tool with its source risk, data exposure, and decision |
 | `templates/docs/security/vuln-policy.md` | `docs/security/vuln-policy.md` | Severity levels, fix-by windows (7, 30, 90, 180 days), exceptions and the monthly review |
 | `templates/docs/security/_templates/runbook-key-rotation.md` | `docs/security/runbook-key-rotation-<secret>.md` | Rotation steps for one secret, with commands that never print the value |
 | `templates/docs/security/_templates/threat-model.md` | `docs/security/threat-model-<name>.md` | Threat model for one RFC or change |
@@ -96,6 +96,6 @@ For TISAX, add the VDA ISA question numbers of the catalogue version you are ass
 
 ## Tests
 
-`tests/test_security.py` replays recorded cases with no network: 8 provenance cases (a vendor repository, an unverified owner, a throwaway fake, a taken-over account, a fork of the listed repository, a release-binary tool, copied history, README churn), 5 access-review cases, the OSV lookup against recorded answers, the intake windows, and the two gate checks beyond their fixture runs (one hit per fail file, the allow options, tracked files only, the owner listing). `scripts/test_checks.py` at the repository root runs both checks against their pass and fail fixtures.
+`tests/test_security.py` replays recorded cases with no network: 9 provenance cases (a vendor repository, an unverified owner, a throwaway fake, a taken-over account, a fork of the listed repository, a release-binary tool, copied history, README churn, a new tool installed from archives that reads agent data), 5 access-review cases, the OSV lookup against recorded answers, the intake windows, and the two gate checks beyond their fixture runs (one hit per fail file, the allow options, tracked files only, the owner listing). `scripts/test_checks.py` at the repository root runs both checks against their pass and fail fixtures.
 
 Demo: [machinebehavior.io/conformity/](https://machinebehavior.io/conformity/), the gate page of the platform behind machinebehavior.io, where the pinned-actions check runs on every deploy.

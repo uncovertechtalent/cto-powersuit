@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Tests for the security module: the two gate checks beyond their fixture runs, and the three scripts.
 
-- provenance.py: every recorded case in cases/provenance/ gives its verdict and exactly its red and amber signals.
+- provenance.py: every recorded case in cases/provenance/ gives its risk grade and exactly its red and amber signals;
+  the recommendation follows the archive install path and the data scope.
 - access_review.py: every case in cases/access-review/ gives exactly its red and amber flags.
 - intake.py: fix-by dates from the default windows, the policy template and a custom policy; dedupe; tracked issues.
 - osv_query.py: purls from an SPDX and a CycloneDX SBOM, and the rows built from recorded OSV answers (no network).
@@ -59,7 +60,9 @@ def provenance_cases():
     for f in sorted((CASES / "provenance").glob("*.json")):
         c = json.loads(f.read_text())
         r = provenance.assess(c, datetime.date.fromisoformat(c["today"]))
-        got = {"verdict": r["verdict"], "red": levels(r["signals"], "red"), "amber": levels(r["signals"], "amber")}
+        got = {"risk": r["risk"], "red": levels(r["signals"], "red"), "amber": levels(r["signals"], "amber")}
+        if "exposure" in c["expect"]:
+            got["exposure"] = r["exposure"]
         want = {k: sorted(v) if isinstance(v, list) else v for k, v in c["expect"].items()}
         if got != want:
             bad.append(f"{f.stem}: got {got}, want {want}")
@@ -71,11 +74,35 @@ def provenance_cases():
 @test
 def provenance_exit_codes_from_observations():
     bad = []
-    for name, code in (("vendor-official", 0), ("unverified-owner", 1), ("fakegit-throwaway", 2)):
+    for name, code in (("vendor-official", 0), ("unverified-owner", 1), ("fakegit-throwaway", 2), ("new-tool-archive-install", 1)):
         p = subprocess.run([sys.executable, str(MODULE / "skills/supply-chain/provenance.py"), "--from-observations",
                             str(CASES / "provenance" / f"{name}.json")], capture_output=True, text=True)
         if p.returncode != code:
             bad.append(f"{name}: exit {p.returncode}, want {code}: {p.stderr.strip()[:200]}")
+    return bad
+
+
+@test
+def provenance_recommendation_axes():
+    bad = []
+    c = json.loads((CASES / "provenance/new-tool-archive-install.json").read_text())
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    text = " ".join(r["recommendation"])
+    for want in ("decides", "marketplace", "pinned commit", "no guarantee", "agent transcripts"):
+        if want not in text:
+            bad.append(f"archive install reading agent data: no {want!r} in the recommendation")
+    c["data_scope"] = "repo"
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    if r["exposure"] != "medium" or "agent transcripts" in " ".join(r["recommendation"]):
+        bad.append(f"data scope repo: exposure {r['exposure']}")
+    del c["data_scope"]
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    if r["exposure"] != "unknown" or "--data-scope" not in " ".join(r["recommendation"]):
+        bad.append("no data scope must ask for one")
+    clean = json.loads((CASES / "provenance/vendor-official.json").read_text())
+    r = provenance.assess(clean, datetime.date(2026, 10, 11))
+    if "marketplace" in " ".join(r["recommendation"]) or r["pin"] not in r["recommendation"][0]:
+        bad.append(f"no archive and low risk: {r['recommendation']}")
     return bad
 
 

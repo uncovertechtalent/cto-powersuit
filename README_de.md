@@ -58,6 +58,8 @@ Die Plugins sind unabhängig voneinander. Installiere die, die du brauchst. Jede
 
 ## Installation
 
+Dieses Projekt gibt es nur unter [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Installiere es ausschließlich mit den beiden Befehlen unten, die den Eigentümer des Repositorys ausdrücklich nennen: `claude plugin marketplace add uncovertechtalent/cto-powersuit` und `npx skills add uncovertechtalent/cto-powersuit`, oder aus einem Klon dieses Repositorys. Das Projekt veröffentlicht weder ZIP-Downloads noch Release-Archive. Wer dir eine Kopie mit Download-Button anbietet, bietet nicht dieses Projekt an. Andere Skills und MCP-Server prüfst du vor der Installation mit der Herkunftsprüfung des Security-Moduls: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), Schritt 7.
+
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
 claude plugin install ai-ops@cto-powersuit
