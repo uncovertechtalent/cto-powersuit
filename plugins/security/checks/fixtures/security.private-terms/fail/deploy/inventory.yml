@@ -1,0 +1,4 @@
+all:
+  hosts:
+    build:
+      ansible_host: 10.99.88.77

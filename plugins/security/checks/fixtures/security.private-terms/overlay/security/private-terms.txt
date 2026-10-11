@@ -1,0 +1,8 @@
+# Fixture term list for the tests. Every term in it is made up.
+# A real list lives in $POWERSUIT_OVERLAY/security/private-terms.txt and never enters a repository.
+employer-z = Zanzibar Widgets
+host-k = kettlehost.lan
+addr-x = 10.99.88.77
+family-b = Bramblewood
+shorthand-n = re:proj(ect)?[- ]?nightjar
+Quillfeather

@@ -3,11 +3,12 @@
 
 For each plugins/<module>/checks/<rule>.py, run the gate runner in dry-run mode against
 checks/fixtures/<rule id>/pass (expect exit 0) and fail (expect exit 1).
+A rule that reads the private overlay gets checks/fixtures/<rule id>/overlay as POWERSUIT_OVERLAY.
 Standard library only. Exit 0 when every check behaves, 1 otherwise.
 
 Usage: python3 scripts/test_checks.py [-v]
 """
-import importlib.util, json, subprocess, sys, tempfile
+import importlib.util, json, os, subprocess, sys, tempfile
 from pathlib import Path
 
 sys.dont_write_bytecode = True  # loading rule files must not leave __pycache__ in the repository
@@ -34,6 +35,10 @@ def main():
                 rid = rule_id(rule)
                 cfg = Path(tmp) / f"{rid}.json"
                 cfg.write_text(json.dumps({"name": "fixture-test", "rules_dir": str(checks), "rules": {rid: {"tier": "block"}}}))
+                env = dict(os.environ)
+                overlay = checks / "fixtures" / rid / "overlay"
+                if overlay.is_dir():
+                    env["POWERSUIT_OVERLAY"] = str(overlay)
                 for kind, want in (("pass", 0), ("fail", 1)):
                     root = checks / "fixtures" / rid / kind
                     runs += 1
@@ -41,7 +46,7 @@ def main():
                         failures.append(f"{rid}: no {kind} fixture at {root.relative_to(REPO)}")
                         continue
                     p = subprocess.run([sys.executable, str(RUNNER), "--config", str(cfg), "--root", str(root), "--dry-run", "--exit-code", "--sha", "fixture"],
-                                       capture_output=True, text=True)
+                                       capture_output=True, text=True, env=env)
                     ok = p.returncode == want
                     print(f"{'ok  ' if ok else 'FAIL'} {rid} {kind}: exit {p.returncode} (want {want})")
                     if VERBOSE or not ok:
