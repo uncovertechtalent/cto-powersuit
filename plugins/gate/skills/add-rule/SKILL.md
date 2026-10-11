@@ -23,7 +23,7 @@ Modules ship their checks in `checks/<rule>.py`, with fixtures in `checks/fixtur
 1. **Find the module's checks folder.** In a local clone of this marketplace it is `plugins/<module>/checks/`; in the plugin cache it sits next to this plugin:
 
    ```bash
-   for d in "${CLAUDE_PLUGIN_ROOT}/../<module>/checks" "${CLAUDE_PLUGIN_ROOT}"/../../<module>/*/checks; do [ -d "$d" ] && echo "$d"; done
+   find "$(dirname "$(dirname "${CLAUDE_PLUGIN_ROOT}")")" -maxdepth 3 -type d -name checks -path "*/<module>/*" 2>/dev/null
    ```
 
    If nothing prints, ask the user for the path.
