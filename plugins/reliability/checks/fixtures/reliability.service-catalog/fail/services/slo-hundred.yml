@@ -1,0 +1,7 @@
+# Fail fixture: a target of 100 leaves no error budget.
+id: slo-hundred
+name: Billing
+owner: Billing team
+slo:
+  target: 100
+runbooks: [https://wiki.example.com/billing]

@@ -1,0 +1,18 @@
+id: web-app
+name: Web app
+description: >
+  The customer-facing web application. Serves the sign-in page,
+  the dashboard and the settings pages.
+owner: Web team
+tier: 1
+lifecycle: production
+slo:
+  sli: share of page requests answered with a status below 500 within 1 s
+  target: 99.9   # percent of valid requests, over the window
+  window: 30d
+  doc: doc:sre/slo-web-app
+runbooks:
+  - doc:sre/runbook-web-app-down
+  - https://wiki.example.com/web-app#errors
+depends_on: [api, database]
+soft_depends_on: [search]

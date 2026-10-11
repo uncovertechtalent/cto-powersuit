@@ -1,0 +1,13 @@
+# Managed database, run by a provider. Entered so the dependency math has a number.
+id: database
+name: Database
+description: The managed relational database.
+owner: Platform team
+tier: 1
+lifecycle: external
+slo:
+  target: 99.99
+  window: 30d
+runbooks:
+- ../runbooks/database-failover.md
+depends_on: []

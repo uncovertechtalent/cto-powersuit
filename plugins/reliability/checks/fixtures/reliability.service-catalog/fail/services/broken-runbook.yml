@@ -1,0 +1,7 @@
+# Fail fixture: the runbook names a docs page that does not exist.
+id: broken-runbook
+name: Queue
+owner: Platform team
+slo:
+  target: 99.9
+runbooks: [doc:sre/runbook-queue-backlog]

@@ -1,0 +1,7 @@
+# Fail fixture: the runbook list is empty.
+id: no-runbook
+name: Image resizer
+owner: Media team
+slo:
+  target: 99
+runbooks: []

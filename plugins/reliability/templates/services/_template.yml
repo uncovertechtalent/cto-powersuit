@@ -1,0 +1,23 @@
+# Catalogue entry for one service. Copy this file to services/<id>.yml and replace every <placeholder>.
+# The file name without .yml is the id. Files whose name starts with _ are skipped by the gate check
+# and by scripts/build_status.py.
+id: <id, the file name without .yml>
+name: <name as users know it>
+description: >
+  <one or two sentences: what the service does and who uses it>
+owner: <person or team that answers for the service>
+tier: <1, 2 or 3; see the tiers in docs/sre/index.md>
+lifecycle: <experimental, production, deprecated or external>
+repository: <https URL of the repository, or private>
+dashboard: <https URL of the main dashboard>
+slo:
+  sli: <good events over valid events, in one line, for example requests answered below 500 within 1 s>
+  target: <number in percent below 100, for example 99.9>
+  window: <30d, 28d or 90d>
+  doc: <the SLO page, as doc:sre/slo-id>
+runbooks:
+  - <a doc:space/slug link, a relative path to a file, or an https URL>
+depends_on: [<ids of serial dependencies: the service fails when one of them fails>]
+soft_depends_on: [<ids of dependencies the service survives with a fallback or a degraded mode>]
+docs: [<doc:space/slug links to design and operations pages>]
+status_page: <shown, or hidden for a service users do not know by name>

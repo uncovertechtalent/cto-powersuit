@@ -1,0 +1,4 @@
+{
+  "$schema": "./incidents.schema.json",
+  "incidents": []
+}

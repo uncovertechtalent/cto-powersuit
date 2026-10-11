@@ -1,0 +1,7 @@
+# Fail fixture: the target is a word.
+id: slo-text-target
+name: Mailer
+owner: Platform team
+slo:
+  target: high
+runbooks: [https://wiki.example.com/mailer]

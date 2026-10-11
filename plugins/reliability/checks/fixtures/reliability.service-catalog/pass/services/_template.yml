@@ -1,0 +1,5 @@
+id: <id>
+owner: <owner>
+slo:
+  target: <target>
+runbooks: []

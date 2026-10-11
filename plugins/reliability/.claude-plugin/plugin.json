@@ -1,0 +1,9 @@
+{
+  "name": "reliability",
+  "version": "0.1.0",
+  "description": "Reliability for a repository: availability targets per service checked against their dependencies, SLOs with burn-rate alerts and an error-budget policy, incident runs, blameless postmortems, a static status page from published records, on-call rules, and a gate check on the service catalogue.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
+  "license": "MIT",
+  "keywords": ["reliability", "sre", "slo", "error-budget", "incident", "postmortem", "status-page", "on-call", "service-catalog"]
+}

@@ -1,0 +1,3 @@
+# Fail fixture: a line that is not key: value.
+id: unreadable
+owner Platform team

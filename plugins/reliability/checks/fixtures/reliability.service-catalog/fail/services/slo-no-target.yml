@@ -1,0 +1,7 @@
+# Fail fixture: the slo has a window and no target.
+id: slo-no-target
+name: Search
+owner: Search team
+slo:
+  window: 30d
+runbooks: [https://wiki.example.com/search]

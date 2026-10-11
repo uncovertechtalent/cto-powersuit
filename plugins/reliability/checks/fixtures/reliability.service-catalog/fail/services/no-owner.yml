@@ -1,0 +1,7 @@
+# Fail fixture: the owner is empty.
+id: no-owner
+name: Worker
+owner:
+slo:
+  target: 99.5
+runbooks: [https://wiki.example.com/worker]

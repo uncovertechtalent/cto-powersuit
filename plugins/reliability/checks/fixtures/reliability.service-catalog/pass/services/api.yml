@@ -1,0 +1,11 @@
+id: api
+name: Public API
+description: The HTTP API behind the web app and the mobile clients.
+owner: "API team"
+tier: 1
+lifecycle: production
+slo:
+  target: "99.95%"
+  window: 30d
+runbooks: [runbooks/api-errors.md]
+depends_on: [database]

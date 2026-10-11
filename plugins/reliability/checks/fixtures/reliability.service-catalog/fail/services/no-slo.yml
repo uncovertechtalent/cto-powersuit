@@ -1,0 +1,5 @@
+# Fail fixture: no slo.
+id: no-slo
+name: Cron jobs
+owner: Platform team
+runbooks: [https://wiki.example.com/cron]

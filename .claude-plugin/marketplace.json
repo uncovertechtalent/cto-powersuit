@@ -76,6 +76,20 @@
       ]
     },
     {
+      "name": "reliability",
+      "source": "./plugins/reliability",
+      "description": "Availability targets, SLOs, incidents, postmortems, a static status page and on-call, with a gate check on the service catalogue.",
+      "category": "development",
+      "skills": [
+        "./skills/incident",
+        "./skills/nines-per-service",
+        "./skills/on-call",
+        "./skills/postmortem",
+        "./skills/slo",
+        "./skills/status-page"
+      ]
+    },
+    {
       "name": "sdlc",
       "source": "./plugins/sdlc",
       "description": "Software delivery lifecycle: an audit for repositories built without one, the lifecycle map, tickets, review, test strategy and release, with a traceability gate check.",
