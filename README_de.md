@@ -20,6 +20,7 @@ Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eige
 | `finops` | Eine Kosten-Baseline aus Rechnungen und Billing-Exporten, Showback pro Team oder Service, Stückkosten, ein Audit des SaaS-Bestands (behalten, kündigen oder ersetzen) und ein FOCUS-Export. Ein Gate-Check, der prüft, dass jede Kostenangabe in den Docs einen Zeitraum und eine Quelle nennt. | Python 3.9+ |
 | `fit` | Die Eingangsbewertung: liest ein Repository und seine Docs, führt das SDLC-Audit aus und empfiehlt, welche Module in welcher Reihenfolge eingesetzt werden. Ein Gate-Check, der prüft, dass jedes als eingesetzt markierte Modul installiert ist. | `sdlc` |
 | `gate` | Ein Deploy-Gate: ein Regelordner mit Pass- und Fail-Fixtures pro Regel, Laufprotokolle, Befunde, die sich erst mit einem bestandenen späteren Lauf schließen, und ein Workflow, dessen Deploy-Job auf das Gate wartet. Die Checks der anderen Module laufen darin. | Python 3.9+, GitHub Actions für den Workflow |
+| `handover` | Übergabe der Plattform an ihren Owner: Schulungs-Checklisten pro installiertem Modul, Exit-Kriterien und ein Testplan, der zeigt, dass der Owner die Plattform allein mit den Docs betreibt. Ein Gate-Check, der prüft, dass jedes installierte Modul einen benannten Owner hat. | Python 3.9+ für den Gate-Check |
 | `hiring` | Ein Interview-Ablauf, in dem jede Stufe ein Signal erhebt, Bewertungsraster mit verankerten Stufen, Debriefs mit Belegen vor der Abstimmung und das Profil der Person, die die Plattform übernimmt. Ein Gate-Check, der prüft, dass jede Dimension eines Rasters verankerte Stufen hat. | Python 3.9+ für den Gate-Check |
 | `observability` | Alloy, Prometheus, Loki, Grafana und Alertmanager mit Docker Compose, Dashboards als Code und Alert-Routen. Ein Gate-Check, der prüft, dass jede Alert-Regel eine Route und ein Runbook nennt. | Docker, Python 3.9+ |
 | `red-team` | Drucktests für die KI-Funktionen eines Teams: Taktiken wählen, mehrstufigen Druck nach Skript in einer Welt mit bekannter richtiger Antwort ausüben und die getroffene Entscheidung bewerten. Ein Gate-Check, der prüft, dass jeder Lauf die erwartete und die beobachtete Entscheidung nennt. | Python 3.9+ |
@@ -50,6 +51,7 @@ claude plugin install docs@cto-powersuit
 claude plugin install finops@cto-powersuit
 claude plugin install fit@cto-powersuit
 claude plugin install gate@cto-powersuit
+claude plugin install handover@cto-powersuit
 claude plugin install hiring@cto-powersuit
 claude plugin install observability@cto-powersuit
 claude plugin install red-team@cto-powersuit

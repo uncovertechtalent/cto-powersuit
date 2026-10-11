@@ -97,6 +97,17 @@
       ]
     },
     {
+      "name": "handover",
+      "source": "./plugins/handover",
+      "description": "Handover to the platform owner: training per module, exit criteria and a runs-without-me test plan, with a gate check on module owners.",
+      "category": "development",
+      "skills": [
+        "./skills/exit-criteria",
+        "./skills/owner-training",
+        "./skills/runs-without-me"
+      ]
+    },
+    {
       "name": "hiring",
       "source": "./plugins/hiring",
       "description": "Interview loop, anchored rubrics, evidence-first debriefs and a successor profile, with a gate check on rubric anchors.",
