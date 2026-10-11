@@ -141,8 +141,11 @@ If you copied the kits into `~/.claude/` before, remove the copied hook entries 
 
 ```bash
 claude plugin validate --strict .
-claude plugin validate --strict plugins/vestige
+for p in plugins/* plugins/*/skills; do claude plugin validate --strict "$p"; done
+python3 scripts/test_checks.py
 ```
+
+`scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture.
 
 ## License
 

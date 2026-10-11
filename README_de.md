@@ -141,8 +141,11 @@ Wenn du die Kits früher nach `~/.claude/` kopiert hast, entferne nach der Insta
 
 ```bash
 claude plugin validate --strict .
-claude plugin validate --strict plugins/vestige
+for p in plugins/* plugins/*/skills; do claude plugin validate --strict "$p"; done
+python3 scripts/test_checks.py
 ```
+
+`scripts/test_checks.py` führt den Gate-Check jedes Moduls mit dem Gate-Runner gegen seine Pass- und Fail-Fixtures aus. Das Skript braucht Python 3.9+ und endet mit Exit-Code 1, wenn ein Check eine Fail-Fixture besteht oder an einer Pass-Fixture scheitert.
 
 ## Lizenz
 

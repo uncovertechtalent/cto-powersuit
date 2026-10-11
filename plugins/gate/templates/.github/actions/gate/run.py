@@ -17,6 +17,8 @@ The rule contract is in rules/README.md next to this file.
 import argparse, datetime, hashlib, importlib.util, json, platform, re, subprocess, sys, traceback, uuid
 from pathlib import Path
 
+sys.dont_write_bytecode = True  # loading rule files must not leave __pycache__ in the repository
+
 VERSION = "0.1.0"
 HERE = Path(__file__).resolve().parent
 NOW = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
