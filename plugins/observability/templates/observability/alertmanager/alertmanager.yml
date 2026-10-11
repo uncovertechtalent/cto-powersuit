@@ -1,0 +1,59 @@
+# Alertmanager routing. Alerts route on two labels that every alert rule carries:
+#   route      the team that owns the alert (platform, app, ...)
+#   severity   page, ticket or info
+# One receiver per team and severity. Alerts without a known route go to "default".
+#
+# Check:  amtool check-config observability/alertmanager/alertmanager.yml
+# Test:   sh observability/alertmanager/tests/routes.sh
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: [alertname, route]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['route="platform"']
+      receiver: platform-ticket
+      routes:
+        - matchers: ['severity="page"']
+          receiver: platform-page
+          repeat_interval: 1h
+
+    - matchers: ['route="app"']
+      receiver: app-ticket
+      routes:
+        - matchers: ['severity="page"']
+          receiver: app-page
+          repeat_interval: 1h
+
+inhibit_rules:
+  # A page mutes the ticket and info alerts of the same alert for the same team.
+  - source_matchers: ['severity="page"']
+    target_matchers: ['severity=~"ticket|info"']
+    equal: [alertname, route]
+
+  # A target that does not answer mutes the other alerts from that target.
+  - source_matchers: ['alertname="TargetDown"']
+    target_matchers: ['alertname!="TargetDown"']
+    equal: [job, instance]
+
+# A receiver without an integration drops the alert. Give each receiver one
+# integration. Keep secrets out of this file: write them to files under
+# alertmanager/secrets/ (listed in observability/.gitignore) and point to them.
+# Check before use: field names of each integration in the Alertmanager docs
+# for the version in docker-compose.yml.
+#
+# Example:
+#   - name: platform-page
+#     webhook_configs:
+#       - url_file: /etc/alertmanager/secrets/platform-page.url
+#         send_resolved: true
+receivers:
+  - name: default
+  - name: platform-page
+  - name: platform-ticket
+  - name: app-page
+  - name: app-ticket

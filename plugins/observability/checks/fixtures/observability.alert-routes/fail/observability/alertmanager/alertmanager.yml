@@ -1,0 +1,9 @@
+# Fail fixture support file: the route tree knows the team payments only.
+route:
+  receiver: default
+  routes:
+    - matchers: ['route="payments"']
+      receiver: payments-ticket
+receivers:
+  - name: default
+  - name: payments-ticket

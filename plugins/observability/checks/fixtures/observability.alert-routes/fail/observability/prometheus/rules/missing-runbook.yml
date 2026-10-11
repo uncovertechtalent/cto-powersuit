@@ -1,0 +1,11 @@
+# Fail fixture for observability.alert-routes: the alert has no runbook_url.
+groups:
+  - name: payments
+    rules:
+      - alert: PaymentRetriesHigh
+        expr: rate(payment_retries_total[5m]) > 1
+        labels:
+          severity: ticket
+          route: payments
+        annotations:
+          summary: Payment retries are high.

@@ -1,0 +1,54 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+# Alert rules. Every rule carries a route label and a runbook_url annotation;
+# see rules/alerts.yml and the tests in tests/.
+rule_files:
+  - rules/*.yml
+
+# OTLP push from Alloy. Resource attributes become labels only when promoted;
+# the others stay on target_info, which keeps the series count down.
+otlp:
+  promote_resource_attributes:
+    - service.name
+    - service.version
+    - deployment.environment.name
+  translation_strategy: UnderscoreEscapingWithSuffixes
+
+storage:
+  tsdb:
+    # OTLP batches can arrive late; accept up to 30 minutes out of order.
+    out_of_order_time_window: 30m
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: ["alertmanager:9093"]
+
+  - job_name: alloy
+    static_configs:
+      - targets: ["alloy:12345"]
+
+  - job_name: loki
+    static_configs:
+      - targets: ["loki:3100"]
+
+  - job_name: grafana
+    static_configs:
+      - targets: ["grafana:3000"]
+
+  # Services that serve /metrics. One job per service; the job name is the
+  # service name that dashboards and alerts use.
+  # - job_name: <service>
+  #   static_configs:
+  #     - targets: ["<host>:<port>"]

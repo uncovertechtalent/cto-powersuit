@@ -1,0 +1,12 @@
+# Fail fixture for observability.alert-routes: the runbook_url points to a file that does not exist.
+groups:
+  - name: payments
+    rules:
+      - alert: PaymentWebhookFailing
+        expr: rate(payment_webhook_failures_total[5m]) > 0
+        labels:
+          severity: ticket
+          route: payments
+        annotations:
+          summary: Payment webhooks fail.
+          runbook_url: docs/runbooks/payment-webhook.md

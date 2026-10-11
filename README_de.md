@@ -15,6 +15,7 @@ Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eige
 | `decisions` | RFCs, Architecture Decision Records (ADRs) und ein Review des Entscheidungslogs. Vorlagen für beide Dokumente und ein Gate-Check, der prüft, dass jeder ADR einen Status, einen Owner und ein Datum hat. | Python 3.9+ für den Gate-Check |
 | `docs` | Ein Docs-Baum, in dem jede Seite einen Owner und Review-Daten hat, Runbooks und eine Suche nach veralteten Seiten. Ein statischer Docs-Build und ein Gate-Check auf die Review-Felder. | Python 3.9+ |
 | `gate` | Ein Deploy-Gate: ein Regelordner mit Pass- und Fail-Fixtures pro Regel, Laufprotokolle, Befunde, die sich erst mit einem bestandenen späteren Lauf schließen, und ein Workflow, dessen Deploy-Job auf das Gate wartet. Die Checks der anderen Module laufen darin. | Python 3.9+, GitHub Actions für den Workflow |
+| `observability` | Alloy, Prometheus, Loki, Grafana und Alertmanager mit Docker Compose, Dashboards als Code und Alert-Routen. Ein Gate-Check, der prüft, dass jede Alert-Regel eine Route und ein Runbook nennt. | Docker, Python 3.9+ |
 | `sdlc` | Der Lebenszyklus, der die Module verbindet: ein Audit, das die fehlenden Phasen eines Repositorys ohne Prozess nach Dringlichkeit ordnet, die Übersicht der Phasen, Tickets, Review für Änderungen von Agenten, Teststrategie und Release mit Rollback. Ein Gate-Check, der prüft, dass jede Änderung ein Ticket oder eine Entscheidung nennt. | Python 3.9+, git |
 
 ## Wissensinfrastruktur
@@ -36,6 +37,7 @@ claude plugin marketplace add uncovertechtalent/cto-powersuit
 claude plugin install decisions@cto-powersuit
 claude plugin install docs@cto-powersuit
 claude plugin install gate@cto-powersuit
+claude plugin install observability@cto-powersuit
 claude plugin install sdlc@cto-powersuit
 claude plugin install vestige@cto-powersuit
 claude plugin install vault@cto-powersuit

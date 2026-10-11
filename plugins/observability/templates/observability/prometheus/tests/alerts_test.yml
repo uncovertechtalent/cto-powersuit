@@ -1,0 +1,85 @@
+# Unit tests for the alert rules. Each alert has one case that fires and one that stays quiet.
+# Run from the repository root:
+#   promtool test rules observability/prometheus/tests/alerts_test.yml
+# exp_labels list every label of the firing alert, including route and severity.
+rule_files:
+  - ../rules/alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  # A target that does not answer for 6 minutes: TargetDown fires after its 5 minutes.
+  - interval: 1m
+    input_series:
+      - series: 'up{job="app", instance="app:8080"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: TargetDown
+        exp_alerts:
+          - exp_labels: {severity: ticket, route: platform, job: app, instance: "app:8080"}
+            exp_annotations:
+              summary: "app on app:8080 does not answer scrapes."
+              runbook_url: docs/eng/runbook-target-down.md
+
+  # The same target answers: no alert.
+  - interval: 1m
+    input_series:
+      - series: 'up{job="app", instance="app:8080"}'
+        values: '1x10'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: TargetDown
+        exp_alerts: []
+
+  # Notifications through the webhook integration fail for 15 minutes: page.
+  - interval: 1m
+    input_series:
+      - series: 'alertmanager_notifications_failed_total{integration="webhook"}'
+        values: '0+1x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: AlertmanagerNotificationsFailing
+        exp_alerts:
+          - exp_labels: {severity: page, route: platform, integration: webhook}
+            exp_annotations:
+              summary: "Alertmanager fails to send notifications through webhook."
+              runbook_url: docs/eng/runbook-alert-delivery.md
+
+  # No failed notifications: no alert.
+  - interval: 1m
+    input_series:
+      - series: 'alertmanager_notifications_failed_total{integration="webhook"}'
+        values: '0x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: AlertmanagerNotificationsFailing
+        exp_alerts: []
+
+  # 10% of requests fail at 1 request per second for 20 minutes: page.
+  - interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{service_name="checkout", http_response_status_code="500"}'
+        values: '0+6x30'
+      - series: 'http_server_request_duration_seconds_count{service_name="checkout", http_response_status_code="200"}'
+        values: '0+54x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: HighErrorRatio
+        exp_alerts:
+          - exp_labels: {severity: page, route: app, service_name: checkout}
+            exp_annotations:
+              summary: "checkout: more than 5% of requests fail."
+              runbook_url: docs/eng/runbook-high-error-ratio.md
+
+  # Half of the requests fail, at one request every 100 seconds: below the traffic floor, no page.
+  - interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{service_name="checkout", http_response_status_code="500"}'
+        values: '0+0.3x30'
+      - series: 'http_server_request_duration_seconds_count{service_name="checkout", http_response_status_code="200"}'
+        values: '0+0.3x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: HighErrorRatio
+        exp_alerts: []

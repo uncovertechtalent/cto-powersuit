@@ -1,0 +1,39 @@
+# Pass fixture for observability.alert-routes. Every alert has a known route and a runbook that resolves.
+groups:
+  - name: payments
+    rules:
+      - record: job:payment_requests:rate5m
+        expr: sum by (job) (rate(payment_requests_total[5m]))
+      - alert: PaymentQueueBacklog
+        expr: payment_queue_depth > 500
+        for: 15m
+        labels:
+          severity: page
+          route: payments
+        annotations:
+          summary: The payment queue holds more than 500 messages.
+          runbook_url: docs/runbooks/queue-backlog.md#drain-the-queue
+      - alert: PaymentLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(payment_duration_seconds_bucket[5m]))) > 2
+        for: 10m
+        labels: {severity: ticket, route: payments}
+        annotations: {summary: "p95 payment latency above 2 s.", runbook_url: "https://runbooks.example.com/payment-latency"}
+
+  - name: data
+    rules:
+      - alert: IngestLagHigh
+        expr: ingest_lag_seconds > 600
+        labels:
+          severity: ticket
+          route: data-ingest
+        annotations:
+          summary: Ingest is more than 10 minutes behind.
+          runbook_url: /docs/runbooks/queue-backlog.md
+      - alert: SearchIndexStale
+        expr: time() - search_index_last_build_timestamp_seconds > 86400
+        labels:
+          severity: ticket
+          route: search-ticket
+        annotations:
+          summary: The search index is older than one day.
+          runbook_url: ../../../docs/runbooks/queue-backlog.md

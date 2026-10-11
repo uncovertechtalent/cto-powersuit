@@ -41,6 +41,17 @@
       ]
     },
     {
+      "name": "observability",
+      "source": "./plugins/observability",
+      "description": "Alloy, Prometheus, Loki, Grafana and Alertmanager via docker compose, dashboards as code and alert routes, with a gate check on alert rules.",
+      "category": "development",
+      "skills": [
+        "./skills/alert-routes",
+        "./skills/dashboards-as-code",
+        "./skills/stack-init"
+      ]
+    },
+    {
       "name": "sdlc",
       "source": "./plugins/sdlc",
       "description": "Software delivery lifecycle: an audit for repositories built without one, the lifecycle map, tickets, review, test strategy and release, with a traceability gate check.",

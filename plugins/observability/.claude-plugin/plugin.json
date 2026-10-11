@@ -1,0 +1,9 @@
+{
+  "name": "observability",
+  "version": "0.1.0",
+  "description": "Observability for a repository: an Alloy, Prometheus, Loki, Grafana and Alertmanager stack in docker compose, dashboards generated from specs in git, alert rules routed by team and severity, and a gate check that every alert has a route and a runbook.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
+  "license": "MIT",
+  "keywords": ["observability", "prometheus", "grafana", "loki", "alertmanager", "alloy", "alerting", "dashboards-as-code", "sre"]
+}

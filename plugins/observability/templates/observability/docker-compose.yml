@@ -1,0 +1,96 @@
+# Observability stack: Alloy receives OTLP, Prometheus stores metrics and evaluates
+# alert rules, Alertmanager routes alerts, Loki stores logs, Grafana shows both.
+#
+# Start:  docker compose --project-directory observability up -d
+# Stop:   docker compose --project-directory observability down
+#
+# Check before use: image versions. The tags below are pinned. Compare each one with
+# the release page of its project before the first start and before every upgrade.
+#
+# Ports bind to BIND_ADDR (default 127.0.0.1, this machine only). Set BIND_ADDR=0.0.0.0
+# in .env to expose them on the network, and put authentication in front first.
+
+services:
+  alloy:
+    image: grafana/alloy:v1.10.0
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./alloy:/etc/alloy:ro
+      - alloy_data:/var/lib/alloy/data
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:4317:4317"   # OTLP gRPC
+      - "${BIND_ADDR:-127.0.0.1}:4318:4318"   # OTLP HTTP
+      - "${BIND_ADDR:-127.0.0.1}:12345:12345" # Alloy UI and /-/ready
+    depends_on: [prometheus, loki]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROM_RETENTION:-30d}
+      - --web.enable-otlp-receiver   # Alloy pushes OTLP metrics here
+      - --web.enable-lifecycle       # POST /-/reload re-reads config and rules
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:9090:9090"
+    depends_on: [alertmanager]
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --data.retention=${AM_RETENTION:-120h}   # silences and notification log
+    volumes:
+      - ./alertmanager:/etc/alertmanager:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:9093:9093"
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.5.0
+    command: ["-config.file=/etc/loki/loki.yml", "-config.expand-env=true"]
+    environment:
+      - LOKI_RETENTION=${LOKI_RETENTION:-30d}
+    volumes:
+      - ./loki:/etc/loki:ro
+      - loki_data:/loki
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:3100:3100"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in observability/.env}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=${GRAFANA_ANONYMOUS:-false}
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:3000:3000"
+    depends_on: [prometheus, loki, alertmanager]
+    restart: unless-stopped
+
+volumes:
+  alloy_data:
+  prometheus_data:
+  alertmanager_data:
+  loki_data:
+  grafana_data:

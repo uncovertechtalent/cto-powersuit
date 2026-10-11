@@ -1,0 +1,57 @@
+// OTLP in, two backends out: metrics to Prometheus, logs to Loki.
+// Services send OTLP to this host on 4317 (gRPC) or 4318 (HTTP), for example with
+// OTEL_EXPORTER_OTLP_ENDPOINT=http://<stack-host>:4318 in the service environment.
+
+otelcol.receiver.otlp "default" {
+  grpc { endpoint = "0.0.0.0:4317" }
+  http { endpoint = "0.0.0.0:4318" }
+
+  output {
+    metrics = [otelcol.processor.attributes.scrub.input]
+    logs    = [otelcol.processor.attributes.scrub.input]
+  }
+}
+
+// Personal data stays out of storage. Delete identity attributes before any
+// backend stores them. Add the attribute keys your services send.
+otelcol.processor.attributes "scrub" {
+  action {
+    key    = "user.email"
+    action = "delete"
+  }
+  action {
+    key    = "user.id"
+    action = "delete"
+  }
+  action {
+    key    = "enduser.id"
+    action = "delete"
+  }
+  action {
+    key    = "client.address"
+    action = "delete"
+  }
+
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+  }
+}
+
+// Prometheus stores cumulative series. Configure the services to export
+// cumulative temporality (OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=cumulative).
+
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.exporter.otlphttp.prometheus.input]
+    logs    = [otelcol.exporter.otlphttp.loki.input]
+  }
+}
+
+otelcol.exporter.otlphttp "prometheus" {
+  client { endpoint = "http://prometheus:9090/api/v1/otlp" }
+}
+
+otelcol.exporter.otlphttp "loki" {
+  client { endpoint = "http://loki:3100/otlp" }
+}

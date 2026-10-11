@@ -1,0 +1,64 @@
+{
+  "uid": "service-overview",
+  "title": "Service overview",
+  "description": "Requests, errors and latency per service from OpenTelemetry HTTP server metrics, error logs from Loki, and the health of the scrape targets.",
+  "tags": ["observability"],
+  "refresh": "30s",
+  "time": "now-6h",
+  "variables": [
+    {"name": "service", "label": "Service", "query": "label_values(http_server_request_duration_seconds_count, service_name)"}
+  ],
+  "rows": [
+    {
+      "title": "Traffic and errors",
+      "panels": [
+        {"type": "stat", "title": "Requests / s", "unit": "reqps", "decimals": 1,
+         "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[5m]))"},
+        {"type": "stat", "title": "Error ratio", "unit": "percentunit", "decimals": 2,
+         "description": "Share of requests with a 5xx status. The HighErrorRatio alert fires above 5%.",
+         "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\",http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[5m]))",
+         "thresholds": [["green", null], ["orange", 0.01], ["red", 0.05]]},
+        {"type": "stat", "title": "Latency p95", "unit": "s", "decimals": 2,
+         "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[5m])))"},
+        {"type": "stat", "title": "Targets down", "decimals": 0,
+         "description": "Scrape targets that do not answer. The TargetDown alert fires after 5 minutes.",
+         "expr": "count(up == 0) or vector(0)",
+         "thresholds": [["green", null], ["red", 1]]},
+        {"type": "timeseries", "title": "Requests / s by service", "unit": "reqps", "stack": true,
+         "targets": [{"expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[5m]))", "legend": "{{service_name}}"}]},
+        {"type": "timeseries", "title": "Error ratio by service", "unit": "percentunit",
+         "targets": [{"expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\",http_response_status_code=~\"5..\"}[5m])) / sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[5m]))", "legend": "{{service_name}}"}]}
+      ]
+    },
+    {
+      "title": "Latency",
+      "panels": [
+        {"type": "heatmap", "title": "Request duration", "unit": "s",
+         "expr": "sum by (le) (increase(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval]))"},
+        {"type": "timeseries", "title": "Latency p50 / p95 by service", "unit": "s",
+         "targets": [
+           {"expr": "histogram_quantile(0.50, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[5m])))", "legend": "p50 {{service_name}}"},
+           {"expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[5m])))", "legend": "p95 {{service_name}}"}
+         ]}
+      ]
+    },
+    {
+      "title": "Logs",
+      "panels": [
+        {"type": "logs", "title": "Error lines", "w": 24, "h": 10,
+         "expr": "{service_name=~\"$service\"} |~ \"(?i)error|fatal|panic\""}
+      ]
+    },
+    {
+      "title": "Stack",
+      "panels": [
+        {"type": "table", "title": "Scrape targets", "w": 12, "h": 8,
+         "description": "1: the target answers. 0: no answer.",
+         "expr": "up"},
+        {"type": "timeseries", "title": "Alerts firing by route", "w": 12, "h": 8,
+         "description": "Alerts in Prometheus by the route label that Alertmanager routes on.",
+         "targets": [{"expr": "sum by (route, severity) (ALERTS{alertstate=\"firing\"})", "legend": "{{route}} {{severity}}"}]}
+      ]
+    }
+  ]
+}

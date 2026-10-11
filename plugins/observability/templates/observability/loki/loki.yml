@@ -1,0 +1,44 @@
+# Single-binary Loki with filesystem storage. Logs arrive as OTLP from Alloy.
+# Retention comes from LOKI_RETENTION in observability/.env (default 30d);
+# the compose file starts Loki with -config.expand-env=true.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+
+schema_config:
+  configs:
+    - from: 2026-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  allow_structured_metadata: true
+  volume_enabled: true
+  retention_period: ${LOKI_RETENTION:-30d}
+
+# The compactor deletes chunks older than retention_period.
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
+
+analytics:
+  reporting_enabled: false

@@ -1,0 +1,3 @@
+# Local settings and secrets of the observability stack.
+.env
+alertmanager/secrets/

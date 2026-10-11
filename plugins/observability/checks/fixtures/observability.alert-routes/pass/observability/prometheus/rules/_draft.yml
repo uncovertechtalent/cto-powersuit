@@ -1,0 +1,6 @@
+# A draft rule file. Paths with a segment starting with _ are skipped, so this alert is not checked.
+groups:
+  - name: draft
+    rules:
+      - alert: DraftAlert
+        expr: vector(1)

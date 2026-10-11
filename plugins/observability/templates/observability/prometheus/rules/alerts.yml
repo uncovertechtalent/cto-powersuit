@@ -1,0 +1,66 @@
+# Alerting rules. Every alert carries:
+#   labels.route              the team that receives it; Alertmanager routes on this label
+#   labels.severity           page (act now), ticket (next working day) or info
+#   annotations.runbook_url   a runbook page in this repository, or an http(s) URL
+# Test: promtool test rules observability/prometheus/tests/alerts_test.yml
+groups:
+  - name: observability-stack
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: ticket
+          route: platform
+        annotations:
+          summary: "{{ $labels.job }} on {{ $labels.instance }} does not answer scrapes."
+          runbook_url: docs/eng/runbook-target-down.md
+
+      - alert: AlertmanagerNotificationsFailing
+        expr: rate(alertmanager_notifications_failed_total[5m]) > 0
+        for: 10m
+        labels:
+          severity: page
+          route: platform
+        annotations:
+          summary: "Alertmanager fails to send notifications through {{ $labels.integration }}."
+          runbook_url: docs/eng/runbook-alert-delivery.md
+
+      - alert: PrometheusRuleEvaluationFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: ticket
+          route: platform
+        annotations:
+          summary: "Rule group {{ $labels.rule_group }} fails to evaluate."
+          runbook_url: docs/eng/runbook-rule-evaluation.md
+
+      - alert: LokiRequestErrors
+        expr: |
+          sum(rate(loki_request_duration_seconds_count{status_code=~"5.."}[5m]))
+          / sum(rate(loki_request_duration_seconds_count[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: ticket
+          route: platform
+        annotations:
+          summary: "More than 5% of Loki requests fail."
+          runbook_url: docs/eng/runbook-loki-errors.md
+
+  # Example for a service that exports OpenTelemetry HTTP server metrics.
+  # The traffic floor keeps one failed request in a quiet hour from paging.
+  - name: example-service
+    rules:
+      - alert: HighErrorRatio
+        expr: |
+          sum by (service_name) (rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m]))
+          / sum by (service_name) (rate(http_server_request_duration_seconds_count[5m])) > 0.05
+          and sum by (service_name) (rate(http_server_request_duration_seconds_count[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: page
+          route: app
+        annotations:
+          summary: "{{ $labels.service_name }}: more than 5% of requests fail."
+          runbook_url: docs/eng/runbook-high-error-ratio.md

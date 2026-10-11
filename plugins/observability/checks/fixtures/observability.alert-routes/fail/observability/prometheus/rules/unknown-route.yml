@@ -1,0 +1,12 @@
+# Fail fixture for observability.alert-routes: the route value matches no route or receiver.
+groups:
+  - name: billing
+    rules:
+      - alert: InvoiceExportStuck
+        expr: invoice_export_pending > 100
+        labels:
+          severity: ticket
+          route: billing
+        annotations:
+          summary: Invoice export is stuck.
+          runbook_url: https://runbooks.example.com/invoice-export

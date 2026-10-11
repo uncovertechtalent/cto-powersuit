@@ -1,0 +1,11 @@
+# Fail fixture for observability.alert-routes: the alert has no route label.
+groups:
+  - name: payments
+    rules:
+      - alert: PaymentErrors
+        expr: rate(payment_errors_total[5m]) > 0.1
+        labels:
+          severity: ticket
+        annotations:
+          summary: Payments fail.
+          runbook_url: https://runbooks.example.com/payment-errors

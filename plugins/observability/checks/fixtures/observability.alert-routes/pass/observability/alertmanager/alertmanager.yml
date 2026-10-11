@@ -1,0 +1,19 @@
+# Pass fixture for observability.alert-routes: routes for the teams payments and data-*.
+route:
+  receiver: default
+  group_by: [alertname, route]
+  routes:
+    - matchers: ['route="payments"']
+      receiver: payments-ticket
+      routes:
+        - matchers: ['severity="page"']
+          receiver: payments-page
+    - match_re:
+        route: data-.*
+      receiver: data-ticket
+receivers:
+  - name: default
+  - name: payments-page
+  - name: payments-ticket
+  - name: data-ticket
+  - name: search-ticket

@@ -15,6 +15,7 @@ Each skill also reads a private overlay when one exists: your own data for that 
 | `decisions` | RFCs, architecture decision records (ADRs) and a review of the decision log. Templates for both records and a gate check that every ADR has a status, an owner and a date. | Python 3.9+ for the gate check |
 | `docs` | A docs tree where every page has an owner and review dates, runbooks, and a sweep for stale pages. A static docs build and a gate check on the review fields. | Python 3.9+ |
 | `gate` | A deploy gate: a rules folder with pass and fail fixtures per rule, run records, findings that close only on a passing rerun, and a workflow whose deploy job waits for the gate. The checks of the other modules run in it. | Python 3.9+, GitHub Actions for the workflow |
+| `observability` | Alloy, Prometheus, Loki, Grafana and Alertmanager with docker compose, dashboards as code, and alert routes. A gate check that every alert rule names a route and a runbook. | Docker, Python 3.9+ |
 | `sdlc` | The lifecycle that ties the modules together: an audit that ranks the missing stages of a repository built without one, the lifecycle map, tickets, review for agent-written changes, test strategy, and release with rollback. A gate check that every change names a ticket or a decision. | Python 3.9+, git |
 
 ## Knowledge infrastructure
@@ -36,6 +37,7 @@ claude plugin marketplace add uncovertechtalent/cto-powersuit
 claude plugin install decisions@cto-powersuit
 claude plugin install docs@cto-powersuit
 claude plugin install gate@cto-powersuit
+claude plugin install observability@cto-powersuit
 claude plugin install sdlc@cto-powersuit
 claude plugin install vestige@cto-powersuit
 claude plugin install vault@cto-powersuit

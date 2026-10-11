@@ -1,0 +1,14 @@
+# Dashboards come from files in git. grafana/build.py writes them from the specs in
+# grafana/specs/. The provider is read-only: a change in the UI cannot be saved here.
+# Export it as JSON and import it into the spec (see grafana/build.py --import).
+apiVersion: 1
+
+providers:
+  - name: repository
+    folder: Observability
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
