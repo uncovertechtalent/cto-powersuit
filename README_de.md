@@ -13,6 +13,7 @@ Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eige
 | Plugin | Was es tut | Braucht |
 |---|---|---|
 | ` `plugins/sdlc/skills/sdlc-audit/test_probe.py` führt die aufgezeichneten Fälle der Probe des SDLC-Audits aus.ai-ops` | Betrieb der Coding-Agenten eines Teams: ein gemeinsames Harness mit engen Berechtigungen, Agenten-Kosten pro API-Anfrage gemessen, mit einem Budget-Alert, und ein Koordinator-Muster mit dem Zustand in Dateien. `vestige`, `stance` und `vault` sind seine optionalen Teile. Ein Gate-Check, der prüft, dass gemeinsame Agenten-Einstellungen keine Secrets und keine Wildcard-Berechtigungen enthalten. | Python 3.9+; `observability` für das Metering |
+| `aieo` | Sichtbarkeit in KI-Suchen: `llms.txt`, strukturierte Daten, ein fester Satz von Anfragen an KI-Suchmaschinen und datierte Vorhersagen, die vor dem Livegang einer Seite gehasht werden. Ein Gate-Check, der prüft, dass jede Vorhersage-Datei zu ihrem Hash passt. | Python 3.9+ |
 | `compliance` | Eine Control-Map zu ISO 27001, TISAX, NIS2 und DSGVO nach Klausel- und Artikelnummer, eine Triage nach dem AI Act und eine rechtliche Grundausstattung für eine Website (Impressum, Datenschutzseite, security.txt, keine Anfragen an Dritte beim Laden der Seite). Gate-Checks für security.txt und Anfragen an Dritte. | Python 3.9+ |
 | `decisions` | RFCs, Architecture Decision Records (ADRs) und ein Review des Entscheidungslogs. Vorlagen für beide Dokumente und ein Gate-Check, der prüft, dass jeder ADR einen Status, einen Owner und ein Datum hat. | Python 3.9+ für den Gate-Check |
 | `docs` | Ein Docs-Baum, in dem jede Seite einen Owner und Review-Daten hat, Runbooks und eine Suche nach veralteten Seiten. Ein statischer Docs-Build und ein Gate-Check auf die Review-Felder. | Python 3.9+ |
@@ -41,6 +42,7 @@ Die Plugins sind unabhängig voneinander. Installiere die, die du brauchst. Jede
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
 claude plugin install ai-ops@cto-powersuit
+claude plugin install aieo@cto-powersuit
 claude plugin install compliance@cto-powersuit
 claude plugin install decisions@cto-powersuit
 claude plugin install docs@cto-powersuit

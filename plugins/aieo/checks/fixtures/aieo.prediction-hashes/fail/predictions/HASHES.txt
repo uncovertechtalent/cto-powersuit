@@ -1,0 +1,5 @@
+# Format: <file name>  sha256 <64 hex digits>, one line per prediction file. Lines starting with # are comments; other lines are notes.
+The file below was edited after hashing.
+changed-claim-2026-01-15.txt  sha256 ff2c3eabee47e88114ed730a29c8d533061cd973ce23d49a5e55d0501fbd09ab
+The file below was listed and never committed.
+missing-claim-2026-01-20.txt  sha256 0000000000000000000000000000000000000000000000000000000000000000

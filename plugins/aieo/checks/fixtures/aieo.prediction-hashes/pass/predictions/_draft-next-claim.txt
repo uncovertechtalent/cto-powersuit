@@ -1,0 +1,1 @@
+Draft. Files whose name starts with an underscore are not hashed yet and the rule skips them.

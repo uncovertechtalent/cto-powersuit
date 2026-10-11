@@ -1,0 +1,14 @@
+# <Site or organisation name>
+
+> <One or two sentences: who runs the site, what it covers and the main finding or offer, with the entity named the same way as on the pages.>
+
+<Optional paragraph: the terms a reader needs, each defined in the words the pages use.>
+
+## <Section name, for example Pages>
+
+- [<Page title>](<https://example.org/page/>): <one line on what the page holds>
+- [<Page title>](<https://example.org/other-page/>): <one line on what the page holds>
+
+## <Section name, for example Reference>
+
+- [<Page title>](<https://example.org/reference/>): <one line on what the page holds>

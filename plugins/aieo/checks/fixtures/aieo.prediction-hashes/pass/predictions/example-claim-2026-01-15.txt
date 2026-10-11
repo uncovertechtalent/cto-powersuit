@@ -1,0 +1,11 @@
+Prediction record: example term page
+Page: https://example.org/terms/example-term/
+Written and hashed on 2026-01-15, before the page went live.
+
+PREDICTION
+
+P1. On 2026-03-01, at least 2 of 3 answer engines name Example Org for the query "example term".
+
+WHAT REFUTES IT
+
+Fewer than 2 engines name Example Org for the query on 2026-03-01.

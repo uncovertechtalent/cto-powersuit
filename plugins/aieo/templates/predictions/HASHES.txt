@@ -1,0 +1,1 @@
+# Format: <file name>  sha256 <64 hex digits>, one line per prediction file in this folder. Lines starting with # are comments; other lines are notes on the entry below them.

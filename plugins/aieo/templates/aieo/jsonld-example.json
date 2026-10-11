@@ -1,0 +1,48 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://example.org/#org",
+      "name": "Example Org",
+      "url": "https://example.org/",
+      "logo": "https://example.org/logo.png",
+      "sameAs": [
+        "https://social.example.net/example-org",
+        "https://code.example.net/example-org"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://example.org/#website",
+      "name": "Example Org",
+      "url": "https://example.org/",
+      "inLanguage": "en",
+      "publisher": {"@id": "https://example.org/#org"}
+    },
+    {
+      "@type": "Article",
+      "@id": "https://example.org/guides/rollback/#article",
+      "headline": "How to roll back a release",
+      "description": "The steps to roll back a release in under ten minutes, and how to check that the rollback worked.",
+      "url": "https://example.org/guides/rollback/",
+      "mainEntityOfPage": "https://example.org/guides/rollback/",
+      "inLanguage": "en",
+      "datePublished": "2026-01-15",
+      "dateModified": "2026-02-01",
+      "author": {"@id": "https://example.org/#org"},
+      "publisher": {"@id": "https://example.org/#org"},
+      "isPartOf": {"@id": "https://example.org/#website"},
+      "breadcrumb": {"@id": "https://example.org/guides/rollback/#breadcrumb"}
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://example.org/guides/rollback/#breadcrumb",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://example.org/"},
+        {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://example.org/guides/"},
+        {"@type": "ListItem", "position": 3, "name": "How to roll back a release", "item": "https://example.org/guides/rollback/"}
+      ]
+    }
+  ]
+}

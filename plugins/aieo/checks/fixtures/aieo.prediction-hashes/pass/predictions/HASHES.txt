@@ -1,0 +1,3 @@
+# Format: <file name>  sha256 <64 hex digits>, one line per prediction file. Lines starting with # are comments; other lines are notes.
+Prediction record for the example term page, hashed 2026-01-15 before the page went live.
+example-claim-2026-01-15.txt  sha256 ff2c3eabee47e88114ed730a29c8d533061cd973ce23d49a5e55d0501fbd09ab

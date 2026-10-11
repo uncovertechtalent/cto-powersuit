@@ -19,6 +19,18 @@
       ]
     },
     {
+      "name": "aieo",
+      "source": "./plugins/aieo",
+      "description": "AI search visibility: llms.txt, structured data, answer probes and hashed predictions, with a gate check on prediction hashes.",
+      "category": "development",
+      "skills": [
+        "./skills/answer-probe",
+        "./skills/llms-txt",
+        "./skills/prediction-hash",
+        "./skills/structured-data"
+      ]
+    },
+    {
       "name": "compliance",
       "source": "./plugins/compliance",
       "description": "Control map to ISO 27001, TISAX, NIS2 and GDPR by number, AI Act triage and a website legal baseline, with gate checks for security.txt and third-party requests.",

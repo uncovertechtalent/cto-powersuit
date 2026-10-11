@@ -1,0 +1,8 @@
+{
+  "name": "aieo",
+  "version": "0.1.0",
+  "description": "AI engine optimisation: llms.txt, structured data from one source, a versioned answer probe for AI search engines and assistants, hashed predictions, and a gate check that every prediction file matches its published hash.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "license": "MIT",
+  "keywords": ["aieo", "aeo", "geo", "ai-search", "llms-txt", "structured-data", "json-ld", "predictions"]
+}

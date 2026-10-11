@@ -1,0 +1,23 @@
+{
+  "about": "Fixed query set for aieo/probe.py. Freeze it before the first run. A change to a query, a fact or the entity needs a new version; trends compare runs of one version only. Patterns are Python regular expressions, matched without case.",
+  "version": "1",
+  "frozen": "<YYYY-MM-DD, the day this version was fixed>",
+  "entity": {
+    "names": ["<entity name as the pages write it>", "<other spelling of the name>"],
+    "domains": ["<example.org>"]
+  },
+  "facts": [
+    {
+      "id": "f1",
+      "claim": "<one fact an answer should state, in plain words>",
+      "correct": ["<regular expression that matches a correct statement of the fact>"],
+      "wrong": ["<regular expression that matches a known wrong statement>"]
+    }
+  ],
+  "queries": [
+    {"id": "q01", "group": "definition", "text": "<a question that asks for a term the pages define>", "facts": ["f1"]},
+    {"id": "q02", "group": "entity", "text": "<a question about the entity by name>", "facts": ["f1"]},
+    {"id": "q03", "group": "problem", "text": "<a problem one of the pages answers>", "facts": []},
+    {"id": "q04", "group": "control", "text": "<a contested query where the entity is not expected to appear>", "facts": []}
+  ]
+}
