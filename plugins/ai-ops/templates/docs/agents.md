@@ -26,6 +26,8 @@ Every agent session in this repository starts from the same shared setup. Person
 - Denied: `.env` files and the secrets folder.
 - Never in the shared settings: a rule that allows every shell command or every fetch, or the bypass mode. The gate check `ai-ops.agent-settings` fails on them.
 
+Claude Code asks on a matching ask rule in every permission mode, the bypass mode included. These settings load only in a session started in this repository's folder; a session started elsewhere that works here does not get them.
+
 ## Spend
 
 Agent spend is metered per API request: see [Agent spend](doc:fin/agent-spend).

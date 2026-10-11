@@ -5,7 +5,7 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(<test command>:*)",
-      "Bash(python3 .github/actions/gate/run.py:*)"
+      "Bash(python3 .github/actions/gate/run.py --dry-run:*)"
     ],
     "ask": [
       "Bash(git push:*)",

@@ -26,8 +26,8 @@ Gives every agent session in a repository the same starting point: what it may d
    ```
 
 3. **Set the permissions.**
-   - Allow without asking: read-only commands, the test command, the gate dry run.
-   - Ask every time: `git push`, merges, deploys, anything that writes outside the repository.
+   - Allow without asking: read-only commands, the test command, the gate dry run. Allow the dry run as its exact command or with `--dry-run` in the prefix; a prefix rule on the runner alone also allows the run that writes records.
+   - Ask every time: `git push`, merges, deploys, anything that writes outside the repository. Claude Code asks on a matching ask rule in every permission mode, the bypass mode included, so each ask rule stops every session in the repository. When branch rules on the server already reject a direct push to the main branch, ask before the merge only: an ask on every branch push stops the sessions and protects nothing more.
    - Deny: `.env` files, the secrets folder, credential files.
    - Never: an allow rule for every shell command (`Bash`, `Bash(*)`) or every fetch (`WebFetch`), or `defaultMode: bypassPermissions` in the shared file. Fill `<test command>` with the repository's real command.
 4. **Write the instruction file.** `CLAUDE.md` or `AGENTS.md`: how to build, test and run the gate dry run; the branch and commit rules (ticket id in every commit); what never to do (push, change CI, touch secrets). Keep it short; every line is read by every session.
@@ -35,6 +35,12 @@ Gives every agent session in a repository the same starting point: what it may d
 6. **Move secrets out.** Every MCP server and every setting reads secrets from environment variables (`"${VAR}"`). Add `.claude/settings.local.json` and `.env*` to `.gitignore`.
 7. **Check.** With the gate installed, add `ai-ops.agent-settings` with `/gate:add-rule` on `warn` and run `python3 .github/actions/gate/run.py --only ai-ops.agent-settings`. Without the gate, read the shared files against the rules in step 3.
 8. **Fill `docs/agents.md`**: owner, plugin list, MCP servers, hooks, and how a change is proposed.
+
+9. **Commit the shared settings.** Check `git check-ignore -v .claude/settings.json`: some tools add `.claude/` to `.git/info/exclude`, which hides the file from `git status`. Add it with `git add -f .claude/settings.json`; once tracked, the exclude no longer applies to it. Never edit `.git/info/exclude` lines another tool wrote.
+
+## Run without a person
+
+In a run without a person (`claude -p`), Claude Code 2.1.286 refused a write to `.claude/settings.json` although the run allowed it. Print the settings content in the output and let the user write the file.
 
 ## Output
 
@@ -45,6 +51,7 @@ Gives every agent session in a repository the same starting point: what it may d
 - Never write a secret into a file. If one is found, report it with the value masked and tell the user to rotate it first.
 - Never commit `.claude/settings.local.json`.
 - Show every change to an existing settings or instruction file before making it.
+- Say in `docs/agents.md` that the shared settings load only in sessions started in the repository folder.
 
 ## Overlay
 
