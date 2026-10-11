@@ -1,0 +1,46 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests on Python ${{ matrix.python }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Gate checks against their fixtures
+        run: python scripts/test_checks.py
+      - name: sdlc-audit probe cases
+        run: python plugins/sdlc/skills/sdlc-audit/test_probe.py
+      - name: Gate runner tests
+        run: python plugins/gate/tests/test_run.py
+      - name: Repository consistency
+        run: python scripts/check_repo.py
+
+  validate:
+    name: Plugin manifests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@2.1.286
+      - name: claude plugin validate --strict
+        run: |
+          claude plugin validate --strict .
+          for p in plugins/* plugins/*/skills; do claude plugin validate --strict "$p"; done

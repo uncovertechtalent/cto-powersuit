@@ -2,7 +2,7 @@
 
 # cto-powersuit
 
-[![skills.sh](https://skills.sh/b/uncovertechtalent/cto-powersuit)](https://skills.sh/uncovertechtalent/cto-powersuit)
+[![checks](https://github.com/uncovertechtalent/cto-powersuit/actions/workflows/checks.yml/badge.svg)](https://github.com/uncovertechtalent/cto-powersuit/actions/workflows/checks.yml) [![skills.sh](https://skills.sh/b/uncovertechtalent/cto-powersuit)](https://skills.sh/uncovertechtalent/cto-powersuit)
 
 Agent skills for the work of a CTO, one plugin per function, in one Claude Code plugin marketplace. A team installs the modules it needs and runs them on generic defaults.
 
