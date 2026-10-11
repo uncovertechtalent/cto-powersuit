@@ -84,4 +84,4 @@ Enable it with `/gate:add-rule` (path A: install a module's check). By hand, fro
 
 Run it on its own with `python3 .github/actions/gate/run.py --only finops.cost-provenance --dry-run`.
 
-Demo: [machinebehavior.io/inside/finops/](https://machinebehavior.io/inside/finops/), the FinOps view of the platform behind machinebehavior.io.
+Demo: [machinebehavior.io/inside/docs/fin/](https://machinebehavior.io/inside/docs/fin/), the FinOps space of the platform behind machinebehavior.io.
