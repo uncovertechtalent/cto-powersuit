@@ -1,3 +1,5 @@
+**English** · [Deutsch](README_de.md)
+
 # cto-powersuit
 
 Agent skills for the work of a CTO, one plugin per function, in one Claude Code plugin marketplace. A team installs the modules it needs and runs them on generic defaults.
