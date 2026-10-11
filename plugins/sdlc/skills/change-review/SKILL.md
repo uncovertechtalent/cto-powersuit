@@ -1,16 +1,16 @@
 ---
-name: review
+name: change-review
 description: >
   Review a change before a person approves it, with a checklist for
   agent-written code: diff size, scope against the ticket, tests touched,
-  secrets, new dependencies, migrations, generated files and changed tests.
-  Use when a pull request is open, before asking a person to review, or when
-  an agent wrote most of the diff. Activates on "/review", "review this PR",
+  secrets, new dependencies, migrations, generated files and changed tests. Use
+  when a pull request is open, before asking a person to review, or when an
+  agent wrote most of the diff. Activates on "/change-review", "review this PR",
   "check this diff", "review the agent's change", "is this ready to merge".
 user-invocable: true
 ---
 
-# Review
+# Change review
 
 Checks one diff against the ticket and a fixed list, and writes a review the human reviewer starts from. The human approves; this skill never does.
 
@@ -59,4 +59,4 @@ This skill works on the generic defaults in this file. Before you start, check f
 [ -n "$POWERSUIT_OVERLAY" ] && ls -1 "$POWERSUIT_OVERLAY/sdlc" 2>/dev/null
 ```
 
-If `$POWERSUIT_OVERLAY/sdlc/` exists, read its `README.md` first, then the files in `sdlc/review/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.
+If `$POWERSUIT_OVERLAY/sdlc/` exists, read its `README.md` first, then the files in `sdlc/change-review/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.

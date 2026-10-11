@@ -18,7 +18,7 @@ claude plugin install sdlc@cto-powersuit
 | `/sdlc:sdlc-init` | Writes `docs/sdlc.md`: stage table with entry and exit criteria, owner, record and serving module, plus the gaps |
 | `/sdlc:work-item` | Walks one change through the stages and keeps a trace table with the record of each stage |
 | `/sdlc:ticket` | Writes a ticket with problem, testable acceptance criteria, risk and labels; sets up the label scheme |
-| `/sdlc:review` | Reviews a diff against the ticket and a checklist for agent-written code; the human approves |
+| `/sdlc:change-review` | Reviews a diff against the ticket and a checklist for agent-written code; the human approves |
 | `/sdlc:test-strategy` | Sets test levels, the one pre-PR command, the flaky-test rule and the agent rule |
 | `/sdlc:release` | Drafts the changelog entry, writes the rollback plan, lists feature flags, records the release |
 
@@ -29,7 +29,7 @@ claude plugin install sdlc@cto-powersuit
 | Request | `sdlc:ticket` |
 | RFC, decision | `decisions` |
 | Build | `sdlc:work-item` |
-| Review | `sdlc:review` |
+| Review | `sdlc:change-review` |
 | Test | `sdlc:test-strategy` |
 | Gate | `gate` |
 | Release | `sdlc:release` |

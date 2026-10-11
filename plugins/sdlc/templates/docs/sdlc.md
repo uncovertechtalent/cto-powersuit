@@ -17,7 +17,7 @@ Every change moves through the stages below, in this order. A stage is done when
 | RFC | The change touches more than one team, is hard to undo or needs comments | RFC decided | <owner> | `docs/decisions/rfc-NNNN-*.md` | `decisions:rfc` |
 | Decision | A choice was made that others need to know | ADR accepted | <owner> | `docs/decisions/adr-NNNN-*.md` | `decisions:adr` |
 | Build | Ticket in `status: ready` | Branch with commits that name the ticket | <owner> | Branch, commits | `sdlc:work-item` |
-| Review | Pull request open | Approved by a person who did not write it | <owner> | Pull request | `sdlc:review` |
+| Review | Pull request open | Approved by a person who did not write it | <owner> | Pull request | `sdlc:change-review` |
 | Test | Code changed | The pre-PR command passes locally and in CI | <owner> | CI run | `sdlc:test-strategy` |
 | Gate | Merge to main | Gate run passes | <owner> | Gate run record | `gate` |
 | Release | Gate passed | Deployed, changelog entry written, rollback path known | <owner> | Deploy run, `CHANGELOG.md` | `sdlc:release` |

@@ -59,7 +59,7 @@ It needs no other module. It reads files and runs read-only commands; it changes
    |---|---|
    | Request, traceability | `/sdlc:ticket`, gate check `sdlc.traceability` |
    | Decision | `decisions` module (`/decisions:rfc`, `/decisions:adr`) |
-   | Review | `/sdlc:review`, pull request template |
+   | Review | `/sdlc:change-review`, pull request template |
    | Test | `/sdlc:test-strategy` |
    | Gate | `gate` module (`/gate:gate-init`) |
    | Release, rollback | `/sdlc:release` |

@@ -19,7 +19,7 @@ Each skill also reads a private overlay when one exists: your own data for that 
 | `gate` | A deploy gate: a rules folder with pass and fail fixtures per rule, run records, findings that close only on a passing rerun, and a workflow whose deploy job waits for the gate. The checks of the other modules run in it. | Python 3.9+, GitHub Actions for the workflow |
 | `observability` | Alloy, Prometheus, Loki, Grafana and Alertmanager with docker compose, dashboards as code, and alert routes. A gate check that every alert rule names a route and a runbook. | Docker, Python 3.9+ |
 | `reliability` | Availability targets per service with the downtime each target allows, SLOs and error budgets, incident and postmortem runs, a static status page and an on-call policy. A gate check that every service in the catalogue has an owner, an SLO and a runbook. | Python 3.9+ |
-| `sdlc` | The lifecycle that ties the modules together: an audit that ranks the missing stages of a repository built without one, the lifecycle map, tickets, review for agent-written changes, test strategy, and release with rollback. A gate check that every change names a ticket or a decision. | Python 3.9+, git |
+| `sdlc` | The lifecycle that ties the modules together: an audit that ranks the missing stages of a repository built without one, the lifecycle map, tickets, change review for agent-written code (`change-review`), test strategy, and release with rollback. A gate check that every change names a ticket or a decision. | Python 3.9+, git |
 
 ## Knowledge infrastructure
 

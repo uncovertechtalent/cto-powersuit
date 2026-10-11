@@ -24,7 +24,7 @@ Takes one change from request to production, stage by stage, and keeps a trace t
 2. **RFC or ADR.** If the change touches more than one team, is hard to undo or needs comments, start `/decisions:rfc`. If it makes a choice others need to know, record `/decisions:adr`. Otherwise mark the stage "not needed" with one line on why.
 3. **Build.** Branch named `<ticket>-<short-name>`. Every commit subject names the ticket (`#123`) or the decision (`ADR-0007`).
 4. **Test.** Run the pre-PR command from `docs/sdlc.md`. Add or change tests with the source; if none are needed, say why in the pull request.
-5. **Review.** Open the pull request with the template. Run `/sdlc:review` on the diff before asking a person.
+5. **Review.** Open the pull request with the template. Run `/sdlc:change-review` on the diff before asking a person.
 6. **Gate.** `python3 .github/actions/gate/run.py --dry-run --exit-code` before merge, if the gate is installed. After merge, link the gate run.
 7. **Release.** Link the deploy run. Add the changelog entry with `/sdlc:release`.
 8. **Observe.** Link the dashboard or SLO that shows the change working. Check it once after the deploy.

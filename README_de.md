@@ -19,7 +19,7 @@ Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eige
 | `gate` | Ein Deploy-Gate: ein Regelordner mit Pass- und Fail-Fixtures pro Regel, Laufprotokolle, Befunde, die sich erst mit einem bestandenen späteren Lauf schließen, und ein Workflow, dessen Deploy-Job auf das Gate wartet. Die Checks der anderen Module laufen darin. | Python 3.9+, GitHub Actions für den Workflow |
 | `observability` | Alloy, Prometheus, Loki, Grafana und Alertmanager mit Docker Compose, Dashboards als Code und Alert-Routen. Ein Gate-Check, der prüft, dass jede Alert-Regel eine Route und ein Runbook nennt. | Docker, Python 3.9+ |
 | `reliability` | Verfügbarkeitsziele pro Service mit der Ausfallzeit, die jedes Ziel erlaubt, SLOs und Error Budgets, Abläufe für Incidents und Postmortems, eine statische Statusseite und eine On-Call-Regelung. Ein Gate-Check, der prüft, dass jeder Service im Katalog einen Owner, ein SLO und ein Runbook hat. | Python 3.9+ |
-| `sdlc` | Der Lebenszyklus, der die Module verbindet: ein Audit, das die fehlenden Phasen eines Repositorys ohne Prozess nach Dringlichkeit ordnet, die Übersicht der Phasen, Tickets, Review für Änderungen von Agenten, Teststrategie und Release mit Rollback. Ein Gate-Check, der prüft, dass jede Änderung ein Ticket oder eine Entscheidung nennt. | Python 3.9+, git |
+| `sdlc` | Der Lebenszyklus, der die Module verbindet: ein Audit, das die fehlenden Phasen eines Repositorys ohne Prozess nach Dringlichkeit ordnet, die Übersicht der Phasen, Tickets, Change-Review für Code von Agenten (`change-review`), Teststrategie und Release mit Rollback. Ein Gate-Check, der prüft, dass jede Änderung ein Ticket oder eine Entscheidung nennt. | Python 3.9+, git |
 
 ## Wissensinfrastruktur
 

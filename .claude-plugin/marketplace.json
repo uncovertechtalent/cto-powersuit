@@ -95,8 +95,8 @@
       "description": "Software delivery lifecycle: an audit for repositories built without one, the lifecycle map, tickets, review, test strategy and release, with a traceability gate check.",
       "category": "development",
       "skills": [
+        "./skills/change-review",
         "./skills/release",
-        "./skills/review",
         "./skills/sdlc-audit",
         "./skills/sdlc-init",
         "./skills/test-strategy",
