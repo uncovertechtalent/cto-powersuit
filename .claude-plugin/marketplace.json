@@ -87,6 +87,17 @@
       ]
     },
     {
+      "name": "red-team",
+      "source": "./plugins/red-team",
+      "description": "Pressure tests for AI features: tactic plan, scripted multi-turn runs with a known right answer, grading on the decision; gate check on run records.",
+      "category": "development",
+      "skills": [
+        "./skills/pressure-grade",
+        "./skills/pressure-plan",
+        "./skills/pressure-run"
+      ]
+    },
+    {
       "name": "reliability",
       "source": "./plugins/reliability",
       "description": "Availability targets, SLOs, incidents, postmortems, a static status page and on-call, with a gate check on the service catalogue.",

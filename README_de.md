@@ -19,6 +19,7 @@ Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eige
 | `finops` | Eine Kosten-Baseline aus Rechnungen und Billing-Exporten, Showback pro Team oder Service, Stückkosten, ein Audit des SaaS-Bestands (behalten, kündigen oder ersetzen) und ein FOCUS-Export. Ein Gate-Check, der prüft, dass jede Kostenangabe in den Docs einen Zeitraum und eine Quelle nennt. | Python 3.9+ |
 | `gate` | Ein Deploy-Gate: ein Regelordner mit Pass- und Fail-Fixtures pro Regel, Laufprotokolle, Befunde, die sich erst mit einem bestandenen späteren Lauf schließen, und ein Workflow, dessen Deploy-Job auf das Gate wartet. Die Checks der anderen Module laufen darin. | Python 3.9+, GitHub Actions für den Workflow |
 | `observability` | Alloy, Prometheus, Loki, Grafana und Alertmanager mit Docker Compose, Dashboards als Code und Alert-Routen. Ein Gate-Check, der prüft, dass jede Alert-Regel eine Route und ein Runbook nennt. | Docker, Python 3.9+ |
+| `red-team` | Drucktests für die KI-Funktionen eines Teams: Taktiken wählen, mehrstufigen Druck nach Skript in einer Welt mit bekannter richtiger Antwort ausüben und die getroffene Entscheidung bewerten. Ein Gate-Check, der prüft, dass jeder Lauf die erwartete und die beobachtete Entscheidung nennt. | Python 3.9+ |
 | `reliability` | Verfügbarkeitsziele pro Service mit der Ausfallzeit, die jedes Ziel erlaubt, SLOs und Error Budgets, Abläufe für Incidents und Postmortems, eine statische Statusseite und eine On-Call-Regelung. Ein Gate-Check, der prüft, dass jeder Service im Katalog einen Owner, ein SLO und ein Runbook hat. | Python 3.9+ |
 | `sdlc` | Der Lebenszyklus, der die Module verbindet: ein Audit, das die fehlenden Phasen eines Repositorys ohne Prozess nach Dringlichkeit ordnet, die Übersicht der Phasen, Tickets, Change-Review für Code von Agenten (`change-review`), Teststrategie und Release mit Rollback. Ein Gate-Check, der prüft, dass jede Änderung ein Ticket oder eine Entscheidung nennt. | Python 3.9+, git |
 
@@ -45,6 +46,7 @@ claude plugin install docs@cto-powersuit
 claude plugin install finops@cto-powersuit
 claude plugin install gate@cto-powersuit
 claude plugin install observability@cto-powersuit
+claude plugin install red-team@cto-powersuit
 claude plugin install reliability@cto-powersuit
 claude plugin install sdlc@cto-powersuit
 claude plugin install vestige@cto-powersuit

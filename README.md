@@ -19,6 +19,7 @@ Each skill also reads a private overlay when one exists: your own data for that 
 | `finops` | A cost baseline from invoices and billing exports, showback per team or service, unit costs, a SaaS stack audit (keep, cut or replace) and a FOCUS export. A gate check that every cost figure in the docs carries a date range and a source. | Python 3.9+ |
 | `gate` | A deploy gate: a rules folder with pass and fail fixtures per rule, run records, findings that close only on a passing rerun, and a workflow whose deploy job waits for the gate. The checks of the other modules run in it. | Python 3.9+, GitHub Actions for the workflow |
 | `observability` | Alloy, Prometheus, Loki, Grafana and Alertmanager with docker compose, dashboards as code, and alert routes. A gate check that every alert rule names a route and a runbook. | Docker, Python 3.9+ |
+| `red-team` | Pressure tests for a team's AI features: pick the tactics, run scripted multi-turn pressure in a world with a known right answer, and grade the decision the system took. A gate check that every run record names the expected and the observed decision. | Python 3.9+ |
 | `reliability` | Availability targets per service with the downtime each target allows, SLOs and error budgets, incident and postmortem runs, a static status page and an on-call policy. A gate check that every service in the catalogue has an owner, an SLO and a runbook. | Python 3.9+ |
 | `sdlc` | The lifecycle that ties the modules together: an audit that ranks the missing stages of a repository built without one, the lifecycle map, tickets, change review for agent-written code (`change-review`), test strategy, and release with rollback. A gate check that every change names a ticket or a decision. | Python 3.9+, git |
 
@@ -45,6 +46,7 @@ claude plugin install docs@cto-powersuit
 claude plugin install finops@cto-powersuit
 claude plugin install gate@cto-powersuit
 claude plugin install observability@cto-powersuit
+claude plugin install red-team@cto-powersuit
 claude plugin install reliability@cto-powersuit
 claude plugin install sdlc@cto-powersuit
 claude plugin install vestige@cto-powersuit

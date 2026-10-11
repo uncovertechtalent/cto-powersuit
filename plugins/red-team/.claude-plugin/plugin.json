@@ -1,0 +1,8 @@
+{
+  "name": "red-team",
+  "version": "0.1.0",
+  "description": "Pressure tests for AI features: a plan with tactics and a stop rule, scripted multi-turn runs in a world where the right decision is known in advance, fold rates per tactic, and a gate check on the run records.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "license": "MIT",
+  "keywords": ["red-team", "ai-evaluation", "sycophancy", "pressure-testing", "llm", "fold-rate"]
+}
