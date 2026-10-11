@@ -1,0 +1,16 @@
+{
+  "role": "Example role",
+  "owner": "Hiring manager",
+  "written": "2026-01-15",
+  "hire_bar": "No dimension at level 1.",
+  "dimensions": [
+    {
+      "name": "Planning work",
+      "signal": "Breaks a goal into steps with an order and a check for each step.",
+      "stage": "Experience interview",
+      "questions": [
+        "Tell me about a piece of work you planned."
+      ]
+    }
+  ]
+}

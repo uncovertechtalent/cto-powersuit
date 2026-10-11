@@ -1,0 +1,27 @@
+{
+  "role": "Support lead",
+  "owner": "Hiring manager",
+  "written": "2026-01-15",
+  "hire_bar": "No dimension at level 1.",
+  "dimensions": [
+    {
+      "name": "Queue handling",
+      "signal": "Sorts a queue of tickets by impact and states the order.",
+      "stage": "Work sample",
+      "questions": [
+        "Tell me about a piece of work you planned."
+      ],
+      "levels": {
+        "1": {
+          "anchor": "Worked the queue in arrival order."
+        },
+        "2": {
+          "anchor": "Sorted by impact with help, and kept first replies < 4 hours on the sample queue."
+        },
+        "3": {
+          "anchor": "Sorted by impact alone and stated why each of the first three tickets came first."
+        }
+      }
+    }
+  ]
+}

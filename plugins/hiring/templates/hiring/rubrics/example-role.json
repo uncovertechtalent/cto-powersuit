@@ -1,0 +1,72 @@
+{
+  "role": "Backend engineer (example)",
+  "level": "<level>",
+  "owner": "<hiring manager>",
+  "written": "<YYYY-MM-DD, before the first interview>",
+  "loop": "hiring/loop.md",
+  "scale": "Levels 1 to 4. Each anchor describes what the interviewer saw or heard. Pick the highest level whose anchor the evidence matches in full.",
+  "hire_bar": "No dimension at level 1. At least two dimensions at level 3 or above.",
+  "dimensions": [
+    {
+      "name": "Code change and testing",
+      "signal": "Makes a small change in an unfamiliar codebase, with tests, and explains the choices.",
+      "stage": "Work sample",
+      "questions": [
+        "Add the feature described in the task brief to the sample service.",
+        "How do you know the change works? Show it."
+      ],
+      "levels": {
+        "1": "Did not reach a running change in the time. Wrote no test, or tests that do not run.",
+        "2": "Reached a running change with help on the layout of the codebase. Tested the main path only. Named no edge case without a prompt.",
+        "3": "Reached a running change without help. Wrote tests for the main path and at least one edge case. Explained one trade-off in the change when asked.",
+        "4": "As level 3, and found a defect or a missing case in the existing code or the brief, said so, and proposed a fix or a question for the owner."
+      }
+    },
+    {
+      "name": "System design",
+      "signal": "Turns a loose requirement into a design with stated limits, trade-offs and failure handling.",
+      "stage": "System design",
+      "questions": [
+        "Design a service that sends notifications to the users of a web app. Start with the questions you would ask.",
+        "What breaks first when the traffic grows ten times?"
+      ],
+      "levels": {
+        "1": "Drew components before asking about requirements. Named no limit of the design when asked.",
+        "2": "Asked about requirements, then drew a design with one main path. Named failure cases only when prompted.",
+        "3": "Asked about load, data and failure requirements first. Gave a design with stated limits and one trade-off for each main choice. Named how the design fails and how it recovers.",
+        "4": "As level 3, and changed the design when a new constraint came up, with the cost of the change. Named what to measure to know the design works in production."
+      }
+    },
+    {
+      "name": "Operating in production",
+      "signal": "Has run a service in production and describes an incident with the facts of what happened and what changed after it.",
+      "stage": "Experience interview",
+      "questions": [
+        "Tell me about a production incident you worked on. What was your part?",
+        "What changed after it, and how did you check that the change worked?"
+      ],
+      "levels": {
+        "1": "Gave no example of production work, or an example with no detail on their own actions.",
+        "2": "Described an incident in general terms. Their own actions stayed vague under follow-up questions. Named no change after the incident.",
+        "3": "Described an incident with a timeline, their own actions and the cause. Named a change that followed and who owned it.",
+        "4": "As level 3, and described how they checked that the change worked, with a measure or a test. Named what they would do another way with what they know now."
+      }
+    },
+    {
+      "name": "Collaboration and feedback",
+      "signal": "Works through a disagreement with a colleague, and gives and takes feedback on work.",
+      "stage": "Experience interview",
+      "questions": [
+        "Tell me about a time you disagreed with a technical decision on your team. What did you do?",
+        "Tell me about feedback on your work that changed how you work."
+      ],
+      "levels": {
+        "1": "Gave no example, or described the other person only as wrong, with no detail of what was said or done.",
+        "2": "Gave an example where someone else settled the disagreement, with little on their own actions.",
+        "3": "Gave an example with their own actions: stated their view, asked for the other view, and named the outcome and what they did after it.",
+        "4": "As level 3, and described a case where they changed their own view on evidence, or changed how they work after feedback, with what changed."
+      }
+    }
+  ],
+  "changes": []
+}

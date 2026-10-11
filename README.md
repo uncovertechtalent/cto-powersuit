@@ -18,6 +18,7 @@ Each skill also reads a private overlay when one exists: your own data for that 
 | `docs` | A docs tree where every page has an owner and review dates, runbooks, and a sweep for stale pages. A static docs build and a gate check on the review fields. | Python 3.9+ |
 | `finops` | A cost baseline from invoices and billing exports, showback per team or service, unit costs, a SaaS stack audit (keep, cut or replace) and a FOCUS export. A gate check that every cost figure in the docs carries a date range and a source. | Python 3.9+ |
 | `gate` | A deploy gate: a rules folder with pass and fail fixtures per rule, run records, findings that close only on a passing rerun, and a workflow whose deploy job waits for the gate. The checks of the other modules run in it. | Python 3.9+, GitHub Actions for the workflow |
+| `hiring` | An interview loop where each stage collects one signal, rubrics with anchored levels, debriefs with evidence before votes, and the profile of the person who takes over the platform. A gate check that every rubric dimension has anchored levels. | Python 3.9+ for the gate check |
 | `observability` | Alloy, Prometheus, Loki, Grafana and Alertmanager with docker compose, dashboards as code, and alert routes. A gate check that every alert rule names a route and a runbook. | Docker, Python 3.9+ |
 | `red-team` | Pressure tests for a team's AI features: pick the tactics, run scripted multi-turn pressure in a world with a known right answer, and grade the decision the system took. A gate check that every run record names the expected and the observed decision. | Python 3.9+ |
 | `reliability` | Availability targets per service with the downtime each target allows, SLOs and error budgets, incident and postmortem runs, a static status page and an on-call policy. A gate check that every service in the catalogue has an owner, an SLO and a runbook. | Python 3.9+ |
@@ -45,6 +46,7 @@ claude plugin install decisions@cto-powersuit
 claude plugin install docs@cto-powersuit
 claude plugin install finops@cto-powersuit
 claude plugin install gate@cto-powersuit
+claude plugin install hiring@cto-powersuit
 claude plugin install observability@cto-powersuit
 claude plugin install red-team@cto-powersuit
 claude plugin install reliability@cto-powersuit

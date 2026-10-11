@@ -1,0 +1,22 @@
+{
+  "role": "Example role",
+  "owner": "Hiring manager",
+  "written": "2026-01-15",
+  "hire_bar": "No dimension at level 1.",
+  "dimensions": [
+    {
+      "name": "Planning work",
+      "signal": "<what the stage observes>",
+      "stage": "Experience interview",
+      "questions": [
+        "Tell me about a piece of work you planned."
+      ],
+      "levels": {
+        "1": "Gave no example of the work.",
+        "2": "Gave an example and named their own part only when asked.",
+        "3": "Gave an example with their own actions and the result.",
+        "4": "As level 3, and named what they changed after the result."
+      }
+    }
+  ]
+}

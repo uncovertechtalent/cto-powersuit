@@ -1,0 +1,8 @@
+{
+  "name": "hiring",
+  "version": "0.1.0",
+  "description": "Structured hiring: an interview loop where each signal is collected once, rubrics with anchored levels written before the first interview, debriefs that put evidence before votes, a successor profile for the platform, and a gate check on rubric anchors.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "license": "MIT",
+  "keywords": ["hiring", "interviews", "structured-interviewing", "rubric", "debrief", "succession"]
+}

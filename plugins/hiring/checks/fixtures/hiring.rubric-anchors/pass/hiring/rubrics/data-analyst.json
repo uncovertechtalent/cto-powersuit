@@ -1,0 +1,36 @@
+{
+  "role": "Data analyst",
+  "owner": "Hiring manager",
+  "written": "2026-01-15",
+  "hire_bar": "No dimension at level 1.",
+  "dimensions": [
+    {
+      "name": "Planning work",
+      "signal": "Breaks a goal into steps with an order and a check for each step.",
+      "stage": "Experience interview",
+      "questions": [
+        "Tell me about a piece of work you planned."
+      ],
+      "levels": {
+        "1": "Gave no example of the work.",
+        "2": "Gave an example and named their own part only when asked.",
+        "3": "Gave an example with their own actions and the result.",
+        "4": "As level 3, and named what they changed after the result."
+      }
+    },
+    {
+      "name": "Explaining results",
+      "signal": "Explains a result and its limits to a person outside the team.",
+      "stage": "Case",
+      "questions": [
+        "Tell me about a piece of work you planned."
+      ],
+      "levels": {
+        "1": "Read out numbers with no conclusion.",
+        "2": "Gave a conclusion and named a limit only when asked.",
+        "3": "Gave a conclusion, one limit and what would change it.",
+        "4": "As level 3, and adjusted the explanation after a question from the listener."
+      }
+    }
+  ]
+}

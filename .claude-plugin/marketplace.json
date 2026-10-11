@@ -76,6 +76,18 @@
       ]
     },
     {
+      "name": "hiring",
+      "source": "./plugins/hiring",
+      "description": "Interview loop, anchored rubrics, evidence-first debriefs and a successor profile, with a gate check on rubric anchors.",
+      "category": "development",
+      "skills": [
+        "./skills/hiring-debrief",
+        "./skills/interview-loop",
+        "./skills/interview-rubric",
+        "./skills/successor-profile"
+      ]
+    },
+    {
       "name": "observability",
       "source": "./plugins/observability",
       "description": "Alloy, Prometheus, Loki, Grafana and Alertmanager via docker compose, dashboards as code and alert routes, with a gate check on alert rules.",
