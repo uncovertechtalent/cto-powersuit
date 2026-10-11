@@ -1,0 +1,6 @@
+on: [push]
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: docker://alpine@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef

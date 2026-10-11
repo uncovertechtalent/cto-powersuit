@@ -1,0 +1,100 @@
+[
+ [
+  {
+   "number": 1,
+   "state": "open",
+   "created_at": "2026-10-01T08:00:00Z",
+   "html_url": "https://github.com/example-org/app/security/dependabot/1",
+   "dependency": {
+    "package": {
+     "ecosystem": "npm",
+     "name": "example-parser"
+    },
+    "manifest_path": "package-lock.json"
+   },
+   "security_advisory": {
+    "ghsa_id": "GHSA-aaaa-aaaa-aaaa",
+    "cve_id": "CVE-2026-1001",
+    "severity": "critical",
+    "summary": "Example issue in example-parser"
+   },
+   "security_vulnerability": {
+    "first_patched_version": {
+     "identifier": "2.4.1"
+    }
+   }
+  },
+  {
+   "number": 2,
+   "state": "open",
+   "created_at": "2026-06-01T08:00:00Z",
+   "html_url": "https://github.com/example-org/app/security/dependabot/2",
+   "dependency": {
+    "package": {
+     "ecosystem": "pip",
+     "name": "example-http"
+    },
+    "manifest_path": "requirements.txt"
+   },
+   "security_advisory": {
+    "ghsa_id": "GHSA-bbbb-bbbb-bbbb",
+    "cve_id": null,
+    "severity": "medium",
+    "summary": "Example issue in example-http"
+   },
+   "security_vulnerability": {
+    "first_patched_version": null
+   }
+  }
+ ],
+ [
+  {
+   "number": 3,
+   "state": "open",
+   "created_at": "2026-10-05T08:00:00Z",
+   "html_url": "https://github.com/example-org/app/security/dependabot/3",
+   "dependency": {
+    "package": {
+     "ecosystem": "npm",
+     "name": "example-zip"
+    },
+    "manifest_path": "package-lock.json"
+   },
+   "security_advisory": {
+    "ghsa_id": "GHSA-cccc-cccc-cccc",
+    "cve_id": "CVE-2026-1003",
+    "severity": "high",
+    "summary": "Example issue in example-zip"
+   },
+   "security_vulnerability": {
+    "first_patched_version": {
+     "identifier": "1.0.9"
+    }
+   }
+  },
+  {
+   "number": 4,
+   "state": "open",
+   "created_at": "2026-10-01T08:00:00Z",
+   "html_url": "https://github.com/example-org/app/security/dependabot/4",
+   "dependency": {
+    "package": {
+     "ecosystem": "npm",
+     "name": "example-parser"
+    },
+    "manifest_path": "package-lock.json"
+   },
+   "security_advisory": {
+    "ghsa_id": "GHSA-aaaa-aaaa-aaaa",
+    "cve_id": "CVE-2026-1001",
+    "severity": "critical",
+    "summary": "Example issue in example-parser"
+   },
+   "security_vulnerability": {
+    "first_patched_version": {
+     "identifier": "2.4.1"
+    }
+   }
+  }
+ ]
+]

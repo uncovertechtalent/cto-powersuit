@@ -1,0 +1,7 @@
+on: [push]
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567
+      - uses: some-org/deploy-action@0123456789abcdef0123456789abcdef01234567 # pinned, but the owner is not on the list

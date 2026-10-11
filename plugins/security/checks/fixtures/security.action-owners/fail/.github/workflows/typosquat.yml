@@ -1,0 +1,6 @@
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actlons/checkout@0123456789abcdef0123456789abcdef01234567

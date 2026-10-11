@@ -1,0 +1,9 @@
+{
+  "name": "security",
+  "version": "0.1.0",
+  "description": "Security for a repository and its agents: pinned actions and an action-owner allowlist, a lock-file vulnerability scan and an SBOM, a provenance check before installing an agent skill or MCP server, a blocking secret check with key-rotation runbooks, a read-only access review that finds admin-bypass merges, threat models per RFC, and vulnerability intake with fix-by dates.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
+  "license": "MIT",
+  "keywords": ["security", "devsecops", "supply-chain", "sbom", "provenance", "mcp", "secrets", "key-rotation", "access-review", "threat-model", "vulnerabilities"]
+}

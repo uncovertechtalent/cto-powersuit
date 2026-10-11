@@ -1,0 +1,84 @@
+{
+ "owner_type": "Organization",
+ "archived": false,
+ "fork": false,
+ "parent": null,
+ "default_branch": "main",
+ "stars": 120,
+ "repo": "example-vendor/example-mcp",
+ "owner": "example-vendor",
+ "expected_owner": "example-vendor",
+ "created_at": "2025-02-01T00:00:00Z",
+ "account_created_at": "2019-03-01T00:00:00Z",
+ "commits": [
+  {
+   "sha": "0000000000000000000000000000000000000001",
+   "date": "2026-10-01T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/server.ts",
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000002",
+   "date": "2026-09-20T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/tools.ts"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000003",
+   "date": "2026-09-02T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000004",
+   "date": "2026-08-15T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "package.json",
+    "package-lock.json"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000005",
+   "date": "2026-07-01T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/server.ts",
+    "test/server.test.ts"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000006",
+   "date": "2026-05-01T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/auth.ts"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000007",
+   "date": "2026-10-02T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "docs/README.md"
+   ]
+  }
+ ],
+ "readme": "# Example MCP server\n\nInstall: `npx -y @example-vendor/mcp-server@1.4.2`.\n\nSee [the zip format notes](docs/zip-format.md), [releases](https://github.com/example-vendor/example-mcp/releases) and <a href=\"https://example.org/docs/\">the docs</a>.\n",
+ "release_assets": [],
+ "expect": {
+  "red": [],
+  "amber": [
+   "readme-only-commits"
+  ],
+  "risk": "medium"
+ },
+ "today": "2026-10-11"
+}

@@ -1,0 +1,52 @@
+{
+ "sbom": {
+  "spdxVersion": "SPDX-2.3",
+  "packages": [
+   {
+    "name": "lodash",
+    "versionInfo": "4.17.20",
+    "externalRefs": [
+     {
+      "referenceCategory": "PACKAGE-MANAGER",
+      "referenceType": "purl",
+      "referenceLocator": "pkg:npm/lodash@4.17.20"
+     }
+    ]
+   },
+   {
+    "name": "lodash",
+    "versionInfo": "4.17.20",
+    "externalRefs": [
+     {
+      "referenceCategory": "PACKAGE-MANAGER",
+      "referenceType": "purl",
+      "referenceLocator": "pkg:npm/lodash@4.17.20"
+     }
+    ]
+   },
+   {
+    "name": "golang.org/x/text",
+    "versionInfo": "v0.37.0",
+    "externalRefs": [
+     {
+      "referenceType": "purl",
+      "referenceLocator": "pkg:golang/golang.org/x/text@v0.37.0"
+     }
+    ]
+   },
+   {
+    "name": "left-pad",
+    "externalRefs": [
+     {
+      "referenceType": "purl",
+      "referenceLocator": "pkg:npm/left-pad"
+     }
+    ]
+   },
+   {
+    "name": "repo",
+    "externalRefs": []
+   }
+  ]
+ }
+}

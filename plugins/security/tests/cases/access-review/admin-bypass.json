@@ -1,0 +1,87 @@
+{
+ "rulesets": [
+  {
+   "id": 101,
+   "name": "main",
+   "enforcement": "active",
+   "source": "Repository",
+   "include": [
+    "~DEFAULT_BRANCH"
+   ],
+   "rules": [
+    "deletion",
+    "non_fast_forward",
+    "pull_request"
+   ],
+   "required_approvals": 1,
+   "bypass_actors": [
+    {
+     "actor_id": 5,
+     "actor_type": "RepositoryRole",
+     "bypass_mode": "always"
+    }
+   ]
+  }
+ ],
+ "classic_protection": null,
+ "collaborators": [
+  {
+   "login": "lead",
+   "role": "admin"
+  },
+  {
+   "login": "dev",
+   "role": "write"
+  }
+ ],
+ "outside": [],
+ "deploy_keys": [],
+ "bypass_suites": [
+  {
+   "id": 9001,
+   "actor": "lead",
+   "at": "2026-10-09T12:00:00+02:00",
+   "after_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "pulls": [
+    12
+   ],
+   "failed": [
+    {
+     "rule": "pull_request",
+     "details": "At least 1 approving review is required by reviewers with write access."
+    }
+   ]
+  },
+  {
+   "id": 9002,
+   "actor": "lead",
+   "at": "2026-10-08T16:00:00+02:00",
+   "after_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "pulls": [],
+   "failed": [
+    {
+     "rule": "pull_request",
+     "details": "Changes must be made through a pull request."
+    }
+   ]
+  }
+ ],
+ "expect": {
+  "red": [
+   "bypass-merge",
+   "bypass-push"
+  ],
+  "amber": [
+   "bypass-always"
+  ]
+ },
+ "repo": "example-org/admin-bypass",
+ "days": 30,
+ "meta": {
+  "owner_type": "Organization",
+  "default_branch": "main",
+  "visibility": "private"
+ },
+ "today": "2026-10-11",
+ "errors": {}
+}

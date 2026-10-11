@@ -1,0 +1,134 @@
+{
+ "querybatch": {
+  "pkg:npm/lodash@4.17.20": [
+   {
+    "id": "GHSA-0001-0001-0001"
+   }
+  ],
+  "pkg:golang/golang.org/x/text@v0.37.0": [
+   {
+    "id": "GO-2026-0001"
+   }
+  ],
+  "pkg:pypi/urllib3@2.0.6": [
+   {
+    "id": "GHSA-0002-0002-0002"
+   }
+  ]
+ },
+ "vulns": {
+  "GHSA-0001-0001-0001": {
+   "id": "GHSA-0001-0001-0001",
+   "aliases": [
+    "CVE-2026-0001"
+   ],
+   "summary": "Example prototype pollution",
+   "database_specific": {
+    "severity": "MODERATE"
+   },
+   "affected": [
+    {
+     "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "purl": "pkg:npm/lodash"
+     },
+     "ranges": [
+      {
+       "type": "SEMVER",
+       "events": [
+        {
+         "introduced": "0"
+        },
+        {
+         "fixed": "4.17.21"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "GO-2026-0001": {
+   "id": "GO-2026-0001",
+   "aliases": [
+    "CVE-2026-0002",
+    "GHSA-0003-0003-0003"
+   ],
+   "summary": "Example panic",
+   "affected": [
+    {
+     "package": {
+      "ecosystem": "Go",
+      "name": "golang.org/x/text"
+     },
+     "ranges": [
+      {
+       "type": "SEMVER",
+       "events": [
+        {
+         "introduced": "0"
+        },
+        {
+         "fixed": "0.39.0"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "GHSA-0003-0003-0003": {
+   "id": "GHSA-0003-0003-0003",
+   "database_specific": {
+    "severity": "HIGH"
+   }
+  },
+  "GHSA-0002-0002-0002": {
+   "id": "GHSA-0002-0002-0002",
+   "summary": "Example header leak",
+   "database_specific": {
+    "severity": "LOW"
+   },
+   "affected": [
+    {
+     "package": {
+      "ecosystem": "PyPI",
+      "name": "urllib3",
+      "purl": "pkg:pypi/urllib3"
+     },
+     "ranges": [
+      {
+       "type": "ECOSYSTEM",
+       "events": [
+        {
+         "introduced": "2.0.0"
+        },
+        {
+         "fixed": "2.0.7"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "package": {
+      "ecosystem": "PyPI",
+      "name": "other",
+      "purl": "pkg:pypi/other"
+     },
+     "ranges": [
+      {
+       "type": "ECOSYSTEM",
+       "events": [
+        {
+         "fixed": "9.9.9"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

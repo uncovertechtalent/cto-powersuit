@@ -51,7 +51,7 @@ The skill is read only. The one file it writes is `docs/fit.md`.
 
    A present signal shows that the module's files are there. Check that they are in use (filled, current, run in CI) before you mark the module `fitted`.
 3. **Ask the user** for what the files do not show: the goals and dates, who can own each module, the AI features, the public site.
-4. **Map each gap to a module.** Use the "Fills it" column of the audit. Add the needs the audit does not cover: a public site (`aieo`, `compliance`), AI features (`ai-ops`, `red-team`), open roles (`hiring`), cost questions (`finops`), a person who built the platform and will leave (`handover`).
+4. **Map each gap to a module.** Use the "Fills it" column of the audit. Add the needs the audit does not cover: a public site (`aieo`, `compliance`), AI features (`ai-ops`, `red-team`), agent skills or MCP servers the team installs (`security`), open roles (`hiring`), cost questions (`finops`), a person who built the platform and will leave (`handover`).
 5. **Decide per module:**
 
    | Recommendation | When |
@@ -74,6 +74,7 @@ The skill is read only. The one file it writes is `docs/fit.md`.
    | reliability | observability, docs | SLOs need metrics; runbooks are docs pages | weeks | `/reliability:nines-per-service` |
    | finops | none | Needs billing exports and invoices | days | `/finops:cost-baseline` |
    | compliance | docs | Evidence links to owned pages | weeks | `/compliance:control-map` |
+   | security | gate | Its secret and action-owner checks run in the gate | days | `/security:supply-chain` |
    | ai-ops | observability | Metering sends agent telemetry to the stack | days | `/ai-ops:agent-harness` |
    | hiring | none | Needs an open role | days | `/hiring:interview-loop` |
    | red-team | an AI feature | Tests a decision the feature makes | days | `/red-team:pressure-plan` |

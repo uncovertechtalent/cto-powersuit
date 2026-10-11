@@ -1,0 +1,54 @@
+{
+ "rulesets": [
+  {
+   "id": 101,
+   "name": "main",
+   "enforcement": "active",
+   "source": "Repository",
+   "include": [
+    "~DEFAULT_BRANCH"
+   ],
+   "rules": [
+    "deletion",
+    "non_fast_forward",
+    "pull_request"
+   ],
+   "required_approvals": 1,
+   "bypass_actors": []
+  }
+ ],
+ "classic_protection": null,
+ "bypass_suites": [],
+ "collaborators": [
+  {
+   "login": "lead",
+   "role": "admin"
+  },
+  {
+   "login": "dev",
+   "role": "write"
+  }
+ ],
+ "outside": [],
+ "deploy_keys": [
+  {
+   "title": "status-bot",
+   "read_only": true,
+   "created_at": "2026-01-10T00:00:00Z",
+   "last_used": "2026-10-06T00:00:00Z"
+  }
+ ],
+ "expect": {
+  "red": [],
+  "amber": []
+ },
+ "repo": "example-org/clean",
+ "days": 30,
+ "meta": {
+  "owner_type": "Organization",
+  "default_branch": "main",
+  "visibility": "private"
+ },
+ "today": "2026-10-11",
+ "errors": {}
+}

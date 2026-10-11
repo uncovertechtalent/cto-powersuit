@@ -171,6 +171,19 @@
       ]
     },
     {
+      "name": "security",
+      "source": "./plugins/security",
+      "description": "Supply chain, secrets and access for a repository and its agents: action-owner allowlist, vulnerability scan and SBOM, provenance checks for skills and MCP servers, key rotation, access review, threat models, and vulnerability intake, with gate checks for secrets and action owners.",
+      "category": "development",
+      "skills": [
+        "./skills/access-review",
+        "./skills/secrets",
+        "./skills/supply-chain",
+        "./skills/threat-model",
+        "./skills/vuln-intake"
+      ]
+    },
+    {
       "name": "vestige",
       "source": "./plugins/vestige",
       "description": "Output filter you calibrate to yourself. Hooks scan every reply and every Markdown write.",

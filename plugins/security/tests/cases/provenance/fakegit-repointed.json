@@ -1,0 +1,111 @@
+{
+ "owner_type": "User",
+ "archived": false,
+ "fork": false,
+ "parent": null,
+ "default_branch": "main",
+ "stars": 120,
+ "repo": "dev-person/sql-tool",
+ "owner": "dev-person",
+ "expected_owner": "dev-person",
+ "created_at": "2022-04-01T00:00:00Z",
+ "account_created_at": "2017-06-01T00:00:00Z",
+ "commits": [
+  {
+   "sha": "0000000000000000000000000000000000000001",
+   "date": "2026-10-05T06:30:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000002",
+   "date": "2026-10-05T06:30:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000003",
+   "date": "2026-10-05T06:30:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000004",
+   "date": "2026-10-05T06:30:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000005",
+   "date": "2026-10-05T06:30:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000006",
+   "date": "2026-10-05T06:30:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "000000000000000000000000000000000000000b",
+   "date": "2025-01-10T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/query.py"
+   ]
+  },
+  {
+   "sha": "000000000000000000000000000000000000000c",
+   "date": "2025-02-10T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/query.py"
+   ]
+  },
+  {
+   "sha": "000000000000000000000000000000000000000d",
+   "date": "2025-03-10T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/query.py"
+   ]
+  },
+  {
+   "sha": "000000000000000000000000000000000000000e",
+   "date": "2025-04-10T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/query.py"
+   ]
+  }
+ ],
+ "readme": "# sql-tool\n\nDownload: https://github.com/dev-person/sql-tool/releases/latest/download/sql-tool-setup\n",
+ "release_assets": [
+  "sql-tool-win64.zip"
+ ],
+ "expect": {
+  "red": [
+   "readme-only-commits",
+   "archive-lure"
+  ],
+  "amber": [
+   "release-binaries",
+   "download-link"
+  ],
+  "risk": "high"
+ },
+ "today": "2026-10-11"
+}

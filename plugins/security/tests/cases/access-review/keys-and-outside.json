@@ -1,0 +1,68 @@
+{
+ "rulesets": [],
+ "classic_protection": {
+  "enforce_admins": false,
+  "required_approvals": 1
+ },
+ "bypass_suites": [],
+ "collaborators": [
+  {
+   "login": "lead",
+   "role": "admin"
+  },
+  {
+   "login": "dev",
+   "role": "write"
+  },
+  {
+   "login": "contractor",
+   "role": "write"
+  },
+  {
+   "login": "auditor",
+   "role": "read"
+  }
+ ],
+ "outside": [
+  "contractor",
+  "auditor"
+ ],
+ "deploy_keys": [
+  {
+   "title": "deploy-bot",
+   "read_only": false,
+   "created_at": "2026-09-01T00:00:00Z",
+   "last_used": "2026-10-01T00:00:00Z"
+  },
+  {
+   "title": "old-mirror",
+   "read_only": true,
+   "created_at": "2025-01-01T00:00:00Z",
+   "last_used": "2026-01-01T00:00:00Z"
+  },
+  {
+   "title": "new-reader",
+   "read_only": true,
+   "created_at": "2026-10-01T00:00:00Z",
+   "last_used": null
+  }
+ ],
+ "expect": {
+  "red": [],
+  "amber": [
+   "admins-not-enforced",
+   "outside-collaborator",
+   "deploy-key-write",
+   "deploy-key-stale"
+  ]
+ },
+ "repo": "example-org/keys-and-outside",
+ "days": 30,
+ "meta": {
+  "owner_type": "Organization",
+  "default_branch": "main",
+  "visibility": "private"
+ },
+ "today": "2026-10-11",
+ "errors": {}
+}

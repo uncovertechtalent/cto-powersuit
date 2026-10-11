@@ -40,6 +40,7 @@ For the second and third way: [machinebehavior.io/your-next-cto/](https://machin
 | `red-team` | Pressure tests for a team's AI features: pick the tactics, run scripted multi-turn pressure in a world with a known right answer, and grade the decision the system took. A gate check that every run record names the expected and the observed decision. | Python 3.9+ |
 | `reliability` | Availability targets per service with the downtime each target allows, SLOs and error budgets, incident and postmortem runs, a static status page and an on-call policy. A gate check that every service in the catalogue has an owner, an SLO and a runbook. | Python 3.9+ |
 | `sdlc` | The lifecycle that ties the modules together: an audit that ranks the missing stages of a repository built without one, the lifecycle map, tickets, change review for agent-written code (`change-review`), test strategy, and release with rollback. A gate check that every change names a ticket or a decision. | Python 3.9+, git |
+| `security` | Security for a repository and its coding agents: actions pinned by commit SHA and limited to an owner allowlist, a vulnerability scan of the lock files and an SBOM, a provenance check before anyone installs an agent skill or an MCP server, key-rotation runbooks, a read-only access review that finds merges past the required review, threat models per RFC, and vulnerability tickets with fix-by dates. Gate checks for secrets in tracked files and for action owners. | Python 3.9+, `gh`; osv-scanner optional |
 
 ## Knowledge infrastructure
 
@@ -54,6 +55,8 @@ These three plugins are the knowledge infrastructure layer and the optional part
 The plugins are independent. Install the ones you need. Each module works without the others; the gate checks of the modules need `gate` to run in CI. On an existing repository, start with `/sdlc:sdlc-audit`: it needs no other module and names the module that fills each gap.
 
 ## Install
+
+The only source of this project is [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Install it only with the two owner-qualified commands below, `claude plugin marketplace add uncovertechtalent/cto-powersuit` and `npx skills add uncovertechtalent/cto-powersuit`, or from a clone of that repository. The project publishes no ZIP downloads and no release archives. A copy that offers a download button is not this project. To check any other skill or MCP server before you install it, use the provenance check of the security module: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), step 7.
 
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
@@ -71,6 +74,7 @@ claude plugin install observability@cto-powersuit
 claude plugin install red-team@cto-powersuit
 claude plugin install reliability@cto-powersuit
 claude plugin install sdlc@cto-powersuit
+claude plugin install security@cto-powersuit
 claude plugin install vestige@cto-powersuit
 claude plugin install vault@cto-powersuit
 claude plugin install stance@cto-powersuit

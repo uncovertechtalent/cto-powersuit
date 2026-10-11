@@ -1,0 +1,4 @@
+on: [push]
+jobs:
+  build:
+    uses: other-org/workflows/.github/workflows/build.yml@0123456789abcdef0123456789abcdef01234567

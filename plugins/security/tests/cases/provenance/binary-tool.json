@@ -1,0 +1,80 @@
+{
+ "owner_type": "Organization",
+ "archived": false,
+ "fork": false,
+ "parent": null,
+ "default_branch": "main",
+ "stars": 120,
+ "repo": "example-vendor/scan-tool",
+ "owner": "example-vendor",
+ "expected_owner": "example-vendor",
+ "created_at": "2023-01-01T00:00:00Z",
+ "account_created_at": "2019-03-01T00:00:00Z",
+ "commits": [
+  {
+   "sha": "0000000000000000000000000000000000000001",
+   "date": "2026-10-01T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/server.ts",
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000002",
+   "date": "2026-09-20T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/tools.ts"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000003",
+   "date": "2026-09-02T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000004",
+   "date": "2026-08-15T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "package.json",
+    "package-lock.json"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000005",
+   "date": "2026-07-01T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/server.ts",
+    "test/server.test.ts"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000006",
+   "date": "2026-05-01T10:00:00Z",
+   "subject": "update",
+   "files": [
+    "src/auth.ts"
+   ]
+  }
+ ],
+ "readme": "# scan-tool\n\nDownload a build from the [releases page](https://github.com/example-vendor/scan-tool/releases) and check it against the checksums file.\n",
+ "release_assets": [
+  "scan-tool_linux_amd64.tar.gz",
+  "scan-tool_windows_amd64.exe",
+  "scan-tool_SHA256SUMS"
+ ],
+ "expect": {
+  "red": [],
+  "amber": [
+   "release-binaries"
+  ],
+  "risk": "medium"
+ },
+ "today": "2026-10-11"
+}
