@@ -31,7 +31,7 @@ runs:
         [ -n "${{ inputs.out }}" ] && out_arg=(--out "${{ inputs.out }}")
         python3 "${{ github.action_path }}/run.py" --config "${{ inputs.config }}" --root "${{ inputs.root }}" "${out_arg[@]}" --trigger "${{ inputs.trigger }}" --sha "${{ inputs.sha }}" --runner "${{ runner.os }}-${{ runner.arch }}"
     - name: Upload the run record
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: gate-run-${{ github.run_id }}-${{ github.run_attempt }}
         path: ${{ inputs.out != '' && inputs.out || 'gate' }}/runs/*.json
