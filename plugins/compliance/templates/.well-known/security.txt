@@ -1,0 +1,13 @@
+# security.txt (RFC 9116). Served at https://<your-domain>/.well-known/security.txt as text/plain.
+# Replace every <placeholder>. Contact and Expires are required.
+# Expires: an ISO 8601 date-time with time zone, less than one year ahead. Renew it before it passes.
+
+Contact: mailto:<security-contact-address>
+Expires: <YYYY-MM-DDThh:mm:ssZ>
+Preferred-Languages: en
+Canonical: https://<your-domain>/.well-known/security.txt
+
+# Optional fields. Remove the # to use one.
+# Policy: https://<your-domain>/<path-to-disclosure-policy>
+# Encryption: https://<your-domain>/<path-to-public-key>
+# Acknowledgments: https://<your-domain>/<path-to-acknowledgments>

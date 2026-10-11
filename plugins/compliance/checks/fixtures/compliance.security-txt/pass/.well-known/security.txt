@@ -1,0 +1,6 @@
+# Pass fixture for compliance.security-txt: two contacts and an expiry far in the future.
+Contact: mailto:security@example.com
+Contact: https://www.example.com/security/report
+Expires: 2099-12-31T23:59:59.000Z
+Preferred-Languages: en, de
+Canonical: https://www.example.com/.well-known/security.txt

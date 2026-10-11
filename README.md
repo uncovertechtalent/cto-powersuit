@@ -12,6 +12,7 @@ Each skill also reads a private overlay when one exists: your own data for that 
 
 | Plugin | What it does | Needs |
 |---|---|---|
+| `compliance` | A control map to ISO 27001, TISAX, NIS2 and GDPR by clause and article number, an AI Act triage, and a legal baseline for a website (Impressum, privacy page, security.txt, no third-party requests on page load). Gate checks for security.txt and third-party requests. | Python 3.9+ |
 | `decisions` | RFCs, architecture decision records (ADRs) and a review of the decision log. Templates for both records and a gate check that every ADR has a status, an owner and a date. | Python 3.9+ for the gate check |
 | `docs` | A docs tree where every page has an owner and review dates, runbooks, and a sweep for stale pages. A static docs build and a gate check on the review fields. | Python 3.9+ |
 | `gate` | A deploy gate: a rules folder with pass and fail fixtures per rule, run records, findings that close only on a passing rerun, and a workflow whose deploy job waits for the gate. The checks of the other modules run in it. | Python 3.9+, GitHub Actions for the workflow |
@@ -34,6 +35,7 @@ The plugins are independent. Install the ones you need. Each module works withou
 
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
+claude plugin install compliance@cto-powersuit
 claude plugin install decisions@cto-powersuit
 claude plugin install docs@cto-powersuit
 claude plugin install gate@cto-powersuit

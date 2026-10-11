@@ -8,6 +8,17 @@
   },
   "plugins": [
     {
+      "name": "compliance",
+      "source": "./plugins/compliance",
+      "description": "Control map to ISO 27001, TISAX, NIS2 and GDPR by number, AI Act triage and a website legal baseline, with gate checks for security.txt and third-party requests.",
+      "category": "development",
+      "skills": [
+        "./skills/ai-act-triage",
+        "./skills/control-map",
+        "./skills/legal-baseline"
+      ]
+    },
+    {
       "name": "decisions",
       "source": "./plugins/decisions",
       "description": "RFCs, architecture decision records and a decision-log review, with templates and a gate check on ADR status, owner and date.",

@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- Pass fixture for compliance.no-third-party: every resource comes from this site. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Example site</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="preload" as="font" href="/fonts/sans.woff2" type="font/woff2" crossorigin>
+  <link rel="icon" href="favicon.ico">
+  <link rel="canonical" href="https://www.example.com/">
+  <link rel="alternate" type="application/rss+xml" href="https://www.example.com/feed.xml">
+  <meta property="og:image" content="https://www.example.com/social.png">
+  <style>
+    @import "/css/base.css";
+    @font-face { font-family: Sans; src: url("/fonts/sans.woff2") format("woff2"); }
+    .hero { background: url(img/hero.jpg); }
+    .dot { background: url(data:image/png;base64,iVBORw0KGgo=); }
+  </style>
+  <script src="/js/site.js" defer></script>
+</head>
+<body>
+  <img src="img/logo.png" srcset="img/logo.png 1x, img/logo@2x.png 2x" alt="Logo">
+  <div style="background-image: url('/img/band.png')"></div>
+  <video src="/media/intro.mp4" poster="/media/intro.jpg" controls></video>
+  <p>Read the <a href="https://www.example.org/guide">external guide</a>.</p>
+  <p>How a third-party font is loaded, as a code example:</p>
+  <pre><code><link rel="stylesheet" href="https://fonts.example.net/css"></code></pre>
+</body>
+</html>

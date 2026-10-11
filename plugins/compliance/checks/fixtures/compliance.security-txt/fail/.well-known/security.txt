@@ -1,0 +1,4 @@
+# Fail fixture for compliance.security-txt: the expiry date has passed.
+Contact: mailto:security@example.com
+Expires: 2020-01-31T23:00:00Z
+Preferred-Languages: en

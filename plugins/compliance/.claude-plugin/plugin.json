@@ -1,0 +1,9 @@
+{
+  "name": "compliance",
+  "version": "0.1.0",
+  "description": "Compliance groundwork for a repository: a control map to ISO 27001, TISAX, NIS2 and GDPR by number only, an EU AI Act triage of every AI use, a legal baseline for websites, and gate checks for security.txt and third-party requests on page load.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
+  "license": "MIT",
+  "keywords": ["compliance", "iso-27001", "tisax", "nis2", "gdpr", "ai-act", "security-txt", "impressum", "privacy"]
+}
