@@ -1,6 +1,6 @@
 # Gate rules
 
-Each `*.py` file in this folder is one rule. `run.py` loads every file that does not start with `_` and runs the rules that `gate/gate.json` enables, in the order `gate.json` lists them. Standard library only. A file that starts with `_` is a helper that rules can import; it is never run as a rule.
+Each `*.py` file in this folder is one rule. `run.py` loads every file that does not start with `_` and runs the rules that `gate/gate.json` enables, in the order `gate.json` lists them. Standard library only. A file that starts with `_` is a helper that rules can import (`from _mymodule_scan import scan`); it is never run as a rule. The runner puts this folder on the import path. Give helpers names unique to your module, because the first helper loaded under a name wins.
 
 ## Contract
 

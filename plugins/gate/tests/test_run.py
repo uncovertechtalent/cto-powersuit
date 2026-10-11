@@ -272,6 +272,15 @@ def only_runs_write_nothing_and_skip_reporters(tmp):
 
 
 @case
+def rules_import_helpers_from_their_folder(tmp):
+    r = Repo(tmp, {"_t_helper.py": "def answer():\n    return 42\n",
+                   "h.py": rule("t.helper", "return {'result': 'pass', 'detail': str(answer())}", extra="from _t_helper import answer")},
+             {"rules": {"t.helper": {"tier": "block"}}})
+    r.run()
+    assert r.record()["checks"]["t.helper"]["detail"] == "42", r.record()["checks"]["t.helper"]
+
+
+@case
 def unknown_phase_is_a_config_error(tmp):
     r = Repo(tmp, {"x.py": rule("t.x", "return {'result': 'pass', 'detail': ''}", extra='PHASE = "later"')}, {"rules": {"t.x": {}}})
     assert r.run().returncode == 2

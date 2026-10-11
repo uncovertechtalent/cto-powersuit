@@ -86,11 +86,14 @@ def load_module(f, prefix):
 
 
 def load_rules(rules_dir):
-    """Every *.py file in rules_dir that does not start with '_' and defines ID and check()."""
+    """Every *.py file in rules_dir that does not start with '_' and defines ID and check().
+    The folder goes on sys.path, so rules can import the '_' helpers next to them."""
     rules = {}
-    d = Path(rules_dir)
+    d = Path(rules_dir).resolve()
     if not d.is_dir():
         return rules
+    if str(d) not in sys.path:
+        sys.path.insert(0, str(d))
     for f in sorted(d.glob("*.py")):
         if f.name.startswith("_"):
             continue
