@@ -1,0 +1,198 @@
+{
+ "title": "Not Found means no access: not checked",
+ "purpose": "users",
+ "observations": {
+  "files": [
+   "README.md",
+   "app.py",
+   ".github/workflows/deploy.yml",
+   "tests/test_app.py"
+  ],
+  "texts": {
+   ".github/workflows/deploy.yml": "jobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pytest\n  deploy:\n    needs: test\n    steps:\n      - uses: actions/deploy-pages@v4\n",
+   "README.md": "# App\n\n```bash\npython3 app.py run\n```\n"
+  },
+  "remote_url": "https://github.com/dev-org/app.git",
+  "own_owners": [
+   "dev",
+   "dev-org"
+  ],
+  "gh_available": true,
+  "branch_protection": {
+   "exit": 1,
+   "output": "gh: Not Found (HTTP 404)"
+  },
+  "author": "dev@example.com",
+  "all_commits": [
+   {
+    "sha": "0000000000000000000000000000000000000001",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000002",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000003",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000004",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000005",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000006",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000007",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000008",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000009",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000000a",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 100,
+    "files": 2
+   }
+  ],
+  "first_parent": [
+   {
+    "sha": "0000000000000000000000000000000000000001",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 1 (#1)",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000002",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 2 (#2)",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000003",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 3 (#3)",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000004",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 4 (#4)",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000005",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 5 (#5)",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000006",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 6 (#6)",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000007",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 7 (#7)",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000008",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 8 (#8)",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000009",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 9 (#9)",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000000a",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Change 10 (#10)",
+    "merge": false
+   }
+  ],
+  "imports_by_file": {
+   "app.py": {
+    "python": [
+     "json",
+     "os"
+    ]
+   }
+  },
+  "inline_manifests": [],
+  "local_modules": [
+   "app",
+   "tests"
+  ],
+  "verify_defs": [],
+  "tags": [
+   "v1.0.0"
+  ],
+  "secret_hits": [],
+  "hurt_commits": [],
+  "failed_runs": 0,
+  "issues": 12
+ },
+ "expect": {
+  "stages.review.evidence[0]": {
+   "startswith": "branch protection: not checked (no access"
+  },
+  "stages.review.state": "partial"
+ }
+}

@@ -12,7 +12,7 @@ Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eige
 
 | Plugin | Was es tut | Braucht |
 |---|---|---|
-| `ai-ops` | Betrieb der Coding-Agenten eines Teams: ein gemeinsames Harness mit engen Berechtigungen, Agenten-Kosten pro API-Anfrage gemessen, mit einem Budget-Alert, und ein Koordinator-Muster mit dem Zustand in Dateien. `vestige`, `stance` und `vault` sind seine optionalen Teile. Ein Gate-Check, der prüft, dass gemeinsame Agenten-Einstellungen keine Secrets und keine Wildcard-Berechtigungen enthalten. | Python 3.9+; `observability` für das Metering |
+| ` `plugins/sdlc/skills/sdlc-audit/test_probe.py` führt die aufgezeichneten Fälle der Probe des SDLC-Audits aus.ai-ops` | Betrieb der Coding-Agenten eines Teams: ein gemeinsames Harness mit engen Berechtigungen, Agenten-Kosten pro API-Anfrage gemessen, mit einem Budget-Alert, und ein Koordinator-Muster mit dem Zustand in Dateien. `vestige`, `stance` und `vault` sind seine optionalen Teile. Ein Gate-Check, der prüft, dass gemeinsame Agenten-Einstellungen keine Secrets und keine Wildcard-Berechtigungen enthalten. | Python 3.9+; `observability` für das Metering |
 | `compliance` | Eine Control-Map zu ISO 27001, TISAX, NIS2 und DSGVO nach Klausel- und Artikelnummer, eine Triage nach dem AI Act und eine rechtliche Grundausstattung für eine Website (Impressum, Datenschutzseite, security.txt, keine Anfragen an Dritte beim Laden der Seite). Gate-Checks für security.txt und Anfragen an Dritte. | Python 3.9+ |
 | `decisions` | RFCs, Architecture Decision Records (ADRs) und ein Review des Entscheidungslogs. Vorlagen für beide Dokumente und ein Gate-Check, der prüft, dass jeder ADR einen Status, einen Owner und ein Datum hat. | Python 3.9+ für den Gate-Check |
 | `docs` | Ein Docs-Baum, in dem jede Seite einen Owner und Review-Daten hat, Runbooks und eine Suche nach veralteten Seiten. Ein statischer Docs-Build und ein Gate-Check auf die Review-Felder. | Python 3.9+ |
@@ -155,6 +155,7 @@ Wenn du die Kits früher nach `~/.claude/` kopiert hast, entferne nach der Insta
 claude plugin validate --strict .
 for p in plugins/* plugins/*/skills; do claude plugin validate --strict "$p"; done
 python3 scripts/test_checks.py
+python3 plugins/sdlc/skills/sdlc-audit/test_probe.py
 ```
 
 `scripts/test_checks.py` führt den Gate-Check jedes Moduls mit dem Gate-Runner gegen seine Pass- und Fail-Fixtures aus. Das Skript braucht Python 3.9+ und endet mit Exit-Code 1, wenn ein Check eine Fail-Fixture besteht oder an einer Pass-Fixture scheitert.

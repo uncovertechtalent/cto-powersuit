@@ -1,0 +1,535 @@
+{
+ "title": "33 inherited commits and one by the user: history too thin, user commits only",
+ "purpose": "users",
+ "observations": {
+  "files": [
+   "README.md",
+   "app.py",
+   ".github/workflows/deploy.yml",
+   "tests/test_app.py"
+  ],
+  "texts": {
+   ".github/workflows/deploy.yml": "jobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pytest\n  deploy:\n    needs: test\n    steps:\n      - uses: actions/deploy-pages@v4\n",
+   "README.md": "# App\n\n```bash\npython3 app.py run\n```\n"
+  },
+  "remote_url": "https://github.com/dev-org/app.git",
+  "own_owners": [
+   "dev",
+   "dev-org"
+  ],
+  "gh_available": true,
+  "branch_protection": {
+   "exit": 0,
+   "output": "{}"
+  },
+  "author": "dev@example.com",
+  "all_commits": [
+   {
+    "sha": "0000000000000000000000000000000000000001",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000002",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000003",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000004",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000005",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000006",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000007",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000008",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000009",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000000a",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000000b",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000000c",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000000d",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000000e",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000000f",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000010",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000011",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000012",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000013",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000014",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000015",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000016",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000017",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000018",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000019",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000001a",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000001b",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000001c",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000001d",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000001e",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "000000000000000000000000000000000000001f",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000020",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "0000000000000000000000000000000000000021",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "lines": 40,
+    "files": 2
+   },
+   {
+    "sha": "5555555555555555555555555555555555555555",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "lines": 13691,
+    "files": 54
+   }
+  ],
+  "first_parent": [
+   {
+    "sha": "0000000000000000000000000000000000000001",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 1",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000002",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 2",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000003",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 3",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000004",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 4",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000005",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 5",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000006",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 6",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000007",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 7",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000008",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 8",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000009",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 9",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000000a",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 10",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000000b",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 11",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000000c",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 12",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000000d",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 13",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000000e",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 14",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000000f",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 15",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000010",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 16",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000011",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 17",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000012",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 18",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000013",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 19",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000014",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 20",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000015",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 21",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000016",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 22",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000017",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 23",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000018",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 24",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000019",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 25",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000001a",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 26",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000001b",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 27",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000001c",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 28",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000001d",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 29",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000001e",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 30",
+    "merge": false
+   },
+   {
+    "sha": "000000000000000000000000000000000000001f",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 31",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000020",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 32",
+    "merge": false
+   },
+   {
+    "sha": "0000000000000000000000000000000000000021",
+    "author": "Dev",
+    "email": "organiser@example.org",
+    "subject": "Template 33",
+    "merge": false
+   },
+   {
+    "sha": "5555555555555555555555555555555555555555",
+    "author": "Dev",
+    "email": "dev@example.com",
+    "subject": "Submission",
+    "merge": false
+   }
+  ],
+  "imports_by_file": {
+   "app.py": {
+    "python": [
+     "json",
+     "os"
+    ]
+   }
+  },
+  "inline_manifests": [],
+  "local_modules": [
+   "app",
+   "tests"
+  ],
+  "verify_defs": [],
+  "tags": [
+   "v1.0.0"
+  ],
+  "secret_hits": [],
+  "hurt_commits": [],
+  "failed_runs": 0,
+  "issues": 12
+ },
+ "expect": {
+  "history.thin": true,
+  "history.user_commits": 1,
+  "history.inherited_commits": 33,
+  "history.largest_user_commit.lines": 13691,
+  "stages.request.evidence[1]": "0 of 1 of the user's main-line commits name a ticket"
+ }
+}

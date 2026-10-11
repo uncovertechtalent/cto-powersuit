@@ -14,7 +14,7 @@ claude plugin install sdlc@cto-powersuit
 
 | Skill | What it does |
 |---|---|
-| `/sdlc:sdlc-audit` | Reads a repository and returns a ranked list of missing lifecycle stages, each with its evidence and the module or skill that fills it. Read only; needs no other module |
+| `/sdlc:sdlc-audit` | Reads a repository and returns the missing lifecycle stages ranked by damage for what it ships to (users, a grader, nothing), each with its evidence and the module or skill that fills it. Read only; needs no other module. Its probes run in `skills/sdlc-audit/probe.py`, with recorded test cases in `skills/sdlc-audit/cases/` |
 | `/sdlc:sdlc-init` | Writes `docs/sdlc.md`: stage table with entry and exit criteria, owner, record and serving module, plus the gaps |
 | `/sdlc:work-item` | Walks one change through the stages and keeps a trace table with the record of each stage |
 | `/sdlc:ticket` | Writes a ticket with problem, testable acceptance criteria, risk and labels; sets up the label scheme |
