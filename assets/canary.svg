@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 420" width="400" height="420" role="img" aria-labelledby="t d">
+  <title id="t">CTO Powersuit canary</title>
+  <desc id="d">A yellow canary in a white hard hat and a steel chest plate with a green check mark, standing on a deploy pipeline of green stages and one amber stage.</desc>
+
+  <!-- pipeline -->
+  <line x1="30" y1="330" x2="370" y2="330" stroke="#94A3B8" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="60" cy="330" r="13" fill="#22C55E" stroke="#15803D" stroke-width="3"/>
+  <circle cx="130" cy="330" r="13" fill="#22C55E" stroke="#15803D" stroke-width="3"/>
+  <circle cx="270" cy="330" r="13" fill="#22C55E" stroke="#15803D" stroke-width="3"/>
+  <circle cx="340" cy="330" r="13" fill="#F59E0B" stroke="#B45309" stroke-width="3"/>
+
+  <!-- tail -->
+  <path d="M120 238 L60 270 L78 236 L52 222 L118 214 Z" fill="#E0B000" stroke="#7A5A00" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- legs -->
+  <path d="M188 292 L182 318 M182 318 L170 324 M182 318 L192 326" stroke="#E07A1F" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M222 292 L226 318 M226 318 L214 326 M226 318 L238 324" stroke="#E07A1F" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- body -->
+  <ellipse cx="200" cy="232" rx="88" ry="72" fill="#FACC15" stroke="#7A5A00" stroke-width="3"/>
+
+  <!-- chest plate -->
+  <path d="M168 196 Q200 180 238 196 L246 262 Q206 292 166 262 Z" fill="#64748B" stroke="#1E293B" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M176 204 Q204 192 232 204" fill="none" stroke="#CBD5E1" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="206" cy="236" r="20" fill="#22C55E" stroke="#14532D" stroke-width="3"/>
+  <path d="M196 236 L203 244 L217 228" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- wing -->
+  <path d="M132 214 Q118 252 150 278 Q160 246 158 212 Z" fill="#E0B000" stroke="#7A5A00" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- head -->
+  <circle cx="246" cy="146" r="50" fill="#FACC15" stroke="#7A5A00" stroke-width="3"/>
+  <!-- hard hat -->
+  <path d="M206 128 Q206 80 248 78 Q290 80 290 128 Z" fill="#F8FAFC" stroke="#1E293B" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M248 80 L248 126" stroke="#CBD5E1" stroke-width="6" stroke-linecap="round"/>
+  <path d="M226 88 Q222 106 222 126 M270 88 Q274 106 274 126" fill="none" stroke="#E2E8F0" stroke-width="3" stroke-linecap="round"/>
+  <path d="M192 126 L306 126 Q312 134 302 138 L196 138 Q186 134 192 126 Z" fill="#F8FAFC" stroke="#1E293B" stroke-width="3" stroke-linejoin="round"/>
+  <!-- eye -->
+  <circle cx="262" cy="146" r="9" fill="#1E293B"/>
+  <circle cx="265" cy="143" r="3" fill="#FFFFFF"/>
+  <!-- beak -->
+  <path d="M292 152 L322 160 L292 170 Z" fill="#F97316" stroke="#9A3412" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- label -->
+  <text x="200" y="395" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" fill="#334155">cto-powersuit</text>
+</svg>

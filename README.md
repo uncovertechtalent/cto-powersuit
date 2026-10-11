@@ -2,6 +2,8 @@
 
 # cto-powersuit
 
+<p align="center"><img src="assets/canary.svg" width="200" alt="The CTO powersuit canary: a canary in a hard hat and a steel chest plate, standing on a deploy pipeline"></p>
+
 [![checks](https://github.com/uncovertechtalent/cto-powersuit/actions/workflows/checks.yml/badge.svg)](https://github.com/uncovertechtalent/cto-powersuit/actions/workflows/checks.yml) [![skills.sh](https://skills.sh/b/uncovertechtalent/cto-powersuit)](https://skills.sh/uncovertechtalent/cto-powersuit)
 
 **The CTO powersuit is a set of agent skills, one module per CTO function from the deploy gate to the hand-over, that one person uses to run a company's whole engineering platform.**
