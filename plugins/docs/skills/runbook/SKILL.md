@@ -1,11 +1,12 @@
 ---
 name: runbook
 description: >
-  Write a runbook page for one symptom or procedure, from an incident, a chat
-  or the user's notes: Symptom, Checks, Steps, Verify, Roll back or escalate,
-  with owner and review dates, linked from the runbooks index. One runbook per
-  symptom. Activates on "/runbook", "write a runbook", "turn this incident
-  into a runbook", "document this fix", "add a runbook for".
+  Write a runbook page for one symptom or procedure, from an incident, a chat or
+  the user's notes: Symptom, Checks, Steps, Verify, Roll back or escalate, with
+  owner and review dates, linked from the runbooks index. Use after an incident,
+  or when a procedure exists only in a chat or in one person's notes. One
+  runbook per symptom. Activates on "/runbook", "write a runbook", "turn this
+  incident into a runbook", "document this fix", "add a runbook for".
 user-invocable: true
 ---
 

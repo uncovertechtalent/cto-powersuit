@@ -3,9 +3,10 @@ name: docs-init
 description: >
   Set up a docs tree in the current repository: ask for the spaces, copy the
   config, a home page per space, the page templates and the build script, fill
-  the front matter (owner, review dates, type) and run the first build. Never
-  overwrites a file. Activates on "/docs-init", "set up docs", "add a docs
-  tree", "docs as code for this repo", "start the documentation".
+  the front matter (owner, review dates, type) and run the first build. Use when
+  a repository has no docs tree yet, or its docs pages have no owners and review
+  dates. Never overwrites a file. Activates on "/docs-init", "set up docs", "add
+  a docs tree", "docs as code for this repo", "start the documentation".
 user-invocable: true
 ---
 

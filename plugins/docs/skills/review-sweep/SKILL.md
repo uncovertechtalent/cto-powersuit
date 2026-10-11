@@ -2,11 +2,12 @@
 name: review-sweep
 description: >
   Find stale docs pages (review date passed, due within 30 days, reviewed: no,
-  no owner or no type), group them by owner, check each page against the
-  system it describes, and update reviewed and review_by only after that check.
-  Reports what changed and what still needs the owner. Never bumps a date
-  without a check. Activates on "/review-sweep", "review the docs", "which docs
-  are stale", "docs review sweep", "fix docs health".
+  no owner or no type), group them by owner, check each page against the system
+  it describes, and update reviewed and review_by only after that check. Use on
+  a schedule, or when pages are past their review date. Reports what changed and
+  what still needs the owner. Never bumps a date without a check. Activates on
+  "/review-sweep", "review the docs", "which docs are stale", "docs review
+  sweep", "fix docs health".
 user-invocable: true
 ---
 

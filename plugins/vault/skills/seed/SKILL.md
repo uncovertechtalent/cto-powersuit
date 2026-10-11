@@ -2,9 +2,10 @@
 name: seed
 description: >
   Seed the user's personal vault from an interview about their actual domains,
-  re-explained facts, and privacy boundary. Generates domain folders, first
-  atoms, starter MOCs, and a fitted CLAUDE.md from the vault-starter template.
-  Activates on "/seed", "seed my vault", "set up my vault".
+  re-explained facts, and privacy boundary. Use once after /vault:vault-init, to
+  fit the starter vault to the user's own domains. Generates domain folders,
+  first atoms, starter MOCs, and a fitted CLAUDE.md from the vault-starter
+  template. Activates on "/seed", "seed my vault", "set up my vault".
 user-invocable: true
 ---
 

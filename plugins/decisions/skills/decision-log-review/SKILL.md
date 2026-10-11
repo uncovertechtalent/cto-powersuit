@@ -4,8 +4,9 @@ description: >
   Sweep the decision log in docs/decisions/ and report what needs attention:
   records missing status, owner or date, proposed ADRs older than 30 days, RFCs
   past comments_close still in draft or review, broken supersede links,
-  duplicate numbers, decisions past their review_by date, and a spot check of
-  a few accepted decisions against the code. Read-only until the user says go.
+  duplicate numbers, decisions past their review_by date, and a spot check of a
+  few accepted decisions against the code. Use for a regular review of the
+  decision log, or before a planning round. Read-only until the user says go.
   Activates on "/decision-log-review", "review the decision log", "audit the
   ADRs", "check the decision records", "which decisions are stale".
 user-invocable: true

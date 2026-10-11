@@ -2,9 +2,10 @@
 name: style-review
 description: >
   Audit existing prose against the user's personal vestige catalog (from their
-  generated output-filter skill). Returns a hit list with location, pattern,
-  severity, and suggested rewrite. Read-only: report, no modification.
-  Activates on "/style-review", "check for vestiges", "audit this for hedging".
+  generated output-filter skill). Use on a draft before it ships, to list the
+  vestige hits in it. Returns a hit list with location, pattern, severity, and
+  suggested rewrite. Read-only: report, no modification. Activates on
+  "/style-review", "check for vestiges", "audit this for hedging".
 user-invocable: true
 ---
 

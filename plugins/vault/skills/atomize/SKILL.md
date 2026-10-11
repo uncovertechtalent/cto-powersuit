@@ -1,8 +1,9 @@
 ---
 name: atomize
 description: >
-  Turn a document, chat log, braindump, or the _inbox into linked one-idea
-  atoms plus index links, following the vault's conventions. Activates on
+  Turn a document, chat log, braindump, or the _inbox into linked one-idea atoms
+  plus index links, following the vault's conventions. Use when a document, a
+  chat log or the inbox needs to go into the vault as linked notes. Activates on
   "/atomize", "atomize this", "sweep the inbox", "file this into the vault".
 user-invocable: true
 ---

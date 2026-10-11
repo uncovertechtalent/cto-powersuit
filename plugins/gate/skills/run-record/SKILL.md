@@ -3,9 +3,11 @@ name: run-record
 description: >
   Read the deploy gate's run records and report: the last result, why a deploy
   was blocked and the shortest fix, open and closed findings, what changed
-  between two runs, and whether the weekly run still happens. Can also write a
-  manual run record. Activates on "/run-record", "why did the gate block",
-  "gate status", "what did the gate find", "record a gate run".
+  between two runs, and whether the weekly run still happens. Use when the gate
+  blocked a deploy, when someone asks what the gate found, or for a weekly gate
+  status. Can also write a manual run record. Activates on "/run-record", "why
+  did the gate block", "gate status", "what did the gate find", "record a gate
+  run".
 user-invocable: true
 ---
 

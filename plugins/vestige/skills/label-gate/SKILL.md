@@ -1,11 +1,13 @@
 ---
 name: label-gate
 description: >
-  Epistemic gate for diagnostic labels. When output reaches for "conspiracy
-  theory", "debunked", "fringe", "baseless" or "discredited", the label becomes
-  a trigger instead of a verdict: it stands only after the claim is scored on
-  four form questions, and the scores print with the answer. Activates on
-  "label gate on" or "/label-gate". Deactivates on "label gate off" / "normal mode".
+  Epistemic gate for diagnostic labels. Use when a reply is about to call a
+  claim debunked, fringe or a conspiracy theory. When output reaches for
+  "conspiracy theory", "debunked", "fringe", "baseless" or "discredited", the
+  label becomes a trigger instead of a verdict: it stands only after the claim
+  is scored on four form questions, and the scores print with the answer.
+  Activates on "label gate on" or "/label-gate". Deactivates on "label gate off"
+  / "normal mode".
 user-invocable: true
 ---
 

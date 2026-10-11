@@ -1,13 +1,14 @@
 ---
 name: guess-gate
 description: >
-  Reference-verification gate. Hallucinated references (paths, commands,
-  usernames, quotes, citations) get corrected against ground truth or
-  explicitly labelled unverified before the reply stands. Ships with a
-  deterministic Stop hook (hooks/guess-scan.js in this plugin) for the locally checkable
-  classes, plus procedures for logit-level and sampling-level gating on
-  open-weight models. Activates on "guess gate on" or "/guess-gate".
-  Deactivates on "guess gate off" / "normal mode".
+  Reference-verification gate. Use when replies name paths, commands, usernames,
+  quotes or citations that must exist. Hallucinated references (paths, commands,
+  usernames, quotes, citations) get corrected against ground truth or explicitly
+  labelled unverified before the reply stands. Ships with a deterministic Stop
+  hook (hooks/guess-scan.js in this plugin) for the locally checkable classes,
+  plus procedures for logit-level and sampling-level gating on open-weight
+  models. Activates on "guess gate on" or "/guess-gate". Deactivates on "guess
+  gate off" / "normal mode".
 user-invocable: true
 ---
 

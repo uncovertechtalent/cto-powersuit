@@ -2,6 +2,8 @@
 
 # cto-powersuit
 
+[![skills.sh](https://skills.sh/b/uncovertechtalent/cto-powersuit)](https://skills.sh/uncovertechtalent/cto-powersuit)
+
 Agent-Skills für die Arbeit eines CTO, ein Plugin pro Funktion, in einem Plugin-Marketplace für Claude Code. Ein Team installiert die Module, die es braucht, und betreibt sie mit allgemeinen Standardwerten.
 
 Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eigenen Daten für dieses Modul, außerhalb des Repositorys gespeichert. Siehe [Overlay](#overlay-deine-private-ebene).
@@ -41,6 +43,14 @@ claude plugin install stance@cto-powersuit
 In Claude Code funktioniert dasselbe als `/plugin marketplace add ...` und `/plugin install ...`. Starte Claude Code nach der Installation neu.
 
 Aus einem lokalen Klon: `claude plugin marketplace add /path/to/cto-powersuit`.
+
+Mit der [skills-CLI](https://skills.sh), für Claude Code und andere Agenten:
+
+```bash
+npx skills add uncovertechtalent/cto-powersuit
+```
+
+Die skills-CLI kopiert nur die Skill-Ordner. Skills, die Vorlagen kopieren, die Hooks und der MCP-Server brauchen die Plugin-Installation oben oder einen Klon dieses Repositorys.
 
 ## Overlay: deine private Ebene
 

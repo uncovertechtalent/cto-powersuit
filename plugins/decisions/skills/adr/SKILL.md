@@ -3,10 +3,12 @@ name: adr
 description: >
   Record one decision as a numbered architecture decision record (ADR) with
   context, decision and consequences, from an accepted or rejected RFC or
-  directly for a small decision. Handles supersede links on both records and
-  keeps the index in docs/decisions/index.md current. Never overwrites a file.
-  Activates on "/adr", "write an ADR", "record a decision", "record this
-  decision", "new decision record", "supersede ADR", "this replaces ADR".
+  directly for a small decision. Use when a decision is made, from a closed RFC
+  or directly, and the team needs a record of it. Handles supersede links on
+  both records and keeps the index in docs/decisions/index.md current. Never
+  overwrites a file. Activates on "/adr", "write an ADR", "record a decision",
+  "record this decision", "new decision record", "supersede ADR", "this replaces
+  ADR".
 user-invocable: true
 ---
 

@@ -2,10 +2,11 @@
 name: rfc
 description: >
   Write a request for comments (RFC) from a problem statement and run it to a
-  decision: draft, open for comments until comments_close, decide, then hand
-  the outcome to the adr skill, which writes the decision record and links
-  back. Never overwrites a file. Activates on "/rfc", "write an RFC",
-  "draft an RFC", "request for comments", "propose a change for review",
+  decision: draft, open for comments until comments_close, decide, then hand the
+  outcome to the adr skill, which writes the decision record and links back. Use
+  when a change touches more than one team, is hard to undo or needs comments
+  before a decision. Never overwrites a file. Activates on "/rfc", "write an
+  RFC", "draft an RFC", "request for comments", "propose a change for review",
   "open the RFC for comments", "close the RFC".
 user-invocable: true
 ---

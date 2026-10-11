@@ -3,9 +3,10 @@ name: gate-init
 description: >
   Set up a deploy gate in the current repository: a rules folder, a runner that
   writes run records, a GitHub Actions workflow whose deploy job waits for the
-  gate, and three starter rules. Copies templates and never overwrites a file.
-  Activates on "/gate-init", "set up the gate", "add a deploy gate",
-  "gate the deploy".
+  gate, and three starter rules. Use when a repository has no deploy gate yet
+  and the team wants checks to run before every deploy. Copies templates and
+  never overwrites a file. Activates on "/gate-init", "set up the gate", "add a
+  deploy gate", "gate the deploy".
 user-invocable: true
 ---
 

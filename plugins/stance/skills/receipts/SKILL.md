@@ -2,10 +2,12 @@
 name: receipts
 description: >
   Receipts standard: probe before you assert, snapshot before you change, label
-  what is unverified. Loaded at every session start by the stance plugin's
-  SessionStart hook, ahead of the style filters. Invoke it by hand to reload the
-  standard mid-session. Activates on "/receipts", "receipts standard",
-  "show your receipts". Turn the session-start load off with STANCE_RECEIPTS=off.
+  what is unverified. Use when claims about state, access or completion need a
+  probe from the current session before they stand. Loaded at every session
+  start by the stance plugin's SessionStart hook, ahead of the style filters.
+  Invoke it by hand to reload the standard mid-session. Activates on
+  "/receipts", "receipts standard", "show your receipts". Turn the session-start
+  load off with STANCE_RECEIPTS=off.
 user-invocable: true
 ---
 

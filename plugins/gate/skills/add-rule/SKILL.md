@@ -2,10 +2,11 @@
 name: add-rule
 description: >
   Add a rule to the deploy gate: install a check that another module ships, or
-  write a new one. Every rule starts in the warn tier, gets a pass fixture and a
-  fail fixture, and moves to the block tier only after a recorded false-positive
-  test. Activates on "/add-rule", "add a gate rule", "gate this",
-  "make the gate check", "install the docs check".
+  write a new one. Use when the team wants a new mechanical check in the gate,
+  or wants to enable a check that another module ships. Every rule starts in the
+  warn tier, gets a pass fixture and a fail fixture, and moves to the block tier
+  only after a recorded false-positive test. Activates on "/add-rule", "add a
+  gate rule", "gate this", "make the gate check", "install the docs check".
 user-invocable: true
 ---
 

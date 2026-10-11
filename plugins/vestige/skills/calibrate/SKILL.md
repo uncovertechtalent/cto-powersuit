@@ -1,12 +1,13 @@
 ---
 name: calibrate
 description: >
-  Derive the user's personal vestige catalog and write their fitted output-filter
-  skill plus hook rule table. Interviews the user, mines their own session
-  transcripts for pushback moments, drafts catalog entries from real specimens,
-  and generates ~/.claude/skills/output-filter/SKILL.md and
-  ~/.claude/vestige-patterns.js. Activates on "/calibrate",
-  "calibrate my filter", "build my output filter".
+  Derive the user's personal vestige catalog and write their fitted
+  output-filter skill plus hook rule table. Use once after installing the
+  vestige plugin, and again when the filter misses patterns the user keeps
+  correcting. Interviews the user, mines their own session transcripts for
+  pushback moments, drafts catalog entries from real specimens, and generates
+  ~/.claude/skills/output-filter/SKILL.md and ~/.claude/vestige-patterns.js.
+  Activates on "/calibrate", "calibrate my filter", "build my output filter".
 user-invocable: true
 ---
 

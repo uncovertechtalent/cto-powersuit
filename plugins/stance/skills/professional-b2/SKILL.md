@@ -1,14 +1,15 @@
 ---
 name: professional-b2
 description: >
-  Smart-professional B2-English output mode. Strips trained-in communication
-  vestiges (praise reflexes, liability hedges, convenience-tax framings, service-worker
-  closers, consensus reflex, conflict-avoidance, performative uncertainty, implicit
-  moral-frame, preamble) and constrains register to upper-intermediate plain English.
-  Levels: lite, full (default), ultra.
-  Activates when user says "professional mode", "B2 mode", "/professional-b2",
-  or "/b2". Same selectable-mode design as the caveman plugin
-  (JuliusBrussee/caveman), with a different transform target.
+  Smart-professional B2-English output mode. Use when replies carry politeness
+  filler, hedges or a register above plain professional English. Strips
+  trained-in communication vestiges (praise reflexes, liability hedges,
+  convenience-tax framings, service-worker closers, consensus reflex,
+  conflict-avoidance, performative uncertainty, implicit moral-frame, preamble)
+  and constrains register to upper-intermediate plain English. Levels: lite,
+  full (default), ultra. Activates when user says "professional mode", "B2
+  mode", "/professional-b2", or "/b2". Same selectable-mode design as the
+  caveman plugin (JuliusBrussee/caveman), with a different transform target.
 user-invocable: true
 ---
 
