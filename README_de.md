@@ -4,9 +4,21 @@
 
 [![checks](https://github.com/uncovertechtalent/cto-powersuit/actions/workflows/checks.yml/badge.svg)](https://github.com/uncovertechtalent/cto-powersuit/actions/workflows/checks.yml) [![skills.sh](https://skills.sh/b/uncovertechtalent/cto-powersuit)](https://skills.sh/uncovertechtalent/cto-powersuit)
 
-Agent-Skills für die Arbeit eines CTO, ein Plugin pro Funktion, in einem Plugin-Marketplace für Claude Code. Ein Team installiert die Module, die es braucht, und betreibt sie mit allgemeinen Standardwerten.
+**Der CTO-Powersuit ist ein Satz Agent-Skills, ein Modul pro CTO-Funktion vom Deploy-Gate bis zur Übergabe, mit dem eine einzelne Person die gesamte Engineering-Plattform eines Unternehmens betreibt.**
+
+von [Stefan Coetzee](https://machinebehavior.io/your-next-cto/)
+
+Die Module kommen als ein Plugin-Marketplace für Claude Code, ein Plugin pro Funktion, und lassen sich auch mit der skills CLI installieren. Ein Team installiert die Module, die es braucht, und betreibt sie mit allgemeinen Standardwerten.
 
 Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eigenen Daten für dieses Modul, außerhalb des Repositorys gespeichert. Siehe [Overlay](#overlay-deine-private-ebene).
+
+## Drei Wege, den Powersuit zu nutzen
+
+1. **Selbst betreiben.** Dein Team installiert die Module aus diesem Repository und betreibt sie selbst. Siehe [Installation](#installation).
+2. **Hilfe holen.** Kommt dein Team nicht weiter, übernimmt Stefan Coetzee eine Bestandsaufnahme oder die Installation.
+3. **Stefan Coetzee als Fractional CTO.** Er betreibt den Powersuit für dein Unternehmen, mit seiner eigenen Forschung und seinen eigenen Daten in einem privaten Overlay über den offenen Modulen. Dieses Overlay bleibt außerhalb dieses Repositorys.
+
+Für den zweiten und dritten Weg: [machinebehavior.io/your-next-cto/](https://machinebehavior.io/your-next-cto/).
 
 ## Module
 
