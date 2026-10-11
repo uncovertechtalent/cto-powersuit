@@ -80,3 +80,13 @@ Every hook hit lands in `~/.claude/guess-scan.log` with a timestamp. The log
 is the dataset: after a month you know your model's reference-guess base
 rate, which classes fire, and whether the rate moves across model versions.
 Publish it; that is the difference between a vibe and a finding.
+
+## Overlay
+
+This skill works on the generic defaults in this file. Before you start, check for a private overlay:
+
+```bash
+[ -n "$POWERSUIT_OVERLAY" ] && ls -1 "$POWERSUIT_OVERLAY/vestige" 2>/dev/null
+```
+
+If `$POWERSUIT_OVERLAY/vestige/` exists, read its `README.md` first, then the files in `vestige/guess-gate/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.

@@ -70,3 +70,13 @@ Tell them the maintenance loop from `${CLAUDE_PLUGIN_ROOT}/CALIBRATION.md` step 
 - Do not pad the catalog to look thorough. Five rules that fire correctly beat twenty that argue.
 - If their specimens contradict their interview answers (they SAY praise is fine, but three specimens show them snapping at praise), show them the contradiction and let them decide. Specimens outrank self-report as evidence, but the user outranks both.
 - The generated skill governs model-to-user output only. Never apply it to the user's own writing unless they ask.
+
+## Overlay
+
+This skill works on the generic defaults in this file. Before you start, check for a private overlay:
+
+```bash
+[ -n "$POWERSUIT_OVERLAY" ] && ls -1 "$POWERSUIT_OVERLAY/vestige" 2>/dev/null
+```
+
+If `$POWERSUIT_OVERLAY/vestige/` exists, read its `README.md` first, then the files in `vestige/calibrate/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.

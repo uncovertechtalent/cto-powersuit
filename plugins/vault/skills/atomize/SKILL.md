@@ -27,3 +27,13 @@ Input: a file path, pasted text, or (no argument) the vault's `_inbox/`. Output:
 - Boring operational text (logistics, scheduling) usually doesn't earn atoms. When most of a source is noise, say so and extract the two things that weren't.
 - Long verbatim material worth keeping (a quoted email, a spec) can live as an atom-with-a-body; the first line still states why it's kept.
 - Anything touching the CLAUDE.md private boundary: file it inside the boundary and never quote it outside the vault.
+
+## Overlay
+
+This skill works on the generic defaults in this file. Before you start, check for a private overlay:
+
+```bash
+[ -n "$POWERSUIT_OVERLAY" ] && ls -1 "$POWERSUIT_OVERLAY/vault" 2>/dev/null
+```
+
+If `$POWERSUIT_OVERLAY/vault/` exists, read its `README.md` first, then the files in `vault/atomize/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.

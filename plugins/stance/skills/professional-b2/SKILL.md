@@ -89,3 +89,13 @@ Security warnings; irreversible-action confirmations; multi-step sequences where
 - `mode-leak` (this plugin): spoken-vs-written register filter (speech devices in writing, the main "AI generated" tell).
 - `good-chad` (this plugin): the stance layer under this lexical one.
 - The `vestige` plugin (same marketplace): `style-review` audits existing prose, and its Stop hook is the mechanical regex backstop for the high-confidence slice of a catalog. It blocks once per turn with a fix list. Its catalog is the one you derive with `/vestige:calibrate`, not this one.
+
+## Overlay
+
+This skill works on the generic defaults in this file. Before you start, check for a private overlay:
+
+```bash
+[ -n "$POWERSUIT_OVERLAY" ] && ls -1 "$POWERSUIT_OVERLAY/stance" 2>/dev/null
+```
+
+If `$POWERSUIT_OVERLAY/stance/` exists, read its `README.md` first, then the files in `stance/professional-b2/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.

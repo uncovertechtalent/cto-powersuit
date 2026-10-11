@@ -188,3 +188,13 @@ Tricolons, punch paragraphs and uniformity are too noisy for regex. They stay in
 - Douglas Biber, *Variation across Speech and Writing* (Cambridge University Press, 1988): the strongest dimension across real texts is involved vs informational, and it tracks mode.
 - Martin Joos, *The Five Clocks* (1961 or 1962; sources differ): the formality axis (frozen, formal, consultative, casual, intimate).
 - M.A.K. Halliday: register as field, tenor and mode.
+
+## Overlay
+
+This skill works on the generic defaults in this file. Before you start, check for a private overlay:
+
+```bash
+[ -n "$POWERSUIT_OVERLAY" ] && ls -1 "$POWERSUIT_OVERLAY/stance" 2>/dev/null
+```
+
+If `$POWERSUIT_OVERLAY/stance/` exists, read its `README.md` first, then the files in `stance/mode-leak/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.

@@ -27,6 +27,32 @@ Inside Claude Code the same works as `/plugin marketplace add ...` and `/plugin 
 
 From a local clone: `claude plugin marketplace add /path/to/cto-powersuit`.
 
+## Overlay: your private layer
+
+Every skill in this repository works on generic defaults. Each one also checks for an overlay: a folder you keep outside the repository with your own data for that module, such as rubrics, calibrations, past decisions, incident history and local conventions.
+
+Set `POWERSUIT_OVERLAY` to the overlay root, in your shell or in the `env` block of `settings.json`. One folder per module, named after the plugin:
+
+```text
+$POWERSUIT_OVERLAY/
+  decisions/
+    README.md      what this overlay holds; every skill in the module reads it first
+    adr/           files for one skill, named after the skill
+  docs/
+  gate/
+  vestige/
+```
+
+Read order for skill `<skill>` in module `<module>`:
+
+1. `$POWERSUIT_OVERLAY/<module>/README.md`, if present.
+2. `$POWERSUIT_OVERLAY/<module>/<skill>/`, if present.
+3. The defaults in the skill itself.
+
+Where the overlay and the skill disagree, the skill follows the overlay. With the variable unset or the module folder missing, the skill runs on its defaults and does not ask for an overlay.
+
+Nothing from an overlay goes into this repository. Keep it in a private location with no public remote. A team that installs the modules builds its own overlay over time from its decisions, incidents, docs and cost history.
+
 ## vestige
 
 Run `/vestige:calibrate` first. Until you do, the hooks use a small starter table (praise openers, service closers, filler idioms, stage hooks). Calibration writes two files you own, outside the plugin, so plugin updates never overwrite them:

@@ -64,3 +64,13 @@ politeness catalog: scan output for the trigger terms, bounce responses that
 carry a label without a printed score, log every firing with a timestamp. The
 log is the dataset; after a month you know your model's label base-rate and
 what fraction survives scoring.
+
+## Overlay
+
+This skill works on the generic defaults in this file. Before you start, check for a private overlay:
+
+```bash
+[ -n "$POWERSUIT_OVERLAY" ] && ls -1 "$POWERSUIT_OVERLAY/vestige" 2>/dev/null
+```
+
+If `$POWERSUIT_OVERLAY/vestige/` exists, read its `README.md` first, then the files in `vestige/label-gate/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.

@@ -54,3 +54,13 @@ Severity comes from the user's catalog ordering (entries they confirmed as BLOCK
 - Not a grammar or fact checker.
 - Not a universal AI-detector. The catalog is fitted to one reader; other readers' legitimate registers will false-positive against it.
 - Not a rewrite service by default. `--rewrite` is opt-in; the default report leaves the text alone.
+
+## Overlay
+
+This skill works on the generic defaults in this file. Before you start, check for a private overlay:
+
+```bash
+[ -n "$POWERSUIT_OVERLAY" ] && ls -1 "$POWERSUIT_OVERLAY/vestige" 2>/dev/null
+```
+
+If `$POWERSUIT_OVERLAY/vestige/` exists, read its `README.md` first, then the files in `vestige/style-review/` if that folder exists. Read other overlay files only when that README or this skill names them. Where the overlay and this file disagree, follow the overlay. If the variable is unset or the folder is missing, use the defaults and do not ask for an overlay. Never copy overlay content into this plugin, into its templates or into any public repository.
