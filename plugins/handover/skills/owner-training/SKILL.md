@@ -60,6 +60,7 @@ Gives the new owner of each module one checklist with four steps: read, run, cha
    | observability | `observability/docker-compose.yml`, the dashboard specs, the alert routes | Start the stack and check that each component answers | One dashboard panel through `/observability:dashboards-as-code` | A test alert reaches the right receiver |
    | finops | `docs/fin/index.md`, the cost baseline | The monthly baseline or FOCUS export | Allocate one service in the showback | The month reconciles with the invoices and passes `finops.cost-provenance` |
    | compliance | `compliance/control-map.csv`, `.well-known/security.txt` | The gap report of `/compliance:control-map` | Update the evidence of one control | Every control has an owner; security.txt is valid and not expired |
+   | security | `docs/security/index.md`, the provenance log, the rotation runbooks | `/security:access-review` | Approve one new action owner or skill after a provenance check | One secret rotated from its runbook; `security.secrets` passes |
    | ai-ops | `docs/agents.md`, the shared agent settings | The metering dashboard and the budget alert | One permission or plugin, reviewed | Agents run with the shared settings; the budget alert evaluates |
    | hiring | `hiring/loop.md` | One loop for one candidate, with the person handing over present | One stage or rubric line | The next loop leaves a complete debrief |
    | red-team | `red-team/plan.md` | `/red-team:pressure-run` with the stub adapter | One plan change, as a new plan version | `/red-team:pressure-grade` scores the run |

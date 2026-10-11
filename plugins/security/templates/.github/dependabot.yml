@@ -1,0 +1,25 @@
+# Dependabot keeps pinned actions and locked dependencies current.
+# For actions pinned by commit SHA, each update moves the pin to the commit of the new release and
+# rewrites the version comment after it. One group per ecosystem gives one pull request per run.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    # "/" covers .github/workflows; the second entry covers composite actions in this repository.
+    directories: ["/", "/.github/actions/*"]
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
+    # An action from your own organisation that you bump by hand when it changes:
+    # ignore:
+    #   - dependency-name: "my-org/my-repo*"
+
+  # One block per ecosystem with a manifest and a lock file, for example:
+  # - package-ecosystem: npm
+  #   directory: "/"
+  #   schedule:
+  #     interval: weekly
+  #   groups:
+  #     npm:
+  #       patterns: ["*"]

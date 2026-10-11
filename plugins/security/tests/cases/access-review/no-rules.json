@@ -1,0 +1,32 @@
+{
+ "rulesets": [],
+ "classic_protection": null,
+ "bypass_suites": [],
+ "collaborators": [
+  {
+   "login": "lead",
+   "role": "admin"
+  },
+  {
+   "login": "dev",
+   "role": "write"
+  }
+ ],
+ "outside": [],
+ "deploy_keys": [],
+ "expect": {
+  "red": [
+   "no-branch-rules"
+  ],
+  "amber": []
+ },
+ "repo": "example-org/no-rules",
+ "days": 30,
+ "meta": {
+  "owner_type": "Organization",
+  "default_branch": "main",
+  "visibility": "private"
+ },
+ "today": "2026-10-11",
+ "errors": {}
+}

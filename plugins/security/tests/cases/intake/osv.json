@@ -1,0 +1,17 @@
+{
+ "packages": 3,
+ "queried": 3,
+ "skipped_no_version": 0,
+ "vulns": [
+  {
+   "purl": "pkg:golang/example.org/lib@v1.2.0",
+   "id": "GO-2026-0042",
+   "aliases": [],
+   "severity": "unknown",
+   "fixed": [
+    "1.2.3"
+   ],
+   "summary": "Example panic"
+  }
+ ]
+}

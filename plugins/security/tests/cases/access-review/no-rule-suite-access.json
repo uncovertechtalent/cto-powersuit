@@ -1,0 +1,65 @@
+{
+ "rulesets": [
+  {
+   "id": 101,
+   "name": "main",
+   "enforcement": "active",
+   "source": "Repository",
+   "include": [
+    "~DEFAULT_BRANCH"
+   ],
+   "rules": [
+    "deletion",
+    "non_fast_forward",
+    "pull_request"
+   ],
+   "required_approvals": 1,
+   "bypass_actors": []
+  }
+ ],
+ "classic_protection": null,
+ "bypass_suites": null,
+ "errors": {
+  "rule_suites": "gh: Not Found (HTTP 404)"
+ },
+ "merged_prs": [
+  {
+   "number": 7,
+   "merged_at": "2026-10-03T10:00:00Z",
+   "author": "dev",
+   "approvals": 0
+  },
+  {
+   "number": 8,
+   "merged_at": "2026-10-04T10:00:00Z",
+   "author": "dev",
+   "approvals": 1
+  }
+ ],
+ "collaborators": [
+  {
+   "login": "lead",
+   "role": "admin"
+  },
+  {
+   "login": "dev",
+   "role": "write"
+  }
+ ],
+ "outside": [],
+ "deploy_keys": [],
+ "expect": {
+  "red": [
+   "merged-below-approvals"
+  ],
+  "amber": []
+ },
+ "repo": "example-org/no-rule-suite-access",
+ "days": 30,
+ "meta": {
+  "owner_type": "Organization",
+  "default_branch": "main",
+  "visibility": "private"
+ },
+ "today": "2026-10-11"
+}

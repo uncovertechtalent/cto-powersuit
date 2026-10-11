@@ -1,0 +1,5 @@
+name: build
+runs:
+  using: composite
+  steps:
+    - uses: actions/upload-artifact@0123456789abcdef0123456789abcdef01234567 # v4.6.2

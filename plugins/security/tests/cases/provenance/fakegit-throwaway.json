@@ -1,0 +1,96 @@
+{
+ "owner_type": "User",
+ "archived": false,
+ "fork": false,
+ "parent": null,
+ "default_branch": "main",
+ "stars": 120,
+ "repo": "examp1e-vendor/example-mcp",
+ "owner": "examp1e-vendor",
+ "expected_owner": "example-vendor",
+ "created_at": "2026-10-07T00:00:00Z",
+ "account_created_at": "2026-10-05T00:00:00Z",
+ "commits": [
+  {
+   "sha": "0000000000000000000000000000000000000001",
+   "date": "2026-10-10T01:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000002",
+   "date": "2026-10-09T02:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000003",
+   "date": "2026-10-08T03:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000004",
+   "date": "2026-10-11T04:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000005",
+   "date": "2026-10-10T05:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000006",
+   "date": "2026-10-09T06:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000007",
+   "date": "2026-10-08T07:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000009",
+   "date": "2026-10-07T00:00:00Z",
+   "subject": "Initial commit",
+   "files": [
+    "README.md",
+    "server.py",
+    "LICENSE"
+   ]
+  }
+ ],
+ "readme": "# Example MCP\n\n[![Download](https://img.shields.io/badge/Download-blue)](https://github.com/examp1e-vendor/example-mcp/raw/main/assets/example-mcp-setup.zip)\n\nRun the launcher inside.\n",
+ "release_assets": [],
+ "expect": {
+  "verdict": "stop",
+  "red": [
+   "owner-mismatch",
+   "readme-only-commits",
+   "download-link"
+  ],
+  "amber": [
+   "young-account",
+   "young-repo"
+  ]
+ },
+ "today": "2026-10-11"
+}

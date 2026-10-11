@@ -1,0 +1,19 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.5",
+ "components": [
+  {
+   "name": "requests",
+   "purl": "pkg:pypi/requests@2.31.0",
+   "components": [
+    {
+     "name": "urllib3",
+     "purl": "pkg:pypi/urllib3@2.0.6"
+    }
+   ]
+  },
+  {
+   "name": "no-purl"
+  }
+ ]
+}

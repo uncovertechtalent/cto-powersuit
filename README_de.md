@@ -42,6 +42,7 @@ Für den zweiten und dritten Weg: [machinebehavior.io/your-next-cto/](https://ma
 | `red-team` | Drucktests für die KI-Funktionen eines Teams: Taktiken wählen, mehrstufigen Druck nach Skript in einer Welt mit bekannter richtiger Antwort ausüben und die getroffene Entscheidung bewerten. Ein Gate-Check, der prüft, dass jeder Lauf die erwartete und die beobachtete Entscheidung nennt. | Python 3.9+ |
 | `reliability` | Verfügbarkeitsziele pro Service mit der Ausfallzeit, die jedes Ziel erlaubt, SLOs und Error Budgets, Abläufe für Incidents und Postmortems, eine statische Statusseite und eine On-Call-Regelung. Ein Gate-Check, der prüft, dass jeder Service im Katalog einen Owner, ein SLO und ein Runbook hat. | Python 3.9+ |
 | `sdlc` | Der Lebenszyklus, der die Module verbindet: ein Audit, das die fehlenden Phasen eines Repositorys ohne Prozess nach Dringlichkeit ordnet, die Übersicht der Phasen, Tickets, Change-Review für Code von Agenten (`change-review`), Teststrategie und Release mit Rollback. Ein Gate-Check, der prüft, dass jede Änderung ein Ticket oder eine Entscheidung nennt. | Python 3.9+, git |
+| `security` | Sicherheit für ein Repository und seine Coding-Agenten: Actions per Commit-SHA gepinnt und auf eine Liste erlaubter Owner begrenzt, ein Schwachstellen-Scan der Lock-Dateien und eine SBOM, eine Herkunftsprüfung vor der Installation eines Agent-Skills oder MCP-Servers, Runbooks für die Schlüsselrotation, ein Zugriffs-Review nur mit Lesezugriff, das Merges am Pflicht-Review vorbei findet, Threat Models pro RFC und Schwachstellen-Tickets mit Frist. Gate-Checks für Secrets in versionierten Dateien und für Action-Owner. | Python 3.9+, `gh`; osv-scanner optional |
 
 ## Wissensinfrastruktur
 
@@ -73,6 +74,7 @@ claude plugin install observability@cto-powersuit
 claude plugin install red-team@cto-powersuit
 claude plugin install reliability@cto-powersuit
 claude plugin install sdlc@cto-powersuit
+claude plugin install security@cto-powersuit
 claude plugin install vestige@cto-powersuit
 claude plugin install vault@cto-powersuit
 claude plugin install stance@cto-powersuit

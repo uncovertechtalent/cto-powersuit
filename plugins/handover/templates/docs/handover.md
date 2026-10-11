@@ -68,6 +68,7 @@ The file or files a module leaves in the repository when it is installed. The ga
 | observability | `observability/docker-compose.yml` |
 | finops | `docs/fin/index.md` or `scripts/focus_export.py` |
 | compliance | `compliance/control-map.csv` or `.well-known/security.txt` |
+| security | `docs/security/index.md` or `docs/security/vuln-policy.md` |
 | ai-ops | `docs/agents.md` |
 | hiring | `hiring/loop.md` |
 | red-team | `red-team/plan.md` |

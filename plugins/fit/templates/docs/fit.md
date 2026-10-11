@@ -22,6 +22,7 @@ Recommendation is one of `fit now`, `fit later`, `not needed` or `fitted`. A mod
 | observability | <recommendation> | <reason> | <first step> | <owner> |
 | finops | <recommendation> | <reason> | <first step> | <owner> |
 | compliance | <recommendation> | <reason> | <first step> | <owner> |
+| security | <recommendation> | <reason> | <first step> | <owner> |
 | ai-ops | <recommendation> | <reason> | <first step> | <owner> |
 | hiring | <recommendation> | <reason> | <first step> | <owner> |
 | red-team | <recommendation> | <reason> | <first step> | <owner> |
@@ -52,6 +53,7 @@ The file or files a module leaves in the repository when it is fitted. The gate 
 | observability | `observability/docker-compose.yml` |
 | finops | `docs/fin/index.md` or `scripts/focus_export.py` |
 | compliance | `compliance/control-map.csv` or `.well-known/security.txt` |
+| security | `docs/security/index.md` or `docs/security/vuln-policy.md` |
 | ai-ops | `docs/agents.md` |
 | hiring | `hiring/loop.md` |
 | red-team | `red-team/plan.md` |

@@ -69,7 +69,7 @@ It needs no other module. It reads files and runs read-only commands; it changes
    |---|---|
    | Request, traceability | `/sdlc:ticket`; gate check `sdlc.traceability` |
    | Decision | `decisions` module: `/decisions:rfc`, `/decisions:adr` |
-   | Build, review | `/sdlc:change-review`, the pull request template; branch protection is a repository setting the user changes |
+   | Build, review | `/sdlc:change-review`, the pull request template; branch protection is a repository setting the user changes; `/security:access-review` lists the merges and pushes that went past the review rule |
    | Test | `/sdlc:test-strategy` |
    | Gate | `gate` module: `/gate:gate-init` |
    | Release record | `/sdlc:release` (changelog and tags) |
@@ -77,8 +77,8 @@ It needs no other module. It reads files and runs read-only commands; it changes
    | Observe | `observability` module; `/reliability:slo` |
    | Incident | `reliability` module: `/reliability:incident`, `/reliability:postmortem`, `/reliability:on-call` |
    | Docs | `docs` module |
-   | Dependencies | Add a lock file with the package manager (`npm install --package-lock-only`, `uv lock`, `poetry lock`, `go mod tidy`), or pin with `==`; declare the dependencies of tool scripts in a manifest |
-   | Secrets | Rotate the secret first, then remove it from history with the user; add a secret rule with `/gate:add-rule` |
+   | Dependencies | Add a lock file with the package manager (`npm install --package-lock-only`, `uv lock`, `poetry lock`, `go mod tidy`), or pin with `==`; declare the dependencies of tool scripts in a manifest. Then `/security:supply-chain`: vulnerability scan of the lock files, SBOM, Dependabot, and pinned actions from listed owners |
+   | Secrets | `/security:secrets`: rotate the secret first with its rotation runbook, then remove it from history with the user; add the blocking check `security.secrets` with `/gate:add-rule` |
    | Hygiene | Remove the files from git (`git rm --cached`) and add them to `.gitignore`, with the user's go |
    | Lifecycle as a whole | `/sdlc:sdlc-init` |
 
