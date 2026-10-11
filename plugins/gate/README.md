@@ -39,6 +39,8 @@ Exit codes: 0 run complete, 1 overall fail (with `--exit-code`), 2 config error,
 - `warn`: a `fail` is recorded as `warn` and stops nothing.
 - `off`: the rule does not run.
 
+Every new rule starts on `warn`, in the starter config and in `/gate:add-rule`, and checks from other modules too. A rule moves to `block` only after its false-positive test is recorded in `gate.json`, its fixtures behave and the repository has no real hits left. `gate.rule-fixtures` is the one exception: `/gate:gate-init` installs it on `block`, because it only reads the gate's own config and fixtures.
+
 A `fail` in either tier opens one finding per hit. The finding closes only when a later run of the same rule no longer sees the hit, and the record names the closing commit. Turning a rule off or moving it to `warn` closes nothing.
 
 ## Gate check
