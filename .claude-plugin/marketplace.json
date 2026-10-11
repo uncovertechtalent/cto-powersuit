@@ -49,7 +49,6 @@
         "./skills/calibrate",
         "./skills/guess-gate",
         "./skills/label-gate",
-        "./skills/output-filter",
         "./skills/style-review"
       ]
     },

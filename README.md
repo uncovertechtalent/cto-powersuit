@@ -97,7 +97,7 @@ The knowledge infrastructure plugins (`vestige`, `vault`, `stance`) predate this
 
 Run `/vestige:calibrate` first. Until you do, the hooks use a small starter table (praise openers, service closers, filler idioms, stage hooks). Calibration writes two files you own, outside the plugin, so plugin updates never overwrite them:
 
-- `~/.claude/skills/output-filter/SKILL.md`: your filter skill.
+- `~/.claude/skills/output-filter/SKILL.md`: your filter skill, written from the template in `plugins/vestige/templates/output-filter/`. The template is not a skill until calibration fills it.
 - `~/.claude/vestige-patterns.js`: your rule table. The hooks load it in place of the starter table.
 
 Hit logs go to `~/.claude/vestige-scan.log` and `~/.claude/guess-scan.log`. `node <plugin>/hooks/analyze-log.js` turns the log into promote and retire candidates. All paths follow `CLAUDE_CONFIG_DIR` when you set it.

@@ -97,7 +97,7 @@ Die Plugins der Wissensinfrastruktur (`vestige`, `vault`, `stance`) sind älter 
 
 Führe zuerst `/vestige:calibrate` aus. Bis dahin nutzen die Hooks eine kleine Starttabelle (Lob zum Einstieg, Service-Floskeln am Ende, Füllphrasen, Bühnen-Einstiege). Die Kalibrierung schreibt zwei Dateien, die dir gehören, außerhalb des Plugins, damit Plugin-Updates sie nie überschreiben:
 
-- `~/.claude/skills/output-filter/SKILL.md`: dein Filter-Skill.
+- `~/.claude/skills/output-filter/SKILL.md`: dein Filter-Skill, geschrieben aus der Vorlage in `plugins/vestige/templates/output-filter/`. Die Vorlage wird erst zum Skill, wenn die Kalibrierung sie ausfüllt.
 - `~/.claude/vestige-patterns.js`: deine Regeltabelle. Die Hooks laden sie anstelle der Starttabelle.
 
 Treffer-Logs landen in `~/.claude/vestige-scan.log` und `~/.claude/guess-scan.log`. `node <plugin>/hooks/analyze-log.js` macht aus dem Log Kandidaten zum Hochstufen und zum Ausmustern. Alle Pfade folgen `CLAUDE_CONFIG_DIR`, wenn du die Variable setzt.
