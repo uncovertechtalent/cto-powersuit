@@ -53,6 +53,21 @@ Where the overlay and the skill disagree, the skill follows the overlay. With th
 
 Nothing from an overlay goes into this repository. Keep it in a private location with no public remote. A team that installs the modules builds its own overlay over time from its decisions, incidents, docs and cost history.
 
+## Module layout
+
+Each module is one plugin under `plugins/<module>/` with four parts:
+
+| Part | Path in the plugin | What it is |
+|---|---|---|
+| Skills | `skills/<skill>/SKILL.md` | One task per skill, in the Agent Skills format. Every skill checks the overlay first. |
+| Templates | `templates/` | Files that land in the client repository, laid out at the paths they take there. Skills copy them and never overwrite an existing file. |
+| Gate check | `checks/<rule>.py`, `checks/fixtures/<rule-id>/pass/` and `fail/` | A rule the deploy gate of the `gate` module can run. The two fixtures are small repository trees: the rule must pass on `pass/` and fail on `fail/`. |
+| Demo | one line in the module's `README.md` | The page on machinebehavior.io/inside where the module runs in public. |
+
+The plugin also needs `.claude-plugin/plugin.json` and an entry in `.claude-plugin/marketplace.json`.
+
+The knowledge infrastructure plugins (`vestige`, `vault`, `stance`) predate this layout and keep their own structure.
+
 ## vestige
 
 Run `/vestige:calibrate` first. Until you do, the hooks use a small starter table (praise openers, service closers, filler idioms, stage hooks). Calibration writes two files you own, outside the plugin, so plugin updates never overwrite them:
