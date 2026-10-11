@@ -1,0 +1,10 @@
+{
+  "name": "fixture-pass",
+  "rules": {
+    "example.has-readme": {
+      "tier": "block",
+      "false_positive_test": {"date": "2026-01-01", "corpus": "fixture", "hits": 0, "legitimate": 0, "decision": "block"}
+    },
+    "gate.rule-fixtures": {"tier": "block"}
+  }
+}

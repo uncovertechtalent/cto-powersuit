@@ -1,0 +1,38 @@
+name: Deploy gate
+description: Runs the gate rules over the repository, writes the run record, latest.json, summary.md and .result.
+inputs:
+  config:
+    description: Path to gate.json
+    required: false
+    default: gate/gate.json
+  root:
+    description: Repository root to check
+    required: false
+    default: "."
+  out:
+    description: Directory for latest.json, summary.md, runs/ and .result (default the config's directory)
+    required: false
+    default: ""
+  trigger:
+    description: Trigger name for the run record
+    required: false
+    default: ${{ github.event_name }}
+  sha:
+    description: Commit under test
+    required: false
+    default: ${{ github.sha }}
+runs:
+  using: composite
+  steps:
+    - name: Run the checks
+      shell: bash
+      run: |
+        out_arg=()
+        [ -n "${{ inputs.out }}" ] && out_arg=(--out "${{ inputs.out }}")
+        python3 "${{ github.action_path }}/run.py" --config "${{ inputs.config }}" --root "${{ inputs.root }}" "${out_arg[@]}" --trigger "${{ inputs.trigger }}" --sha "${{ inputs.sha }}" --runner "${{ runner.os }}-${{ runner.arch }}"
+    - name: Upload the run record
+      uses: actions/upload-artifact@v4
+      with:
+        name: gate-run-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ${{ inputs.out != '' && inputs.out || 'gate' }}/runs/*.json
+        retention-days: 90

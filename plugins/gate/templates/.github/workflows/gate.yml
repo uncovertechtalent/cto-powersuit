@@ -1,0 +1,70 @@
+name: Gate
+
+# The gate runs on every push to main, on a weekly schedule and by hand.
+# The deploy job needs the gate job: a failing check blocks the deploy and
+# the previous build stays live.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Gate checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run the checks
+        uses: ./.github/actions/gate
+        with:
+          config: gate/gate.json
+
+      - name: Commit latest.json and summary.md
+        # Keeps the run history in git. Delete this step to keep the history in the run artifacts only.
+        run: |
+          git config user.name "gate-bot"
+          git config user.email "gate-bot@users.noreply.github.com"
+          git add gate/latest.json gate/summary.md
+          if git diff --cached --quiet; then
+            echo "no change to commit"
+          else
+            git commit -m "gate: run $(date -u +%Y-%m-%dT%H:%M:%SZ) (${{ github.event_name }}) [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: Gate
+        run: |
+          result=$(cat gate/.result)
+          echo "overall: $result"
+          if [ "$result" != "pass" ]; then
+            echo "::error::gate checks failed; deploy blocked, the previous build stays live"
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (after the bot commit)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Deploy
+        run: echo "Replace this step with your deploy steps."

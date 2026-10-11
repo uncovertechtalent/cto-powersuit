@@ -1,0 +1,13 @@
+{
+  "name": "your-repository",
+  "owner": "",
+  "rules_dir": ".github/actions/gate/rules",
+  "fixtures_dir": "gate/fixtures",
+  "exclude": [".git/", "node_modules/", "/gate/"],
+  "schedule": {"cron": "17 6 * * 1", "interval_days": 7},
+  "rules": {
+    "gate.placeholders": {"tier": "warn"},
+    "gate.schedule": {"tier": "warn"},
+    "gate.rule-fixtures": {"tier": "block"}
+  }
+}

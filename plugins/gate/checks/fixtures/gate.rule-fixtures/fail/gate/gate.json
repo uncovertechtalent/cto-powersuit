@@ -1,0 +1,8 @@
+{
+  "name": "fixture-fail",
+  "rules": {
+    "example.has-readme": {"tier": "block"},
+    "example.not-written": {"tier": "block"},
+    "gate.rule-fixtures": {"tier": "block"}
+  }
+}

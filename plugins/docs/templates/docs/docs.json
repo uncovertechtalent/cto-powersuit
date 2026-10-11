@@ -1,0 +1,21 @@
+{
+  "title": "Docs",
+  "out": "site/docs",
+  "url_prefix": "/docs/",
+  "base_url": "",
+  "review_interval_days": 90,
+  "spaces": [
+    {
+      "key": "eng",
+      "name": "Engineering",
+      "about": "How the systems are built, deployed and run: architecture, pipelines and runbooks.",
+      "owner": ""
+    },
+    {
+      "key": "decisions",
+      "name": "Decisions",
+      "about": "RFCs and architecture decision records.",
+      "owner": ""
+    }
+  ]
+}

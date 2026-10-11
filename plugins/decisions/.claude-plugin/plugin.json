@@ -1,0 +1,9 @@
+{
+  "name": "decisions",
+  "version": "0.1.0",
+  "description": "Decision records for a repository: write RFCs, record decisions as numbered ADRs with supersede links and an index, review the log for stale or broken records, and a gate check for ADR front matter.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
+  "license": "MIT",
+  "keywords": ["adr", "rfc", "decisions", "decision-log", "architecture", "governance"]
+}

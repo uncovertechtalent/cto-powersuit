@@ -2,9 +2,19 @@
 
 Agent skills for the work of a CTO, one plugin per function, in one Claude Code plugin marketplace. A team installs the modules it needs and runs them on generic defaults.
 
-The first three plugins are the knowledge infrastructure layer ([what knowledge infrastructure for LLMs means](https://coetzeestefan.substack.com/p/knowledge-infrastructure-for-llms)). `vault` is the knowledge base and its retrieval, `vestige` enforces your rules at the output boundary, and `stance` adds boundary rules plus verification through the receipts standard.
+Each skill also reads a private overlay when one exists: your own data for that module, kept outside the repository. See [Overlay](#overlay-your-private-layer).
 
-Each plugin replaces a manual install (copy files into `~/.claude/`, then edit `settings.json` by hand) with two commands.
+## Modules
+
+| Plugin | What it does | Needs |
+|---|---|---|
+| `decisions` | RFCs, architecture decision records (ADRs) and a review of the decision log. Templates for both records and a gate check that every ADR has a status, an owner and a date. | Python 3.9+ for the gate check |
+| `docs` | A docs tree where every page has an owner and review dates, runbooks, and a sweep for stale pages. A static docs build and a gate check on the review fields. | Python 3.9+ |
+| `gate` | A deploy gate: a rules folder with pass and fail fixtures per rule, run records, findings that close only on a passing rerun, and a workflow whose deploy job waits for the gate. The checks of the other modules run in it. | Python 3.9+, GitHub Actions for the workflow |
+
+## Knowledge infrastructure
+
+These three plugins are the knowledge infrastructure layer ([what knowledge infrastructure for LLMs means](https://coetzeestefan.substack.com/p/knowledge-infrastructure-for-llms)). `vault` is the knowledge base and its retrieval, `vestige` enforces your rules at the output boundary, and `stance` adds boundary rules plus verification through the receipts standard. Each one replaces a manual install (copy files into `~/.claude/`, then edit `settings.json` by hand) with two commands.
 
 | Plugin | What it does | Needs |
 |---|---|---|
@@ -12,12 +22,15 @@ Each plugin replaces a manual install (copy files into `~/.claude/`, then edit `
 | `vault` | A plain-Markdown vault with hybrid keyword and semantic search, served to Claude as an MCP server. Skills to create the vault, seed it from an interview and atomize documents into it. | [uv](https://docs.astral.sh/uv/) (Python 3.12+) |
 | `stance` | Stance filters against the trained accommodation reflex: `professional-b2` (plain register, no politeness vestiges), `good-chad` (holds position under pushback, no grovel), `receipts` (probe before you assert), `poles` (decisions without the hedge) and `mode-leak` (speech devices in writing). | Node 14+, bash |
 
-The plugins are independent. Install one, two or all of them.
+The plugins are independent. Install the ones you need. `decisions` and `docs` work without `gate`; their checks need it to run in CI.
 
 ## Install
 
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
+claude plugin install gate@cto-powersuit
+claude plugin install decisions@cto-powersuit
+claude plugin install docs@cto-powersuit
 claude plugin install vestige@cto-powersuit
 claude plugin install vault@cto-powersuit
 claude plugin install stance@cto-powersuit

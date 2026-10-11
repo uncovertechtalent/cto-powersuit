@@ -1,12 +1,30 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "cto-powersuit",
-  "description": "CTO Powersuit: agent skills for the work of a CTO, one plugin per function. Includes an output filter you calibrate to yourself, a plain-Markdown vault with local search, and stance filters against the trained accommodation reflex.",
+  "description": "CTO Powersuit: agent skills for the work of a CTO, one plugin per function. Modules for decisions, docs and the deploy gate, plus the knowledge infrastructure plugins: an output filter you calibrate to yourself, a plain-Markdown vault with local search, and stance filters.",
   "owner": {
     "name": "Stefan Coetzee",
     "url": "https://github.com/uncovertechtalent"
   },
   "plugins": [
+    {
+      "name": "decisions",
+      "source": "./plugins/decisions",
+      "description": "RFCs, architecture decision records and a decision-log review, with templates and a gate check on ADR status, owner and date.",
+      "category": "development"
+    },
+    {
+      "name": "docs",
+      "source": "./plugins/docs",
+      "description": "Docs tree with owners and review dates, runbooks, a stale-page sweep, a static docs build and a gate check on review fields.",
+      "category": "development"
+    },
+    {
+      "name": "gate",
+      "source": "./plugins/gate",
+      "description": "Deploy gate: rules with pass and fail fixtures, run records, findings that close only on a passing rerun, and a workflow that deploys after the gate.",
+      "category": "development"
+    },
     {
       "name": "vestige",
       "source": "./plugins/vestige",

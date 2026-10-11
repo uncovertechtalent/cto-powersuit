@@ -1,0 +1,9 @@
+{
+  "name": "docs",
+  "version": "0.1.0",
+  "description": "Docs as code for a repository: a Markdown docs tree with owners and review dates, a static site build with a health page, skills to set it up, write runbooks and sweep stale pages, and a gate check for the review fields.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
+  "license": "MIT",
+  "keywords": ["docs", "documentation", "docs-as-code", "runbooks", "diataxis", "review", "static-site"]
+}
