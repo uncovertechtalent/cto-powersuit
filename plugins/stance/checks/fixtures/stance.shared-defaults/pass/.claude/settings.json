@@ -1,0 +1,7 @@
+{
+  "env": {
+    "PROFESSIONAL_B2_DEFAULT_MODE": "lite",
+    "STANCE_EXEMPLARS": "off"
+  },
+  "permissions": {"allow": ["Bash(npm test:*)"]}
+}

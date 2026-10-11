@@ -1,0 +1,7 @@
+{
+  "env": {
+    "STANCE_RECEIPTS": "off",
+    "GOOD_CHAD_DEFAULT_MODE": "off"
+  },
+  "disableAllHooks": true
+}

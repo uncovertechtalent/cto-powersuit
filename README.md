@@ -101,7 +101,7 @@ Each module is one plugin under `plugins/<module>/` with four parts:
 
 The plugin also needs `.claude-plugin/plugin.json` and an entry in `.claude-plugin/marketplace.json`.
 
-The knowledge infrastructure plugins (`vestige`, `vault`, `stance`) predate this layout and keep their own structure.
+The knowledge infrastructure plugins (`vestige`, `vault`, `stance`) follow the same layout. Their templates are the vestige filter template and the vault starter, and each has a gate check of its own.
 
 ## vestige
 

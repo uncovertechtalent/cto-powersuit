@@ -20,10 +20,10 @@ Copies the starter vault to the user's vault path. The starter holds the folder 
 
    ```bash
    mkdir -p "<path>"
-   rsync -a --ignore-existing "${CLAUDE_PLUGIN_ROOT}/vault-starter/" "<path>/"
+   rsync -a --ignore-existing "${CLAUDE_PLUGIN_ROOT}/templates/vault-starter/" "<path>/"
    ```
 
-   Without rsync, use `cp -Rn "${CLAUDE_PLUGIN_ROOT}/vault-starter/." "<path>/"`. Hidden files (`.vsearchignore`, `.gitignore`) must come across.
+   Without rsync, use `cp -Rn "${CLAUDE_PLUGIN_ROOT}/templates/vault-starter/." "<path>/"`. Hidden files (`.vsearchignore`, `.gitignore`) must come across.
 4. **Report.** List the files copied and any that already existed and were skipped.
 5. **Point at the search path.** The plugin's `vault-search` MCP server reads the vault path from the plugin option `vault_path` (default `~/vault`). If the user picked another path, tell them to set it: `claude plugin configure vault@<marketplace>` or reinstall with `--config vault_path=<path>`, then restart Claude Code.
 6. **Next step.** Tell them to run `/vault:seed`. It replaces the starter's generic structure with one built from their own domains.

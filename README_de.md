@@ -101,7 +101,7 @@ Jedes Modul ist ein Plugin unter `plugins/<module>/` mit vier Teilen:
 
 Das Plugin braucht außerdem `.claude-plugin/plugin.json` und einen Eintrag in `.claude-plugin/marketplace.json`.
 
-Die Plugins der Wissensinfrastruktur (`vestige`, `vault`, `stance`) sind älter als dieser Aufbau und behalten ihre eigene Struktur.
+Die Plugins der Wissensinfrastruktur (`vestige`, `vault`, `stance`) folgen demselben Aufbau. Ihre Vorlagen sind die Filter-Vorlage von vestige und der Start-Vault, und jedes hat einen eigenen Gate-Check.
 
 ## vestige
 
