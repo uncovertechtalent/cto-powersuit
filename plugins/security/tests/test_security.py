@@ -8,10 +8,12 @@
 - osv_query.py: purls from an SPDX and a CycloneDX SBOM, and the rows built from recorded OSV answers (no network).
 - security.secrets: each fail fixture gives one hit of its kind; allow, allow_hashes and tracked_only behave.
 - security.action-owners: each fail fixture gives one hit of its kind; the owner list option and the listing behave.
+- security.private-terms: each fail fixture gives one hit of its kind; no output shows a term; n/a without a list; list errors
+  name a line only; the allow file; tracked files and built folders; the pre-push hook against a local remote; the scan CLI.
 
 Standard library only, Python 3.9+. Usage: python3 plugins/security/tests/test_security.py [-v]
 """
-import contextlib, datetime, importlib.util, io, json, shutil, subprocess, sys, tempfile
+import contextlib, datetime, importlib.util, io, json, os, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -36,6 +38,11 @@ access = load(MODULE / "skills/access-review/access_review.py", "access_review")
 intake = load(MODULE / "skills/vuln-intake/intake.py", "intake")
 secrets = load(MODULE / "checks/secrets.py", "rule_secrets")
 owners = load(MODULE / "checks/action_owners.py", "rule_action_owners")
+private = load(MODULE / "checks/private_terms.py", "rule_private_terms")
+PT = MODULE / "checks/fixtures/security.private-terms"
+PT_LIST = PT / "overlay/security/private-terms.txt"
+# Words of the made-up fixture terms. No output of the rule may contain one.
+PT_WORDS = ["zanzibar", "kettlehost", "10.99.88.77", "bramblewood", "nightjar", "quillfeather"]
 TESTS = []
 
 
@@ -289,6 +296,244 @@ def action_owners_options_and_listing():
     listed = [line.split("\t")[0] for line in out.getvalue().splitlines()]
     if listed != ["actions"]:
         bad.append(f"listing of the pass fixture: {listed}")
+    return bad
+
+
+def leaks(text):
+    return [w for w in PT_WORDS if w in text.lower()]
+
+
+@contextlib.contextmanager
+def no_overlay_env():
+    saved = os.environ.pop("POWERSUIT_OVERLAY", None)
+    try:
+        yield
+    finally:
+        if saved is not None:
+            os.environ["POWERSUIT_OVERLAY"] = saved
+
+
+@test
+def private_terms_each_fail_file_gives_one_hit_of_its_kind():
+    res = check_rule(private, PT / "fail", terms_file=str(PT_LIST))
+    got = sorted((h["file"], h.get("rule"), h["snippet"].split()[2] if h.get("rule") != "allow-without-reason" else "-") for h in res["hits"])
+    want = sorted([(".private-terms-allow", "allow-without-reason", "-"), ("CHANGELOG.md", "private-term", "line8"),
+                   ("README.md", "private-term", "employer-z"), ("deploy/inventory.yml", "private-term", "addr-x"),
+                   ("docs/plan.md", "private-term", "shorthand-n"), ("drafts/****.txt", "private-term-in-path", "family-b"),
+                   ("notes/wrapped.md", "private-term", "employer-z"), ("site/hosts.html", "private-term", "host-k"),
+                   ("site/index.html", "private-term", "employer-z"), ("site/team.html", "private-term", "family-b")])
+    bad = [] if got == want else [f"hits: {got}"]
+    lines = {h["file"]: h["line"] for h in res["hits"]}
+    if (lines["notes/wrapped.md"], lines["deploy/inventory.yml"], lines["site/index.html"]) != (1, 4, 5):
+        bad.append(f"line numbers: {lines}")
+    if check_rule(private, PT / "pass", terms_file=str(PT_LIST))["result"] != "pass":
+        bad.append("pass fixture fails")
+    return bad + [f"term in the output: {w}" for w in leaks(json.dumps(res))]
+
+
+@test
+def private_terms_without_a_list():
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp, no_overlay_env():
+        res = check_rule(private, PT / "fail")
+        if res["result"] != "n/a" or "POWERSUIT_OVERLAY is unset" not in res["detail"]:
+            bad.append(f"no variable, no option: {res['result']}, {res['detail']}")
+        res = check_rule(private, PT / "fail", terms_file=str(Path(tmp) / "missing.txt"))
+        if res["result"] != "n/a" or "no term list at" not in res["detail"]:
+            bad.append(f"missing file: {res['result']}")
+        empty = Path(tmp) / "empty.txt"
+        empty.write_text("# no terms yet\n\n")
+        if check_rule(private, PT / "fail", terms_file=str(empty))["result"] != "n/a":
+            bad.append("an empty list must give n/a")
+        if check_rule(private, PT / "fail", terms_file=str(empty), require_list=True)["result"] != "fail":
+            bad.append("require_list with an empty list must fail")
+        os.environ["POWERSUIT_OVERLAY"] = str(PT / "overlay")
+        if check_rule(private, PT / "fail")["result"] != "fail":
+            bad.append("the list under POWERSUIT_OVERLAY is not read")
+        del os.environ["POWERSUIT_OVERLAY"]
+        root = Path(tmp) / "repo"
+        shutil.copytree(PT / "fail", root)
+        shutil.copy(PT_LIST, root / "terms.txt")
+        res = check_rule(private, root, terms_file=str(root / "terms.txt"))
+        if res["result"] != "fail" or "inside the scanned tree" not in res["detail"]:
+            bad.append(f"a list inside the tree must be refused: {res['detail']}")
+    return bad
+
+
+@test
+def private_terms_list_errors_name_a_line_only():
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for body, want in (("# c\nbad = re:quill(feather\n", "term list line 2: invalid regular expression"),
+                           ("re:(quillfeather)?\n", "term list line 1: the expression matches an empty string"),
+                           ("a = quillfeather\na = bramblewood\n", "term list line 2: label a is used twice")):
+            f = Path(tmp) / "terms.txt"
+            f.write_text(body)
+            try:
+                private.load_terms(f)
+                bad.append(f"no error for: {want}")
+            except private.ListError as e:
+                if str(e) != want:
+                    bad.append(f"message {e!s}, want {want}")
+            res = check_rule(private, PT / "pass", terms_file=str(f))
+            if res["result"] != "fail" or leaks(json.dumps(res)):
+                bad.append(f"rule result for a broken list: {res['result']}, leaks {leaks(json.dumps(res))}")
+    return bad
+
+
+@test
+def private_terms_allow_file():
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp) / "fail"
+        shutil.copytree(PT / "fail", root)
+        (root / ".private-terms-allow").write_text(
+            "# test entries\nREADME.md employer-z Named on purpose in this test\nsite/* * Every term under site/ for this test\n"
+            "nothing.md host-k An entry that matches nothing\ndocs/* unknown-label A label that is not in the list\n")
+        res = check_rule(private, root, terms_file=str(PT_LIST))
+        files = sorted(h["file"] for h in res["hits"])
+        want = ["CHANGELOG.md", "deploy/inventory.yml", "docs/plan.md", "drafts/****.txt", "notes/wrapped.md"]
+        if files != want:
+            bad.append(f"hits after the allow file: {files}")
+        for part in ("4 allowed", "matched nothing: lines 4, 5", "label not in the list: lines 5"):
+            if part not in res["detail"]:
+                bad.append(f"detail lacks '{part}': {res['detail']}")
+        res = check_rule(private, root, terms_file=str(PT_LIST), allow_file="other-allow")
+        if len(res["hits"]) != 9:
+            bad.append(f"allow_file option: {len(res['hits'])} hits, want 9")
+    return bad
+
+
+@test
+def private_terms_tracked_files_and_built_folders():
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        git = lambda *a: subprocess.run(["git", "-C", tmp, *a], capture_output=True, text=True, check=True)
+        git("init", "-q")
+        (root / "README.md").write_text("Nothing private here.\n")
+        (root / "notes.md").write_text("Call Bramblewood about it.\n")
+        (root / "public").mkdir()
+        (root / "public/index.html").write_text("<p>Kettlehost.lan</p>\n")
+        git("add", "README.md")
+        res = check_rule(private, root, terms_file=str(PT_LIST))
+        if res["result"] != "pass" or "1 tracked" not in res["detail"]:
+            bad.append(f"untracked files read: {res['detail']}")
+        res = check_rule(private, root, terms_file=str(PT_LIST), built=["public"])
+        if [h["file"] for h in res["hits"]] != ["public/index.html"]:
+            bad.append(f"built folder: {[h['file'] for h in res['hits']]}")
+        res = check_rule(private, root, terms_file=str(PT_LIST), tracked_only=False)
+        if sorted(h["file"] for h in res["hits"]) != ["notes.md", "public/index.html"]:
+            bad.append(f"tracked_only false: {[h['file'] for h in res['hits']]}")
+    return bad
+
+
+@test
+def private_terms_pre_push_hook():
+    bad, seen = [], []
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        work, remote = tmp / "work", tmp / "remote.git"
+        env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", GIT_AUTHOR_NAME="Fixture",
+                   GIT_AUTHOR_EMAIL="fixture@example.invalid", GIT_COMMITTER_NAME="Fixture", GIT_COMMITTER_EMAIL="fixture@example.invalid")
+        env.pop("POWERSUIT_OVERLAY", None)
+
+        def git(*a, cwd=work):
+            return subprocess.run(["git", *a], cwd=cwd, env=env, capture_output=True, text=True)
+
+        def commit(path, text, message):
+            (work / path).parent.mkdir(parents=True, exist_ok=True)
+            (work / path).write_text(text)
+            git("add", "-A")
+            git("commit", "-q", "-m", message)
+
+        def push(*a, want):
+            p = git("push", "-q", "origin", *a)
+            seen.append(p.stderr)
+            got = "ok" if p.returncode == 0 else "stopped"
+            if got != want:
+                bad.append(f"push {' '.join(a)}: {got}, want {want}: {p.stderr.strip()[-300:]}")
+            return p.stderr
+
+        git("init", "-q", "--bare", str(remote), cwd=tmp)
+        git("init", "-q", str(work), cwd=tmp)
+        git("checkout", "-q", "-b", "main")
+        git("remote", "add", "origin", str(remote))
+        code, _ = private.install_hook(work / ".git/hooks", str(PT_LIST))
+        if code or "pre-push" not in (work / ".git/hooks/pre-push").read_text():
+            bad.append("install_hook wrote no shim")
+        commit("README.md", "# Project\n", "Start")
+        push("main", want="ok")
+        commit("docs/setup.md", "# Setup\n\nThe runner sits on Kettlehost.lan for now.\n", "Add setup notes")
+        err = push("main", want="stopped")
+        if "docs/setup.md:3 private term host-k" not in err:
+            bad.append(f"added line not named by file and line: {err.strip()[-200:]}")
+        commit("docs/setup.md", "# Setup\n\nThe runner sits on the build host.\n", "Reword setup notes")
+        push("main", want="stopped")  # the earlier commit still carries the term
+        git("reset", "-q", "--hard", "origin/main")
+        commit("docs/setup.md", "# Setup\n", "Thanks to Zanzibar Widgets")
+        err = push("main", want="stopped")
+        if "message:1 private term employer-z" not in err:
+            bad.append(f"commit message hit missing: {err.strip()[-200:]}")
+        git("commit", "-q", "--amend", "-m", "Add setup page")
+        push("main", want="ok")
+        commit("docs/setup.md", "# Setup page\nRunner host: kettlehost.lan\n", "Edit two lines")
+        err = push("main", want="stopped")
+        if "docs/setup.md:2 private term host-k" not in err:
+            bad.append(f"changed line not named by its new line number: {err.strip()[-200:]}")
+        git("reset", "-q", "--hard", "origin/main")
+        commit("legacy.md", "old line\nquillfeather\n", "Legacy file")
+        push("--no-verify", "main", want="ok")
+        commit("legacy.md", "old line\n", "Remove a name")
+        push("main", want="ok")  # a deleted line sends nothing new
+        commit("about.md", "I worked at Zanzibar Widgets.\n", "About page")
+        push("main", want="stopped")
+        commit(".private-terms-allow", "about.md employer-z Former employer, named on purpose\n", "Allow the about page mention")
+        push("main", want="ok")
+        commit("drafts/bramblewood.md", "notes\n", "Drafts")
+        err = push("main", want="stopped")
+        if "drafts/****.md private term family-b" not in err:
+            bad.append(f"new file name hit missing: {err.strip()[-200:]}")
+        git("reset", "-q", "--hard", "origin/main")
+        git("checkout", "-q", "-b", "feature")
+        commit("feature.md", "A feature.\n", "Feature")
+        push("feature", want="ok")
+        git("tag", "-a", "v1", "-m", "Release for project nightjar")
+        push("v1", want="stopped")
+        push("HEAD:refs/heads/project-nightjar", want="stopped")
+        (tmp / "empty.txt").write_text("# no terms yet\n")
+        (work / ".git/hooks/pre-push").write_text(f'#!/bin/sh\n# private-terms pre-push hook\nexec python3 "{MODULE / "checks/private_terms.py"}" pre-push "$@" --terms "{tmp / "empty.txt"}"\n')
+        err = push("HEAD:refs/heads/empty-list", want="ok")
+        if "no terms yet" not in err:
+            bad.append(f"an empty list must let the push through with a note: {err.strip()[-200:]}")
+        (work / ".git/hooks/pre-push").write_text(f'#!/bin/sh\n# private-terms pre-push hook\nexec python3 "{MODULE / "checks/private_terms.py"}" pre-push "$@" --terms "{tmp / "missing.txt"}"\n')
+        err = push("main", want="stopped")
+        if "no term list at" not in err:
+            bad.append(f"missing list must stop the push: {err.strip()[-200:]}")
+        h = subprocess.run([sys.executable, str(MODULE / "checks/private_terms.py"), "history", str(work), "--terms", str(PT_LIST)],
+                           capture_output=True, text=True, env=env)
+        seen.append(h.stdout + h.stderr)
+        if h.returncode != 1 or "line8: 2 lines" not in h.stdout or "employer-z:" not in h.stdout:
+            bad.append(f"history counts: exit {h.returncode}, {h.stdout.strip()[-200:]}")
+        (work / ".git/hooks/pre-push").write_text("#!/bin/sh\nexit 0\n")
+        if private.install_hook(work / ".git/hooks", str(PT_LIST))[0] != 2:
+            bad.append("install_hook replaced another hook")
+    return bad + [f"term in the hook output: {w}" for w in leaks("\n".join(seen))]
+
+
+@test
+def private_terms_scan_cli():
+    bad = []
+    script = MODULE / "checks/private_terms.py"
+    run_cli = lambda *a: subprocess.run([sys.executable, str(script), "scan", *a], capture_output=True, text=True)
+    for root, want in ((PT / "pass", 0), (PT / "fail", 1)):
+        p = run_cli(str(root), "--terms", str(PT_LIST))
+        if p.returncode != want or leaks(p.stdout + p.stderr):
+            bad.append(f"scan {root.name}: exit {p.returncode}, want {want}; leaks {leaks(p.stdout + p.stderr)}")
+    with no_overlay_env():
+        p = run_cli(str(PT / "fail"))
+    if p.returncode != 2:
+        bad.append(f"scan without a list: exit {p.returncode}, want 2")
     return bad
 
 
