@@ -1,0 +1,8 @@
+[
+  {"sha": "e5f60718293a4b5c6d7e8f901234567890123456", "author": "Dana Example", "date": "2026-09-30",
+   "subject": "Merge pull request #43 from example/cache-headers", "body": "Set cache headers on static files",
+   "files": ["web/static.py", "tests/test_static.py"]},
+  {"sha": "f60718293a4b5c6d7e8f90123456789012345678", "author": "Lee Example", "date": "2026-09-29",
+   "subject": "quick fix for the login page", "body": "",
+   "files": ["web/login.py"]}
+]

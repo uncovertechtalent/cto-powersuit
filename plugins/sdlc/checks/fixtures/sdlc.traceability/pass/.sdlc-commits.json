@@ -1,0 +1,14 @@
+[
+  {"sha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "author": "Dana Example", "date": "2026-09-30",
+   "subject": "Merge pull request #42 from example/retry-uploads", "body": "Retry failed uploads three times (#41)",
+   "files": ["src/uploads/retry.py", "tests/uploads/test_retry.py"]},
+  {"sha": "b2c3d4e5f60718293a4b5c6d7e8f901234567890", "author": "Lee Example", "date": "2026-09-29",
+   "subject": "Record the decision on one CI provider (ADR-0007)", "body": "",
+   "files": ["docs/decisions/adr-0007-one-ci-provider.md"]},
+  {"sha": "c3d4e5f60718293a4b5c6d7e8f90123456789012", "author": "Sam Example", "date": "2026-09-28",
+   "subject": "Add rate limits to the public API (PLAT-118)", "body": "",
+   "files": ["api/limits.go", "api/limits_test.go"]},
+  {"sha": "d4e5f60718293a4b5c6d7e8f9012345678901234", "author": "gate-bot", "date": "2026-09-28",
+   "subject": "gate: run 2026-09-28T06:17:00Z (schedule) [skip ci]", "body": "",
+   "files": ["gate/latest.json", "gate/summary.md"]}
+]

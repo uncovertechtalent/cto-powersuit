@@ -41,6 +41,21 @@
       ]
     },
     {
+      "name": "sdlc",
+      "source": "./plugins/sdlc",
+      "description": "Software delivery lifecycle: an audit for repositories built without one, the lifecycle map, tickets, review, test strategy and release, with a traceability gate check.",
+      "category": "development",
+      "skills": [
+        "./skills/release",
+        "./skills/review",
+        "./skills/sdlc-audit",
+        "./skills/sdlc-init",
+        "./skills/test-strategy",
+        "./skills/ticket",
+        "./skills/work-item"
+      ]
+    },
+    {
       "name": "vestige",
       "source": "./plugins/vestige",
       "description": "Output filter you calibrate to yourself. Hooks scan every reply and every Markdown write.",
