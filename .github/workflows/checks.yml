@@ -79,3 +79,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: '"$RUNNER_TEMP/zizmor/bin/zizmor" --format github .github'
+
+  shellcheck:
+    name: Shell scripts (shellcheck)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: shellcheck every tracked shell script
+        # shellcheck comes with the ubuntu-24.04 runner image. review-pr.sh runs on macOS bash 3.2, so a
+        # warning there can be a broken run on the owner's machine.
+        run: |
+          shellcheck --version | head -n 2
+          git ls-files -z '*.sh' | xargs -0 shellcheck -S warning

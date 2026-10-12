@@ -240,7 +240,7 @@ claude "/sdlc:change-review 42 kb"
 
 ### Local review until CI tokens exist
 
-The CI review needs `CLAUDE_CODE_OAUTH_TOKEN` or an API key, and neither is set yet, so the workflow skips. Until it runs, every session runs the local reviewer on its pull request before it reports the pull request ready. The reviewer keeps the CI design:
+The CI review needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN`, and it is not set yet, so the workflow skips. Until it runs, every session runs the local reviewer on its pull request before it reports the pull request ready. The reviewer keeps the CI design:
 - It loads the sdlc plugin from a clean clone of `main` in `~/.cache/powersuit-main`, never from the pull request, for that run only. Nothing is installed and no settings file changes.
 - The model gets the pull request as files, with no shell and no network, and runs with `--restricted`.
 - The private knowledge base is reached only through its MCP search tools (by default the `vault-search` server from your Claude config).
@@ -249,12 +249,14 @@ The CI review needs `CLAUDE_CODE_OAUTH_TOKEN` or an API key, and neither is set 
 ```bash
 git clone https://github.com/uncovertechtalent/cto-powersuit.git ~/.cache/powersuit-main
 install -d ~/.config/powersuit
-install -m 755 ~/.cache/powersuit-main/plugins/sdlc/skills/change-review/review-pr.sh ~/.config/powersuit/review-pr.sh
+ln -sf ~/.cache/powersuit-main/plugins/sdlc/skills/change-review/review-pr.sh ~/.config/powersuit/review-pr.sh
 ~/.config/powersuit/review-pr.sh uncovertechtalent/cto-powersuit 42
 ~/.config/powersuit/review-pr.sh uncovertechtalent/cto-powersuit 42 --post-saved
 ```
 
-A run saves the comment, prints the turns, the time, and the cost estimate, and on a terminal asks before posting. `--post-saved` posts the saved comment without a new review, so what you read is what goes out. The script refuses to post when the private-terms check finds a term. It also refuses when the check cannot run (no list, or an empty one), unless you add `--allow-unscanned` after reading the comment.
+The link follows `main`: every run refreshes the cache, so the runner and its limits update with the reviewer. A run saves the comment, prints the turns, the time, and the cost estimate, and on a terminal asks before posting. `--post-saved` posts the saved comment without a new review, so what you read is what goes out. It refuses if the pull request head moved since that review. The script refuses to post when the private-terms check finds a term. It also refuses when the check cannot run (no list, or an empty one), unless you add `--allow-unscanned` after reading the comment. Pull requests from forks and bots, and drafts, need `--allow-external`: CI skips them, and here the model has private context.
+
+Text in a pull request can try to steer the review, and here also try to pull private context into the comment. The scan, the rule to cite public files only, and your reading before `--post-saved` are the controls. The review is input to your merge decision, never evidence that a change is safe.
 
 ## Evals
 

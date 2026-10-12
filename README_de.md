@@ -242,7 +242,7 @@ claude "/sdlc:change-review 42 kb"
 
 ### Lokales Review, bis es CI-Tokens gibt
 
-Das Review in der CI braucht `CLAUDE_CODE_OAUTH_TOKEN` oder einen API-Schlüssel, und keins von beiden ist bisher gesetzt, deshalb wird der Workflow übersprungen. Bis er läuft, führt jede Session das lokale Review auf ihrem Pull Request aus, bevor sie ihn als fertig meldet. Das Skript hält das Design der CI ein:
+Das Review in der CI braucht das Repository-Secret `CLAUDE_CODE_OAUTH_TOKEN`, und es ist bisher nicht gesetzt, deshalb wird der Workflow übersprungen. Bis er läuft, führt jede Session das lokale Review auf ihrem Pull Request aus, bevor sie ihn als fertig meldet. Das Skript hält das Design der CI ein:
 - Es lädt das sdlc-Plugin aus einem sauberen Klon von `main` in `~/.cache/powersuit-main`, nie aus dem Pull Request, und nur für diesen Lauf. Nichts wird installiert, keine Einstellungsdatei ändert sich.
 - Das Modell bekommt den Pull Request als Dateien, ohne Shell und ohne Netzwerk, und läuft mit `--restricted`.
 - Die private Wissensbasis erreicht es nur über deren MCP-Suchwerkzeuge (standardmäßig der Server `vault-search` aus deiner Claude-Konfiguration).
@@ -251,12 +251,14 @@ Das Review in der CI braucht `CLAUDE_CODE_OAUTH_TOKEN` oder einen API-Schlüssel
 ```bash
 git clone https://github.com/uncovertechtalent/cto-powersuit.git ~/.cache/powersuit-main
 install -d ~/.config/powersuit
-install -m 755 ~/.cache/powersuit-main/plugins/sdlc/skills/change-review/review-pr.sh ~/.config/powersuit/review-pr.sh
+ln -sf ~/.cache/powersuit-main/plugins/sdlc/skills/change-review/review-pr.sh ~/.config/powersuit/review-pr.sh
 ~/.config/powersuit/review-pr.sh uncovertechtalent/cto-powersuit 42
 ~/.config/powersuit/review-pr.sh uncovertechtalent/cto-powersuit 42 --post-saved
 ```
 
-Ein Lauf speichert den Kommentar, zeigt Züge, Dauer und Kostenschätzung und fragt im Terminal vor dem Posten. `--post-saved` postet den gespeicherten Kommentar ohne neues Review, damit online steht, was du gelesen hast. Das Skript postet nicht, wenn der Private-Terms-Check einen Begriff findet. Es postet auch nicht, wenn der Check nicht laufen kann (keine Liste oder eine leere), außer du gibst nach dem Lesen `--allow-unscanned` an.
+Der Link folgt `main`: Jeder Lauf aktualisiert den Cache, also ändern sich Skript und Grenzen mit dem Reviewer. Ein Lauf speichert den Kommentar, zeigt Züge, Dauer und Kostenschätzung und fragt im Terminal vor dem Posten. `--post-saved` postet den gespeicherten Kommentar ohne neues Review, damit online steht, was du gelesen hast. Es verweigert das, wenn sich der Kopf des Pull Requests seit diesem Review bewegt hat. Das Skript postet nicht, wenn der Private-Terms-Check einen Begriff findet. Es postet auch nicht, wenn der Check nicht laufen kann (keine Liste oder eine leere), außer du gibst nach dem Lesen `--allow-unscanned` an. Pull Requests aus Forks und von Bots sowie Entwürfe brauchen `--allow-external`: Die CI überspringt sie, und hier hat das Modell privaten Kontext.
+
+Text in einem Pull Request kann versuchen, das Review zu lenken und hier auch privaten Kontext in den Kommentar zu ziehen. Der Scan, die Regel, nur öffentliche Dateien zu zitieren, und dein Lesen vor `--post-saved` sind die Kontrollen. Das Review fließt in deine Merge-Entscheidung ein und ist nie ein Beleg, dass eine Änderung sicher ist.
 
 ## Evals
 
