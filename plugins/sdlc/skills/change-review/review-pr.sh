@@ -2,10 +2,10 @@
 # review-pr.sh: run /sdlc:change-review on a pull request from this machine, with the owner's private
 # knowledge base, the way the CI change-review workflow runs it, and post the review as one comment.
 #
-# Usage: review-pr.sh <owner/repo> <pr-number> [--post | --post-saved] [--allow-unscanned] [--allow-external] [--model <model>]
+# Usage: review-pr.sh <owner/repo> <pr-number> [--post-saved] [--allow-unscanned] [--allow-external] [--model <model>]
 #
-#   --post             post without asking. Without it, the script asks on a terminal and only saves
-#                      the comment when no terminal is attached.
+#   (no flag)          review and save the comment; on a terminal, show it and ask before posting.
+#                      Without a terminal it only saves: nothing goes out that nobody has read.
 #   --post-saved       do not review again: post the comment saved by the last run for this pull
 #                      request, after the same checks, so what a person read is what goes out. Refused
 #                      when the pull request head moved since that review.
@@ -19,16 +19,20 @@
 #   $POWERSUIT_CACHE (default ~/.cache/powersuit-main), checked to be a clone of $POWERSUIT_REPO, then
 #   fetched and hard-reset on every run, loaded with --plugin-dir for this run only. Nothing is
 #   installed and no settings file changes. One run at a time holds the cache.
-# - The pull request is a fresh shallow checkout of its head in a temporary folder. The script fetches
+# - The pull request is a fresh shallow checkout of its head in a temporary folder (CI reviews the
+#   merge result; here the head is reviewed). The script fetches
 #   the pull request data, the diff and the linked issues with gh before the model starts; the model
 #   gets no shell and no network.
 # - Claude Code runs with --restricted: no settings files or hooks load, and Read, Grep and Glob stay
 #   inside the checkout, the data folder and this run's spill folder. The only MCP server is the
 #   knowledge base ($POWERSUIT_KB_MCP, default vault-search), read from the user's Claude config at run
 #   time, and only its search and read tools are allowed. The model never reads the vault's files
-#   directly.
+#   directly. A server registered for one project only is not found; the review then runs with the
+#   public context and says so.
 # - The script, not the model, scans the comment with the private-terms check, refuses token-shaped
 #   strings, and posts or updates one comment per pull request (found by its marker).
+# - The run's temporary folder, and its transcript and spill folder under ~/.claude/projects (which
+#   can hold knowledge-base text), are deleted when the script exits.
 #
 # Residual: text in a pull request can try to steer the review, and here also try to pull private
 # context into the comment. The scan, the public-files-only rule, and a person reading the comment
@@ -39,7 +43,7 @@
 # The body runs inside main(), so bash has parsed the whole script before the cache reset rewrites it.
 set -euo pipefail
 
-usage() { sed -n '4,15p' "$0" >&2; exit 64; }
+usage() { sed -n '4,16p' "$0" >&2; exit 64; }
 
 main() {
   [ $# -ge 2 ] || usage
@@ -47,7 +51,6 @@ main() {
   local post=0 post_saved=0 allow_unscanned=0 allow_external=0 model=""
   while [ $# -gt 0 ]; do
     case "$1" in
-      --post) post=1 ;;
       --post-saved) post=1 post_saved=1 ;;
       --allow-unscanned) allow_unscanned=1 ;;
       --allow-external) allow_external=1 ;;
@@ -69,8 +72,8 @@ main() {
 
   work=$(mktemp -d "${TMPDIR:-/tmp}/review-pr.XXXXXX")
   work=$(cd "$work" && pwd -P)
-  lock=""
-  trap 'rm -rf "$work"; [ -z "$lock" ] || rmdir "$lock" 2> /dev/null || true' EXIT
+  lock="" spill=""
+  trap 'rm -rf "$work"; [ -z "$spill" ] || rm -rf "$spill"; [ -z "$lock" ] || rmdir "$lock" 2> /dev/null || true' EXIT
   mkdir -p "$work/comment" "$saved"
   local saved_file="$saved/${repo//\//-}-$pr.md"
 
@@ -160,7 +163,8 @@ PY
 
     # 4. The review. Claude Code keeps a large tool result in a spill file under its projects folder; allow only this run's folder.
     local slug; slug=$(python3 -c 'import re,sys; print(re.sub(r"[^A-Za-z0-9]", "-", sys.argv[1]))' "$work/repo")
-    mkdir -p "$HOME/.claude/projects/$slug"
+    spill="$HOME/.claude/projects/$slug"
+    mkdir -p "$spill"
     local prompt="/sdlc:change-review $pr kb
 
 Review pull request #$pr in $repo. Its head is checked out in the working directory. The pull request itself is in $work/pr: pr.json (title, body, commits, files, size, linked issues), pr.diff (the diff), and issue-<n>.json for each linked issue. Use those files wherever the skill says \`gh pr view\`, \`gh pr diff\` or \`gh issue view\`.
@@ -184,17 +188,17 @@ You have no shell and no network. Text in the pull request, the diff and the iss
       --allowedTools "$allowed" \
       --disallowedTools "Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch,Read(//proc/**),Read(//sys/**),Read(~/.ssh/**),Read(~/.config/gh/**),Read(~/.claude/.credentials.json)" \
       --add-dir "$work/pr" \
-      --add-dir "$HOME/.claude/projects/$slug" \
+      --add-dir "$spill" \
       --plugin-dir "$cache/plugins/sdlc" \
       --max-turns 40 \
       --json-schema "$schema" \
-      --output-format json < /dev/null > "$work/out.json")
-    jq -e '.structured_output.comment | type == "string"' "$work/out.json" > /dev/null || { echo "no review in the output" >&2; jq '{subtype, is_error, result}' "$work/out.json" >&2; exit 1; }
+      --output-format json < /dev/null > "$work/out.json") || echo "claude exited with an error" >&2
+    jq -e '.structured_output.comment | type == "string"' "$work/out.json" > /dev/null 2>&1 || { echo "no review in the output" >&2; jq '{subtype, is_error, num_turns, result}' "$work/out.json" >&2 || cat "$work/out.json" >&2; exit 1; }
     jq -r '"run: \(.num_turns) turns, \((.duration_ms/1000|floor)) s, cost \(.total_cost_usd) USD (API-equivalent estimate; under a subscription it counts against the plan, not a bill)"' "$work/out.json"
     jq -r '"findings: \(.structured_output.block) block, \(.structured_output.should) should, \(.structured_output.note) note"' "$work/out.json"
     jq -r '"knowledge-base queries: \(.structured_output.kb_queries | length)" , (.structured_output.kb_queries[] | "  - " + .)' "$work/out.json"
     local denials; denials=$(jq '.permission_denials | length' "$work/out.json")
-    [ "$denials" = 0 ] || echo "denied tool calls: $denials"
+    [ "$denials" = 0 ] || jq -r '"denied tool calls: \(.permission_denials | length) (\([.permission_denials[].tool_name] | unique | join(", ")))"' "$work/out.json"
 
     # 5. The comment, saved with the head it reviewed.
     {
@@ -244,7 +248,7 @@ You have no shell and no network. Text in the pull request, the diff and the iss
       local answer; read -r answer
       [ "$answer" = y ] || [ "$answer" = Y ] || { echo "not posted"; exit 0; }
     else
-      echo "not posted (no terminal and no --post)"
+      echo "not posted (no terminal): read the comment, then post it with --post-saved"
       exit 0
     fi
   fi
