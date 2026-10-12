@@ -17,6 +17,8 @@ name: change-review
 # - Advisory. Findings never fail a check. Decision (2026-10-12): promote "block" findings to a
 #   failing check once the false-positive rate of the first reviews is known; the structured output
 #   already carries the block count for that.
+# - Residual: text in a pull request can still steer what this review says, up to a misleading "no
+#   findings". The review is input to the merge decision, never evidence that a change is safe.
 # - Pull requests from forks, from Dependabot and from other bots, and drafts, are skipped.
 # - The token is the repository secret CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`). Without
 #   it the review job skips its steps and passes, and nothing is posted.
