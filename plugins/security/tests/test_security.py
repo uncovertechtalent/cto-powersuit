@@ -7,7 +7,8 @@
 - intake.py: fix-by dates from the default windows, the policy template and a custom policy; dedupe; tracked issues.
 - osv_query.py: purls from an SPDX and a CycloneDX SBOM, and the rows built from recorded OSV answers (no network).
 - security.secrets: each fail fixture gives one hit of its kind; allow, allow_hashes and tracked_only behave.
-- security.action-owners: each fail fixture gives one hit of its kind; the owner list option and the listing behave.
+- security.action-owners: each fail fixture gives one hit of its kind; the owner list option and the listing behave;
+  its LOCAL prefixes and USES pattern match gate.actions-pinned.
 - security.private-terms: each fail fixture gives one hit of its kind; no output shows a term; n/a without a list; list errors
   name a line only; the allow file; tracked files and built folders; the pre-push hook against a local remote; the scan CLI.
 
@@ -38,6 +39,7 @@ access = load(MODULE / "skills/access-review/access_review.py", "access_review")
 intake = load(MODULE / "skills/vuln-intake/intake.py", "intake")
 secrets = load(MODULE / "checks/secrets.py", "rule_secrets")
 owners = load(MODULE / "checks/action_owners.py", "rule_action_owners")
+pinned = load(MODULE.parent / "gate/checks/actions_pinned.py", "rule_actions_pinned")
 private = load(MODULE / "checks/private_terms.py", "rule_private_terms")
 PT = MODULE / "checks/fixtures/security.private-terms"
 PT_LIST = PT / "overlay/security/private-terms.txt"
@@ -381,6 +383,17 @@ def no_overlay_env():
         if saved is not None:
             os.environ["POWERSUIT_OVERLAY"] = saved
 
+
+
+@test
+def action_owners_matches_actions_pinned():
+    """security.action-owners keeps hand copies of LOCAL and USES from gate.actions-pinned; the copies must match (#11)."""
+    bad = []
+    if owners.LOCAL != pinned.LOCAL:
+        bad.append(f"LOCAL differs: action_owners {owners.LOCAL}, actions_pinned {pinned.LOCAL}")
+    if owners.USES.pattern != pinned.USES.pattern:
+        bad.append(f"USES differs: action_owners {owners.USES.pattern!r}, actions_pinned {pinned.USES.pattern!r}")
+    return bad
 
 @test
 def private_terms_each_fail_file_gives_one_hit_of_its_kind():

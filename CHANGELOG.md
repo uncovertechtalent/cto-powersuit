@@ -19,7 +19,7 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ### Fixed
 
-- `gate` 0.2.1 and `security` 0.2.2: `gate.actions-pinned` and `security.action-owners` treat GitHub's self-repository form (`uses: $/...`) as local, like `./`. Before, the pin check reported it as `no-ref` and the owner check as owner `$` ([#11](https://github.com/uncovertechtalent/cto-powersuit/issues/11)). Repositories that already have the gate keep the old files, because `/gate:gate-init` copies with `cp -n`: copy `checks/actions_pinned.py` (gate) and `checks/action_owners.py` (security) into `.github/actions/gate/rules/` again with plain `cp`.
+- `gate` 0.2.1 and `security` 0.2.2: `gate.actions-pinned` and `security.action-owners` treat GitHub's self-repository form (`uses: $/...`) as local, like `./`. Before, the pin check reported it as `no-ref` and the owner check as owner `$` ([#11](https://github.com/uncovertechtalent/cto-powersuit/issues/11)). Repositories that already have the checks keep the old files: `/gate:gate-init` copies `checks/actions_pinned.py` with `cp -n`, which never overwrites, and step 3 of `/security:supply-chain` copied `checks/action_owners.py` once. Copy both into `.github/actions/gate/rules/` again with plain `cp`, and their pass fixtures too, so the installed fixtures cover `$/`. A test now fails when the two checks' `LOCAL` prefixes or `USES` pattern differ.
 - `ai-ops`: `/ai-ops:metering` told teams to put the telemetry variables in the repository's `.claude/settings.json`, where Claude Code ignores them. It now names the shell, user settings, and managed settings.
 
 ## [0.1.0] - 2026-10-12

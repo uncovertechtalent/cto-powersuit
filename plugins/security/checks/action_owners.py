@@ -7,7 +7,8 @@ ID = "security.action-owners"
 DESCRIPTION = ("Workflows and composite actions use actions and reusable workflows only from owners on the "
                "allowlist, and Docker images only from listed prefixes. A new owner in a workflow is a new party "
                "that runs code with the workflow's token. Pinning is the job of gate.actions-pinned; this rule "
-               "reads the owner only. Local actions (./..., ../... and the self-repository form $/...) are exempt.")
+               "reads the owner only. Local actions (./..., ../... and the self-repository form $/...) are "
+               "exempt.")
 DEFAULTS = {
     "globs": [".github/workflows/*.yml", ".github/workflows/*.yaml",
               ".github/actions/**/action.yml", ".github/actions/**/action.yaml",

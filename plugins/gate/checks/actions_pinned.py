@@ -4,7 +4,8 @@ import re
 ID = "gate.actions-pinned"
 DESCRIPTION = ("Workflows and composite actions reference every action and reusable workflow from outside the "
                "repository by a full 40-character commit SHA, and every Docker image by a sha256 digest. A tag "
-               "or a branch can be moved to other code; a commit SHA cannot. Local actions (./..., ../... and the self-repository form $/...) are exempt.")
+               "or a branch can be moved to other code; a commit SHA cannot. Local actions (./..., ../... and the "
+               "self-repository form $/...) are exempt.")
 DEFAULTS = {
     "globs": [".github/workflows/*.yml", ".github/workflows/*.yaml",
               ".github/actions/**/action.yml", ".github/actions/**/action.yaml",
