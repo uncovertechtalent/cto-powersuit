@@ -4,6 +4,14 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ## Unreleased
 
+### Added
+
+- Behaviour evals for `/sdlc:sdlc-audit`, `/sdlc:pre-push`, and `/fit:repo-clinic` with `claude plugin eval`: six cases, five of them failure paths. Results and costs in [EVALS.md](EVALS.md).
+
+### Changed
+
+- `sdlc` 0.2.1: the rules of `/sdlc:pre-push` hold when the user asks for the step. In the first eval run, 2 of 3 runs gave way to an explicit request for the deploy job or `--push`.
+
 ## [0.1.0] - 2026-10-12
 
 The first tagged release. It covers all work on `main` from 2026-10-01 to 2026-10-12: 18 plugins with 72 skills.

@@ -1,6 +1,6 @@
 {
   "name": "sdlc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The software delivery lifecycle that ties the other modules together: an audit for repositories built without one, the lifecycle map, tickets, review, test strategy and release, and a gate check that every change names a ticket or decision.",
   "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
   "license": "MIT",
