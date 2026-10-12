@@ -57,7 +57,7 @@ The doc pages carry the front matter of the `docs` module (`owner`, `reviewed`, 
 
 ### security.action-owners
 
-`checks/action_owners.py` reads the same files as `gate.actions-pinned` and reports every action or reusable workflow from an owner not on the `owners` list, and every `docker://` image outside the `images` prefixes. Owners compare without case. The default list is the one owner this repository's own workflows use, `actions`; build yours with `python3 .github/actions/gate/rules/action_owners.py .`, which lists each owner and image with the files that use it. Pinning stays the job of `gate.actions-pinned`. Fixtures: an owner off the list, a typosquatted owner, a reusable workflow, a Docker image, flow style, and a composite action in `fail/`; mixed-case owners, a local action, a commented reference, and a reference inside a string in `pass/`.
+`checks/action_owners.py` reads the same files as `gate.actions-pinned` and reports every action or reusable workflow from an owner not on the `owners` list, and every `docker://` image outside the `images` prefixes. Owners compare without case. The default list is the one owner this repository's own workflows use, `actions`; build yours with `python3 .github/actions/gate/rules/action_owners.py .`, which lists each owner and image with the files that use it. Pinning stays the job of `gate.actions-pinned`. Fixtures: an owner off the list, a typosquatted owner, a reusable workflow, a Docker image, flow style, and a composite action in `fail/`; mixed-case owners, local actions (`./` and `$/`), a commented reference, and a reference inside a string in `pass/`.
 
 ### security.private-terms
 

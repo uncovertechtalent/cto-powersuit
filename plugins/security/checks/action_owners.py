@@ -17,7 +17,8 @@ DEFAULTS = {
     "owners": ["actions"],
     "images": [],  # docker:// prefixes, e.g. "docker://ghcr.io/my-org/"; empty: every image is a hit
 }
-# The same reference pattern as gate.actions-pinned.
+# The same reference pattern and local prefixes as gate.actions-pinned. $/ is GitHub's self-repository form.
+LOCAL = ("./", "../", "$/")
 USES = re.compile(r"""(?:^\s*(?:-\s+)?|[{,]\s*)uses\s*:\s*(['"]?)(?P<ref>[^'"\s#,}]+)\1""")
 
 
@@ -28,7 +29,7 @@ def references(text):
             continue
         for m in USES.finditer(line):
             ref = m.group("ref")
-            if not ref.startswith(("./", "../", "$/")):  # $/ is GitHub's self-repository form
+            if not ref.startswith(LOCAL):
                 yield n, ref
 
 
