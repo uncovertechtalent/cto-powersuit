@@ -6,9 +6,11 @@ name: change-review
 # - The skill is installed from the base branch, so a pull request cannot change the reviewer that
 #   reviews it. The code under review is the pull request's merge result.
 # - Two jobs. "review" runs Claude Code with read-only tools and a read-only token and returns the
-#   review as structured output; it cannot post, push or edit, and it cannot read /proc, /sys or the
-#   home folder, where the token could be found. "comment" posts that output, after a check for
-#   token-shaped strings, and has no checkout, no secret and no model.
+#   review as structured output; it cannot post, push or edit. Read, Grep and Glob are denied on
+#   /proc and /sys, where the token sits in the process environment, and on the runner's and the
+#   tools' credential files. Not on the whole home folder: on a runner the workspace is under it.
+#   "comment" posts that output, after a check for token-shaped strings, and has no checkout, no
+#   secret and no model.
 # - Pull requests from forks and from bots are skipped: they get no secrets, and the action stops
 #   for actors without write access.
 # - The token is the repository secret CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`). Without
@@ -86,7 +88,7 @@ jobs:
           claude_args: >-
             --max-turns 40
             --allowedTools "Skill,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*)"
-            --disallowedTools "Edit,Write,NotebookEdit,WebFetch,WebSearch,Read(//proc/**),Read(//sys/**),Read(~/**)"
+            --disallowedTools "Edit,Write,NotebookEdit,WebFetch,WebSearch,Read(//proc/**),Read(//sys/**),Read(~/runners/**),Read(~/actions-runner/**),Read(~/.ssh/**),Read(~/.config/gh/**),Read(~/.claude/.credentials.json)"
             --json-schema '{"type":"object","properties":{"review":{"type":"string","description":"The review in Markdown"}},"required":["review"],"additionalProperties":false}'
 
   comment:
