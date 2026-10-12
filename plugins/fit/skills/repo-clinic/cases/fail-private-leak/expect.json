@@ -1,0 +1,10 @@
+{
+  "exit": 1,
+  "problems": 4,
+  "expect": [
+    "pr-plan.md: missing",
+    "report.md: names src/server.js:42 from private.md",
+    "fix.patch: names src/server.js:42 from private.md",
+    "report.md: no '# Repo clinic: <owner>/<repo>' heading"
+  ]
+}

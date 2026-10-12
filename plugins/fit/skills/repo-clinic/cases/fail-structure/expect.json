@@ -1,0 +1,13 @@
+{
+  "exit": 1,
+  "problems": 7,
+  "expect": [
+    "report.md: 365 words, want under 300",
+    "report.md: gap sections [1, 2], want [1, 2, 3]",
+    "report.md: gap 1 has no 'Evidence:' line",
+    "report.md: no 'Checked: ... Not checked: ...' line",
+    "report.md: the last line must be the footer",
+    "pr-plan.md: no 'State:' line",
+    "LOG.md: no row for acme/widget"
+  ]
+}

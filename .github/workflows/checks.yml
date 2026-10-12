@@ -30,6 +30,8 @@ jobs:
         run: python plugins/gate/tests/test_run.py
       - name: Security module tests
         run: python plugins/security/tests/test_security.py
+      - name: Repo clinic lint cases
+        run: python plugins/fit/skills/repo-clinic/test_lint.py
       - name: Repository consistency
         run: python scripts/check_repo.py
 

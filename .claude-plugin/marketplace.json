@@ -79,10 +79,11 @@
     {
       "name": "fit",
       "source": "./plugins/fit",
-      "description": "Estate assessment: runs the sdlc audit and recommends which modules to fit and in which order, with a gate check that fitted modules are installed.",
+      "description": "Estate assessment: runs the sdlc audit and recommends which modules to fit and in which order, with a gate check that fitted modules are installed. Repo clinic: audits a public repository at its owner's request and drafts one short report and one small pull request.",
       "category": "development",
       "skills": [
-        "./skills/estate-assessment"
+        "./skills/estate-assessment",
+        "./skills/repo-clinic"
       ]
     },
     {

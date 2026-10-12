@@ -1,0 +1,12 @@
+{
+  "exit": 1,
+  "problems": 6,
+  "expect": [
+    "report.md:3: em or en dash",
+    "report.md:3: praise word 'Great'",
+    "report.md:11: 'not ... but' sentence",
+    "pr-plan.md:16: secret pattern",
+    "pr-plan.md:22: em or en dash",
+    "pr-plan.md:22: praise word 'Nice work'"
+  ]
+}

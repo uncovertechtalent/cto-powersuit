@@ -1,0 +1,6 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -5,1 +5,1 @@
+-      - uses: actions/checkout@v4
++      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
