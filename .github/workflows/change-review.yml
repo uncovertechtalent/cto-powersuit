@@ -6,8 +6,9 @@ name: change-review
 # - The skill is installed from the base branch, so a pull request cannot change the reviewer that
 #   reviews it. The code under review is the pull request's merge result.
 # - Two jobs. "review" runs Claude Code with read-only tools and a read-only token and returns the
-#   review as structured output; it cannot post, push or edit. "comment" posts that output and has
-#   no checkout, no secret and no model.
+#   review as structured output; it cannot post, push or edit, and it cannot read /proc, /sys or the
+#   home folder, where the token could be found. "comment" posts that output, after a check for
+#   token-shaped strings, and has no checkout, no secret and no model.
 # - Pull requests from forks and from bots are skipped: they get no secrets, and the action stops
 #   for actors without write access.
 # - The token is the repository secret CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`). Without
@@ -74,17 +75,18 @@ jobs:
           prompt: |
             /sdlc:change-review
 
-            Review pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}. The merge result of the pull request is checked out in the working directory. `gh pr view` and `gh pr diff` read the pull request; `git diff origin/main...HEAD` gives the same diff.
+            Review pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}. The merge result of the pull request is checked out in the working directory.
 
             This run is headless in CI and nobody can answer questions:
-            - Read only. Do not run /sdlc:pre-push, tests, builds or installs.
+            - The shell allows two commands, one per call, with no pipes: `gh pr view ${{ github.event.pull_request.number }}` (with `--json title,body,commits,files,additions,deletions` for scope and size) and `gh pr diff ${{ github.event.pull_request.number }}`. Read files in the working directory with the Read, Grep and Glob tools.
+            - Read only. Do not run /sdlc:pre-push, tests, builds or installs. Skip the overlay check: CI has no overlay.
             - Do not post to GitHub. Return the review in the `review` field; the workflow posts it as one comment.
             - Write the review in Markdown: the findings ordered block, should, note, each with file, line and the fix, then one line with the counts. With no findings, say so in one line.
             - The repository is public. Mask any secret you find.
           claude_args: >-
             --max-turns 40
-            --allowedTools "Skill,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*)"
-            --disallowedTools "Edit,Write,NotebookEdit,WebFetch,WebSearch"
+            --allowedTools "Skill,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*)"
+            --disallowedTools "Edit,Write,NotebookEdit,WebFetch,WebSearch,Read(//proc/**),Read(//sys/**),Read(~/**)"
             --json-schema '{"type":"object","properties":{"review":{"type":"string","description":"The review in Markdown"}},"required":["review"],"additionalProperties":false}'
 
   comment:
@@ -106,6 +108,12 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
+          # The runner already drops a job output that contains a registered secret. This also stops a
+          # review that carries anything shaped like an Anthropic or GitHub token, in any form.
+          if jq -r '.review' <<< "$RESULT" | grep -Eq 'sk-ant-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}'; then
+            echo "::error::The review contains a token-shaped string, so it is not posted. Read the review job's log."
+            exit 1
+          fi
           marker="<!-- cto-powersuit:change-review -->"
           {
             echo "$marker"
