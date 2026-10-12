@@ -124,7 +124,7 @@ gh attestation verify cto-powersuit-<version>.tar.gz --repo uncovertechtalent/ct
 sha256sum -c cto-powersuit-<version>.tar.gz.sha256
 ```
 
-`gh attestation verify` checks the Sigstore signature and that the workflow that signed it ran in this repository. Add `--signer-workflow uncovertechtalent/cto-powersuit/.github/workflows/release.yml` to require this release workflow. On macOS, use `shasum -a 256 -c` for the second command. The provenance check of the security module counts an attested release asset as checked: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md).
+`gh attestation verify` checks the Sigstore signature and that the workflow that signed it ran in this repository. Add `--signer-workflow uncovertechtalent/cto-powersuit/.github/workflows/release.yml` to require this release workflow. On macOS, use `shasum -a 256 -c` for the second command. The provenance check of the security module ([`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md)) does not flag an attested release asset as an unverified binary. It reads that the attestation exists and leaves the signature to `gh attestation verify`. An attestation shows which repository's workflow built the file, not whether that repository deserves trust; the other signals of the check grade that.
 
 ## Overlay: your private layer
 
@@ -230,7 +230,7 @@ CI runs these on every push and pull request ([`.github/workflows/checks.yml`](.
 
 Reviews run in three layers, and each layer sees only the context it may see:
 
-1. **CI self-review.** On a pull request from a branch of this repository, [`.github/workflows/change-review.yml`](.github/workflows/change-review.yml) runs `/sdlc:change-review` from the base branch. It first reads this repository's changelog, the READMEs, the conventions CI enforces, and the linked issue. It then reviews the change against them and posts one comment. A choice those files record becomes a note ("intentional per <file>"), not a finding. The workflow needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN` and skips without it.
+1. **CI self-review.** On a pull request from a branch of this repository, [`.github/workflows/change-review.yml`](.github/workflows/change-review.yml) runs `/sdlc:change-review` from the base branch. It first reads this repository's changelog, the READMEs, the conventions CI enforces, and the linked issue. It then reviews the change against them and posts one comment. A choice those files record becomes a note ("intentional per <file>"), not a finding. The model gets the pull request as files and has no shell and no network. The review is advisory: it reports a neutral check with the finding counts and never fails one; "block" findings become a failing check once the false-positive rate of the first reviews is known. The workflow skips Dependabot and other bots, and needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN`; it skips without it.
 2. **Review with private context, on your own machine only.** With `kb`, the skill also reads your private knowledge base: a `vault-search` MCP server, or a folder your overlay names. It then posts one comment that cites public files only, after you have read it. Nothing private reaches CI or a review bot.
 3. **CodeRabbit** reads [`.coderabbit.yaml`](.coderabbit.yaml): path instructions that point at the choices this repository records, and no MCP knowledge source.
 

@@ -134,7 +134,7 @@ A coding agent asked to find an MCP server can surface such a repository and quo
 | `fork` | amber | A fork of another repository |
 | `young-account`, `young-repo` | amber | Account younger than 90 days, repository younger than 30 days |
 | `imported-history` | amber | Commits older than the repository by more than 30 days: history copied from another project, or a migration |
-| `release-binaries` | amber | Archive or binary release assets without a build provenance attestation in the same repository; check them against published checksums or signatures. An attested asset does not count, and the recommendation names `gh attestation verify <file> --repo <owner/repo>` to check it |
+| `release-binaries` | amber | Archive or binary release assets without a build provenance attestation in the same repository; check them against published checksums or signatures. An attested asset does not count, and the recommendation names `gh attestation verify <file> --repo <owner/repo>` to check its signature. An attestation shows which repository's workflow built the file, not whether that repository deserves trust: the other signals grade that |
 | `archived` | amber | The repository is archived and gets no fixes |
 
 Any red signal gives source risk `high`, any amber signal `medium`, none `low`. Exit codes 0, 1 and 2 follow the source risk; 3 means the metadata could not be read. Age is amber only, because taken-over accounts are old. A download link alone is amber, because honest projects ship release archives too; together with README-only commits it is red.
