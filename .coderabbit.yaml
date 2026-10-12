@@ -11,7 +11,7 @@ reviews:
   in_progress_fortune: false
   assess_linked_issues: true
   path_filters:
-    - "!.github/claude-code/package-lock.json"
+    - "!ci/claude-code/package-lock.json"
   path_instructions:
     - path: "**"
       instructions: |
@@ -28,7 +28,7 @@ reviews:
         README.md and README_de.md must have identical code blocks (scripts/check_repo.py). Every plugin has a table row and an install line in both.
     - path: ".github/**"
       instructions: |
-        Every outside action is pinned to a full commit SHA with its release in a comment; tools are pinned by hash (.github/zizmor/requirements.txt, .github/claude-code/package-lock.json). Permissions are set per job, and the workflow level grants none. Accepted zizmor findings, each with a reason, are in .github/zizmor.yml.
+        Every outside action is pinned to a full commit SHA with its release in a comment; tools are pinned by hash (ci/zizmor/requirements.txt, ci/claude-code/package-lock.json). Permissions are set per job, and the workflow level grants none. Accepted zizmor findings, each with a reason, are in .github/zizmor.yml.
         change-review.yml is built in two jobs on purpose: the job that runs the model has read-only tools and a read-only token, and the job that posts has no secret and no model. The skill comes from the base branch so a pull request cannot change its own reviewer.
         release.yml: only the build job has id-token and attestations write; only the publish job has contents write; a manual run never publishes.
     - path: "plugins/*/checks/**"
