@@ -41,7 +41,7 @@ Agent-written diffs need extra care on three items: changed tests, dependencies 
 ## Steps
 
 1. Read the ticket, then the diff, then the files around each changed hunk.
-2. Run the checklist. Run the pre-PR command from `docs/sdlc.md` if the user agrees.
+2. Run the checklist. If the user agrees, run `/sdlc:pre-push` (the check jobs of the workflows, locally), or the pre-PR command from `docs/sdlc.md` when preloop is not installed.
 3. Write the review: findings ordered **block**, **should**, **note**, each with file, line and the fix.
 4. Post it as a pull request comment only when the user says so (`gh pr review <n> --comment --body-file <file>`).
 

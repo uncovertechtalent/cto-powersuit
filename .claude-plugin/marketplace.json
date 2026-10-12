@@ -162,6 +162,7 @@
       "category": "development",
       "skills": [
         "./skills/change-review",
+        "./skills/pre-push",
         "./skills/release",
         "./skills/sdlc-audit",
         "./skills/sdlc-init",
