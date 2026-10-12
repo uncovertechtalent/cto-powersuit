@@ -1,0 +1,102 @@
+name: release
+
+# Runs when a version tag v<x.y.z> is pushed. It checks the release metadata at the tag, builds a
+# source tarball of the tag with git archive, writes its sha256, attests both files with build
+# provenance (Sigstore, signed with this workflow's GitHub OIDC identity), and attaches them to the
+# GitHub release. If the release does not exist yet, the workflow creates it with the tag's section
+# of CHANGELOG.md as its notes. Check a file with:
+#   gh attestation verify <file> --repo uncovertechtalent/cto-powersuit
+# Releases tagged before this workflow existed (v0.1.0) have no assets and no attestation.
+# A manual run (workflow_dispatch) is a dry run: it builds and attests a tarball of the chosen branch
+# or tag and keeps it as a workflow artifact for 7 days. It creates no release and changes no release.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Source tarball and provenance
+    runs-on: ubuntu-24.04
+    # Only this job can mint an OIDC token and write attestations. It cannot write to the repository.
+    permissions:
+      contents: read        # check out the tag
+      id-token: write       # the OIDC identity that signs the attestation
+      attestations: write   # store the attestation in this repository
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0  # check_release.py compares the tag with the previous one
+
+      - name: Release metadata at the tag
+        run: python3 scripts/check_release.py
+
+      - name: Build the source tarball and its sha256
+        env:
+          TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+        run: |
+          set -euo pipefail
+          if [ -n "$TAG" ]; then name="cto-powersuit-${TAG#v}"; else name="cto-powersuit-dry-run-$(git rev-parse --short=12 HEAD)"; fi
+          mkdir dist
+          git archive --format=tar.gz --prefix="$name/" -o "dist/$name.tar.gz" HEAD
+          (cd dist && sha256sum "$name.tar.gz" > "$name.tar.gz.sha256")
+          cat "dist/$name.tar.gz.sha256"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-files
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Attach to the GitHub release
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    # Only this job can write releases. It has no OIDC token and builds nothing.
+    permissions:
+      contents: write       # create the release and upload its files
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-files
+          path: dist
+
+      - name: Create the release or add the files to it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --repo "$REPO" --clobber
+          else
+            python3 - "${TAG#v}" > notes.md <<'PY'
+          import re, sys
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          m = re.search(rf"^## \[{re.escape(sys.argv[1])}\] - .*?$\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+          print(m.group(1).strip() if m else f"See CHANGELOG.md for {sys.argv[1]}.")
+          PY
+            gh release create "$TAG" dist/* --repo "$REPO" --verify-tag --title "CTO Powersuit ${TAG#v}" --notes-file notes.md
+          fi
+          gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[].name'

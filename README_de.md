@@ -58,7 +58,7 @@ Die Plugins sind unabhängig voneinander. Installiere die, die du brauchst. Jede
 
 ## Installation
 
-Dieses Projekt gibt es nur unter [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Installiere es ausschließlich mit den beiden Befehlen unten, die den Eigentümer des Repositorys ausdrücklich nennen: `claude plugin marketplace add uncovertechtalent/cto-powersuit` und `npx skills add uncovertechtalent/cto-powersuit`, oder aus einem Klon dieses Repositorys. Releases sind Git-Tags mit Release Notes und haben keine angehängten Dateien. Wer dir anderswo eine Kopie mit Download-Button anbietet, bietet nicht dieses Projekt an. Andere Skills und MCP-Server prüfst du vor der Installation mit der Herkunftsprüfung des Security-Moduls: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), Schritt 7.
+Dieses Projekt gibt es nur unter [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Installiere es ausschließlich mit den beiden Befehlen unten, die den Eigentümer des Repositorys ausdrücklich nennen: `claude plugin marketplace add uncovertechtalent/cto-powersuit` und `npx skills add uncovertechtalent/cto-powersuit`, oder aus einem Klon dieses Repositorys. Releases sind Git-Tags mit Release Notes. Jedes Release nach v0.1.0 trägt außerdem einen Quell-Tarball seines Tags, dessen sha256 und eine Build-Provenance-Attestierung, damit du eine Kopie gegen dieses Repository prüfen kannst ([Versionen und Rollback](#versionen-und-rollback)). Der Tarball dient der Prüfung und ist kein Installationsweg. Wer dir anderswo eine Kopie mit Download-Button anbietet, bietet nicht dieses Projekt an. Andere Skills und MCP-Server prüfst du vor der Installation mit der Herkunftsprüfung des Security-Moduls: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), Schritt 7.
 
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
@@ -118,6 +118,15 @@ claude plugin install sdlc@cto-powersuit
 Mit der skills-CLI führst du `npx skills add` mit dem gewünschten Tag erneut aus. Der Befehl überschreibt die installierten Skills und die Ref in `skills-lock.json`.
 
 Getestet mit Claude Code 2.1.286 und skills 1.7.2.
+
+Jedes Release nach v0.1.0 trägt zwei Dateien: `cto-powersuit-<version>.tar.gz`, ein `git archive` des Tags, und `cto-powersuit-<version>.tar.gz.sha256`. Wenn ein Tag gepusht wird, prüft der Release-Workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml)) die Release-Metadaten, baut beide Dateien, attestiert sie mit Build-Provenance und hängt sie an das GitHub-Release. Gibt es das Release noch nicht, legt der Workflow es an, mit dem Abschnitt des Tags aus dem Changelog als Release Notes. v0.1.0 wurde getaggt, bevor es den Workflow gab, und hat weder Dateien noch eine Attestierung. So prüfst du eine heruntergeladene Datei:
+
+```bash
+gh attestation verify cto-powersuit-<version>.tar.gz --repo uncovertechtalent/cto-powersuit
+sha256sum -c cto-powersuit-<version>.tar.gz.sha256
+```
+
+`gh attestation verify` prüft die Sigstore-Signatur und dass der signierende Workflow in diesem Repository lief. Mit `--signer-workflow uncovertechtalent/cto-powersuit/.github/workflows/release.yml` verlangst du zusätzlich genau diesen Release-Workflow. Unter macOS nimmst du für den zweiten Befehl `shasum -a 256 -c`. Die Herkunftsprüfung des Security-Moduls zählt ein attestiertes Release-Asset als geprüft: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md).
 
 ## Overlay: deine private Ebene
 
@@ -218,6 +227,8 @@ python3 scripts/check_release.py
 ```
 
 `scripts/test_checks.py` führt den Gate-Check jedes Moduls mit dem Gate-Runner gegen seine Pass- und Fail-Fixtures aus. Das Skript braucht Python 3.9+ und endet mit Exit-Code 1, wenn ein Check eine Fail-Fixture besteht oder an einer Pass-Fixture scheitert. `plugins/sdlc/skills/sdlc-audit/test_probe.py` führt die aufgezeichneten Fälle der Probe des SDLC-Audits aus. `plugins/gate/tests/test_run.py` testet den Gate-Runner selbst an kleinen Repositories, die es in einem temporären Ordner anlegt. `scripts/check_repo.py` gleicht Marketplace, Plugin-Ordner, beide READMEs, die Demo-Zeilen und den Overlay-Abschnitt jedes Skills miteinander ab. `scripts/check_release.py` prüft, dass Changelog und Version des Powersuits übereinstimmen und dass jedes Plugin, das sich seit dem letzten Release-Tag geändert hat, eine höhere Version trägt. `scripts/test_release.py` testet das an kleinen Repositories.
+
+CI führt diese Befehle bei jedem Push und jedem Pull Request aus ([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), dazu zizmor auf die Workflows; jeder akzeptierte Befund steht mit Begründung in `.github/zizmor.yml`. Bei einem Pull Request aus einem Branch dieses Repositorys führt [`.github/workflows/change-review.yml`](.github/workflows/change-review.yml) `/sdlc:change-review` vom Basis-Branch aus und postet das Review als einen Kommentar. Der Workflow braucht das Repository-Secret `CLAUDE_CODE_OAUTH_TOKEN` und wird ohne es übersprungen.
 
 ## Evals
 

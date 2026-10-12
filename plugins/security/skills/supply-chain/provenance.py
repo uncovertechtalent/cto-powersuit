@@ -4,9 +4,11 @@
 Reads public metadata with `gh api` (read only, nothing is downloaded or run) and grades it on two axes.
 Source risk (low, medium, high) comes from the signals: owner against the owner the registry or the
 vendor names, fork status, account and repository age, copied history, the share of recent commits that
-touch only the README, README links to archives or executables, and release assets. Any red signal gives
-high, any amber signal medium, none low. Exposure (low, medium, high) comes from --data-scope, what the
-tool will read once installed. Both go into the recommendation.
+touch only the README, README links to archives or executables, and release assets. A release asset with a
+build provenance attestation in the same repository (looked up by the asset's sha256 digest) does not count
+as an unverified binary. Any red signal gives high, any amber signal medium, none low. Exposure (low,
+medium, high) comes from --data-scope, what the tool will read once installed. Both go into the
+recommendation.
 
 Usage:
   provenance.py <owner/repo or URL> [--expected-owner NAME] [--data-scope SCOPE] [--commits 20]
@@ -20,7 +22,7 @@ unknown (the default).
 Exit codes: 0 low, 1 medium, 2 high source risk, 3 the metadata could not be read.
 Standard library only, Python 3.9+.
 """
-import argparse, datetime, json, re, subprocess, sys
+import argparse, collections, datetime, json, re, subprocess, sys
 
 THRESHOLDS = {
     "account_days": 90,       # an account younger than this is amber
@@ -69,14 +71,29 @@ def collect(slug, n_commits):
         readme = gh(f"repos/{slug}/readme", raw=True)
     except RuntimeError:
         readme = ""
-    assets = [a["name"] for r in gh(f"repos/{slug}/releases?per_page=10") for a in r.get("assets", [])]
+    assets = [a for r in gh(f"repos/{slug}/releases?per_page=10") for a in r.get("assets", [])]
+    seen = {}
+    attested = [a["name"] for a in assets if BINARY_ASSET.search(a["name"]) and attested_in(slug, a.get("digest"), seen)]
     return {
         "repo": repo["full_name"], "owner": owner, "owner_type": repo["owner"]["type"],
         "created_at": repo["created_at"], "pushed_at": repo.get("pushed_at"), "archived": repo.get("archived", False),
         "fork": repo.get("fork", False), "parent": (repo.get("parent") or {}).get("full_name"),
         "default_branch": repo.get("default_branch"), "stars": repo.get("stargazers_count"),
-        "account_created_at": account["created_at"], "commits": commits, "readme": readme, "release_assets": assets,
+        "account_created_at": account["created_at"], "commits": commits, "readme": readme,
+        "release_assets": [a["name"] for a in assets], "attested_assets": attested,
     }
+
+
+def attested_in(slug, digest, seen):
+    """True when the repository holds a build provenance attestation for this asset digest (sha256:<hex>)."""
+    if not digest or not digest.startswith("sha256:"):
+        return False
+    if digest not in seen:
+        try:
+            seen[digest] = bool(gh(f"repos/{slug}/attestations/{digest}").get("attestations"))
+        except RuntimeError:
+            seen[digest] = False
+    return seen[digest]
 
 
 def days(since, today):
@@ -123,9 +140,12 @@ def assess(obs, today, t=THRESHOLDS):
         s.append(("amber", "download-link", f"README links to {len(downloads)} archive or executable downloads: {', '.join(downloads[:3])}"))
         if any(i == "readme-only-commits" for _, i, _ in s):
             s.append(("red", "archive-lure", "README-only commits and an archive download link together: the FakeGit pattern"))
-    binaries = [a for a in obs.get("release_assets", []) if BINARY_ASSET.search(a)]
+    attested = obs.get("attested_assets", [])
+    binaries = list((collections.Counter(a for a in obs.get("release_assets", []) if BINARY_ASSET.search(a))
+                     - collections.Counter(attested)).elements())
     if binaries:
-        s.append(("amber", "release-binaries", f"{len(binaries)} archive or binary release assets, e.g. {', '.join(binaries[:3])}; verify checksums or signatures"))
+        s.append(("amber", "release-binaries", f"{len(binaries)} archive or binary release assets without a provenance attestation, "
+                                               f"e.g. {', '.join(list(dict.fromkeys(binaries))[:3])}; verify checksums or signatures"))
     if obs.get("archived"):
         s.append(("amber", "archived", "the repository is archived; it gets no fixes"))
     levels = {lvl for lvl, _, _ in s}
@@ -144,6 +164,9 @@ def assess(obs, today, t=THRESHOLDS):
         rec.append("Prefer the marketplace or registry install, or a build from a pinned commit, over release archives: an archive "
                    "can be swapped in a fork, through a link in a comment, or in a compromised release. A marketplace install is no "
                    "guarantee either, so pin the version.")
+    if attested:
+        rec.append(f"{len(attested)} release assets carry a build provenance attestation from this repository. Check a file "
+                   f"before you use it: gh attestation verify <file> --repo {obs['repo']}")
     if exposure == "high":
         rec.append(f"Once installed it reads {SCOPE_TEXT[scope]}. Read the code that reads it before you install, and give it the narrowest "
                    "access you can.")

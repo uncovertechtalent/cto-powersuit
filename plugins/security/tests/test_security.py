@@ -2,7 +2,7 @@
 """Tests for the security module: the two gate checks beyond their fixture runs, and the three scripts.
 
 - provenance.py: every recorded case in cases/provenance/ gives its risk grade and exactly its red and amber signals;
-  the recommendation follows the archive install path and the data scope.
+  the recommendation follows the archive install path and the data scope; attested release assets are counted per asset.
 - access_review.py: every case in cases/access-review/ gives exactly its red and amber flags.
 - intake.py: fix-by dates from the default windows, the policy template and a custom policy; dedupe; tracked issues.
 - osv_query.py: purls from an SPDX and a CycloneDX SBOM, and the rows built from recorded OSV answers (no network).
@@ -110,6 +110,25 @@ def provenance_recommendation_axes():
     r = provenance.assess(clean, datetime.date(2026, 10, 11))
     if "marketplace" in " ".join(r["recommendation"]) or r["pin"] not in r["recommendation"][0]:
         bad.append(f"no archive and low risk: {r['recommendation']}")
+    return bad
+
+
+@test
+def provenance_attested_assets():
+    """An attested release asset is no unverified binary; the count is per asset, so an older unattested copy of the same name still is."""
+    bad = []
+    c = json.loads((CASES / "provenance/attested-release.json").read_text())
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    if "gh attestation verify <file> --repo example-vendor/example-mcp" not in " ".join(r["recommendation"]):
+        bad.append(f"attested assets: no verify command in the recommendation {r['recommendation']}")
+    c["release_assets"] = c["release_assets"] + ["example-mcp-1.4.2.tar.gz"]
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    if levels(r["signals"], "amber") != ["release-binaries"] or not r["signals"][0]["evidence"].startswith("1 "):
+        bad.append(f"one unattested copy of an attested name: {r['signals']}")
+    del c["attested_assets"]
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    if not any(s["id"] == "release-binaries" and s["evidence"].startswith("3 ") for s in r["signals"]):
+        bad.append(f"observations without attested_assets (recorded before the field existed): {r['signals']}")
     return bad
 
 

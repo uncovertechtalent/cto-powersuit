@@ -1,0 +1,39 @@
+# Dependabot keeps the pinned CI tools current, the same shape as on the three sites: monthly, one
+# grouped pull request per ecosystem, and each one runs the checks like any other pull request.
+# - github-actions: the commit-SHA pins in .github/workflows; it moves the SHA and the version comment together.
+# - pip: zizmor in .github/zizmor/requirements.txt; it moves the version and the wheel hashes together.
+# - npm: Claude Code in .github/claude-code/package-lock.json, the version the Plugin manifests job validates with.
+# The cooldown waits 7 days after a release before proposing it, so a release that is pulled or found
+# compromised in its first week never reaches a pull request here.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+  - package-ecosystem: pip
+    directory: "/.github/zizmor"
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      zizmor:
+        patterns:
+          - "*"
+  - package-ecosystem: npm
+    directory: "/.github/claude-code"
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      claude-code:
+        patterns:
+          - "*"

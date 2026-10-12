@@ -1,0 +1,5 @@
+# zizmor configuration: https://docs.zizmor.sh/configuration/
+# The "Workflow security (zizmor)" job in checks.yml runs zizmor on .github with this file.
+# Every accepted finding goes here with the rule, the file and the reason. None so far: every
+# finding on the first run was fixed in the workflow instead.
+rules: {}

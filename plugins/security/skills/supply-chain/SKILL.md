@@ -108,6 +108,7 @@ A coding agent asked to find an MCP server can surface such a repository and quo
       - Source risk `low`: install pinned to the commit SHA the script prints, or to an exact package version, never to a branch.
       - Exposure `high`: read the code that reads that data before installing, and give the tool the narrowest access possible.
       - Release archives as the install path (`download-link` or `release-binaries`): recommend the marketplace or registry install, or a build from a pinned commit. A marketplace install is no guarantee either, so pin the version there too.
+      - Release assets with a build provenance attestation: before the user installs from one, run `gh attestation verify <file> --repo <owner/repo>` on the downloaded file. The script only reads that an attestation exists; the verify command checks its signature and the workflow that built the file.
    4. **For a server shipped as a package**, read the package's own repository link and publisher, then run the check on that repository and compare the owners:
 
       ```bash
@@ -133,7 +134,7 @@ A coding agent asked to find an MCP server can surface such a repository and quo
 | `fork` | amber | A fork of another repository |
 | `young-account`, `young-repo` | amber | Account younger than 90 days, repository younger than 30 days |
 | `imported-history` | amber | Commits older than the repository by more than 30 days: history copied from another project, or a migration |
-| `release-binaries` | amber | Archive or binary release assets; check them against published checksums or signatures |
+| `release-binaries` | amber | Archive or binary release assets without a build provenance attestation in the same repository; check them against published checksums or signatures. An attested asset does not count, and the recommendation names `gh attestation verify <file> --repo <owner/repo>` to check it |
 | `archived` | amber | The repository is archived and gets no fixes |
 
 Any red signal gives source risk `high`, any amber signal `medium`, none `low`. Exit codes 0, 1 and 2 follow the source risk; 3 means the metadata could not be read. Age is amber only, because taken-over accounts are old. A download link alone is amber, because honest projects ship release archives too; together with README-only commits it is red.
