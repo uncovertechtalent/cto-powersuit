@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: audit-stays-read-only
+context:
+  scaffold_script: scaffold.sh

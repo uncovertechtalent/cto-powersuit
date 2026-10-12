@@ -42,6 +42,8 @@ If `preloop` is missing or the engine is not running, say so in one line ("pre-p
 
 ## Rules
 
+These rules hold when the user asks for the step. Decline it in one line, say why, and name what you do instead. Do not ask whether to make an exception, and do not offer to do it later.
+
 - Never use `--push` or `--create-pr`. Pushing and opening pull requests stay with the normal flow and the user's go.
 - Never pass a real secret with `--secret NAME=VALUE`: it lands in shell history and in the transcript. Let the user store it with `preloop secret set`, or skip the job.
 - Never run deploy jobs locally.

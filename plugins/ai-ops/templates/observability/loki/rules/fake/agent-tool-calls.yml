@@ -1,0 +1,15 @@
+# Denied tool calls of coding agents, evaluated by the Loki ruler on Claude Code's tool_decision events.
+# Set the threshold before you enable the rule: twice the busiest 15 minutes of denials in the last
+# 30 days, and at least 5. The tool-audit skill's script prints both numbers.
+groups:
+  - name: agent-tool-calls
+    rules:
+      - alert: AgentToolDenialsSpike
+        expr: |
+          sum by (source) (count_over_time({service_name=~"claude-code.*"} | event_name="tool_decision" | decision="reject" [15m])) > <denials per 15 minutes>
+        labels:
+          severity: ticket
+          route: platform
+        annotations:
+          summary: "Agents had more tool calls denied by {{ $labels.source }} in 15 minutes than the threshold."
+          runbook_url: docs/agent-tool-calls.md

@@ -28,7 +28,7 @@ Für den zweiten und dritten Weg: [machinebehavior.io/your-next-cto/](https://ma
 
 | Plugin | Was es tut | Braucht |
 |---|---|---|
-| `ai-ops` | Betrieb der Coding-Agenten eines Teams: ein gemeinsames Harness mit engen Berechtigungen, Agenten-Kosten pro API-Anfrage gemessen, mit einem Budget-Alert, und ein Koordinator-Muster mit dem Zustand in Dateien. `vestige`, `stance` und `vault` sind seine optionalen Teile. Ein Gate-Check, der prüft, dass gemeinsame Agenten-Einstellungen keine Secrets und keine Wildcard-Berechtigungen enthalten. | Python 3.9+; `observability` für das Metering |
+| `ai-ops` | Betrieb der Coding-Agenten eines Teams: ein gemeinsames Harness mit engen Berechtigungen, Agenten-Kosten pro API-Anfrage gemessen, mit einem Budget-Alert, ein Audit-Trail jedes Tool-Aufrufs mit der Angabe, wer ihn erlaubt oder abgelehnt hat, und einem Alert bei einer Häufung abgelehnter Aufrufe, und ein Koordinator-Muster mit dem Zustand in Dateien. `vestige`, `stance` und `vault` sind seine optionalen Teile. Ein Gate-Check, der prüft, dass gemeinsame Agenten-Einstellungen keine Secrets und keine Wildcard-Berechtigungen enthalten. | Python 3.9+; `observability` für das Metering und den Audit-Trail |
 | `aieo` | Sichtbarkeit in KI-Suchen: `llms.txt`, strukturierte Daten, ein fester Satz von Anfragen an KI-Suchmaschinen und datierte Vorhersagen, die vor dem Livegang einer Seite gehasht werden. Ein Gate-Check, der prüft, dass jede Vorhersage-Datei zu ihrem Hash passt. | Python 3.9+ |
 | `compliance` | Eine Control-Map zu ISO 27001, TISAX, NIS2 und DSGVO nach Klausel- und Artikelnummer, eine Triage nach dem AI Act und eine rechtliche Grundausstattung für eine Website (Impressum, Datenschutzseite, security.txt, keine Anfragen an Dritte beim Laden der Seite). Gate-Checks für security.txt und Anfragen an Dritte. | Python 3.9+ |
 | `decisions` | RFCs, Architecture Decision Records (ADRs) und ein Review des Entscheidungslogs. Vorlagen für beide Dokumente und ein Gate-Check, der prüft, dass jeder ADR einen Status, einen Owner und ein Datum hat. | Python 3.9+ für den Gate-Check |
@@ -218,6 +218,19 @@ python3 scripts/check_release.py
 ```
 
 `scripts/test_checks.py` führt den Gate-Check jedes Moduls mit dem Gate-Runner gegen seine Pass- und Fail-Fixtures aus. Das Skript braucht Python 3.9+ und endet mit Exit-Code 1, wenn ein Check eine Fail-Fixture besteht oder an einer Pass-Fixture scheitert. `plugins/sdlc/skills/sdlc-audit/test_probe.py` führt die aufgezeichneten Fälle der Probe des SDLC-Audits aus. `plugins/gate/tests/test_run.py` testet den Gate-Runner selbst an kleinen Repositories, die es in einem temporären Ordner anlegt. `scripts/check_repo.py` gleicht Marketplace, Plugin-Ordner, beide READMEs, die Demo-Zeilen und den Overlay-Abschnitt jedes Skills miteinander ab. `scripts/check_release.py` prüft, dass Changelog und Version des Powersuits übereinstimmen und dass jedes Plugin, das sich seit dem letzten Release-Tag geändert hat, eine höhere Version trägt. `scripts/test_release.py` testet das an kleinen Repositories.
+
+## Evals
+
+`claude plugin eval` führt Verhaltensfälle für drei Skills aus: `/sdlc:sdlc-audit` und `/sdlc:pre-push` in `plugins/sdlc/evals/` sowie `/fit:repo-clinic` in `plugins/fit/evals/`. Fünf der sechs Fälle prüfen einen Fehlerpfad, in dem der Skill ablehnen oder anhalten muss. Jeder Lauf ist ein Modellaufruf auf deinem Konto. Deshalb laufen die Fälle lokal und nicht in CI.
+
+```bash
+cd plugins/sdlc
+claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
+cd ../fit
+claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
+```
+
+`--scaffold` führt das `scaffold.sh` jedes Falls aus, das im Arbeitsordner des Laufs ein kleines Fixture-Repository anlegt. Setze auf macOS `/Library/Developer/CommandLineTools/usr/bin` an den Anfang von `PATH`: Die Sandbox der Evals bricht den Shim `/usr/bin/git`, und die Skills lesen die Git-Historie. Ein voller Lauf kostet etwa 4 $. [EVALS.md](EVALS.md) enthält die Ergebnisse.
 
 ## Lizenz
 

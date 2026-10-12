@@ -26,7 +26,7 @@ For the second and third way: [machinebehavior.io/your-next-cto/](https://machin
 
 | Plugin | What it does | Needs |
 |---|---|---|
-| `ai-ops` | Operations for a team's coding agents: a shared harness with narrow permissions, agent spend metered per API request with a budget alert, and a coordinator pattern with state in files. `vestige`, `stance` and `vault` are its optional parts. A gate check that shared agent settings carry no secrets and no wildcard permissions. | Python 3.9+; `observability` for metering |
+| `ai-ops` | Operations for a team's coding agents: a shared harness with narrow permissions, agent spend metered per API request with a budget alert, an audit trail of every tool call with who allowed or denied it and an alert on a spike of denied calls, and a coordinator pattern with state in files. `vestige`, `stance` and `vault` are its optional parts. A gate check that shared agent settings carry no secrets and no wildcard permissions. | Python 3.9+; `observability` for metering and the audit trail |
 | `aieo` | Visibility in AI search: `llms.txt`, structured data, a fixed query set probed against AI search engines, and dated predictions hashed before a page goes live. A gate check that every prediction file matches its hash. | Python 3.9+ |
 | `compliance` | A control map to ISO 27001, TISAX, NIS2 and GDPR by clause and article number, an AI Act triage, and a legal baseline for a website (Impressum, privacy page, security.txt, no third-party requests on page load). Gate checks for security.txt and third-party requests. | Python 3.9+ |
 | `decisions` | RFCs, architecture decision records (ADRs) and a review of the decision log. Templates for both records and a gate check that every ADR has a status, an owner and a date. | Python 3.9+ for the gate check |
@@ -216,6 +216,19 @@ python3 scripts/check_release.py
 ```
 
 `scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture. `plugins/sdlc/skills/sdlc-audit/test_probe.py` runs the recorded cases of the sdlc audit's probe. `plugins/gate/tests/test_run.py` tests the gate runner itself on small repositories built in a temporary folder. `scripts/check_repo.py` cross-checks the marketplace, the plugin folders, both READMEs, the demo lines and the overlay section of every skill. `scripts/check_release.py` checks that the changelog and the suit version agree, and that every plugin changed since the last release tag has a higher version. `scripts/test_release.py` tests it on small repositories.
+
+## Evals
+
+`claude plugin eval` runs behaviour cases for three skills: `/sdlc:sdlc-audit` and `/sdlc:pre-push` in `plugins/sdlc/evals/`, and `/fit:repo-clinic` in `plugins/fit/evals/`. Five of the six cases are failure paths, where the skill must refuse or stop. Every run is a model call on your account, so the cases run locally and not in CI.
+
+```bash
+cd plugins/sdlc
+claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
+cd ../fit
+claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
+```
+
+`--scaffold` runs each case's `scaffold.sh`, which builds a small fixture repository in the run's workspace. On macOS, put `/Library/Developer/CommandLineTools/usr/bin` first on `PATH`: the eval sandbox breaks the `/usr/bin/git` shim, and the skills read git history. A full run costs about $4. [EVALS.md](EVALS.md) has the results.
 
 ## License
 

@@ -1,0 +1,62 @@
+{
+  "uid": "agent-tool-calls",
+  "title": "Agent tool calls",
+  "description": "Every tool call of the coding agents and who decided it: a rule in the settings, a hook, or a person at a prompt. Counted from Claude Code's tool_decision and tool_result events in Loki. Keep this dashboard private: the denied-calls panel shows tool parameters when OTEL_LOG_TOOL_DETAILS=1.",
+  "tags": ["ai-ops", "security"],
+  "refresh": "1m",
+  "time": "now-24h",
+  "rows": [
+    {
+      "title": "Decisions",
+      "panels": [
+        {"type": "stat", "title": "Allowed", "unit": "short", "datasource": "loki",
+         "description": "Calls the settings, a hook or a person allowed in the time range.",
+         "expr": "sum(count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | decision=\"accept\" [$__range]))"},
+        {"type": "stat", "title": "Denied", "unit": "short", "datasource": "loki",
+         "description": "Calls a deny rule, a hook or a person refused in the time range.",
+         "expr": "sum(count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | decision=\"reject\" [$__range])) or vector(0)",
+         "thresholds": [["green", null], ["orange", 1]]},
+        {"type": "stat", "title": "Asked", "unit": "short", "datasource": "loki",
+         "description": "Calls a person answered at a prompt (sources user_temporary, user_permanent, user_reject, user_abort). A prompt nobody answered writes no event.",
+         "expr": "sum(count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | source=~\"user_.*\" [$__range])) or vector(0)"},
+        {"type": "stat", "title": "Blocked by hooks", "unit": "short", "datasource": "loki",
+         "description": "Calls a PreToolUse hook refused.",
+         "expr": "sum(count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | decision=\"reject\" | source=\"hook\" [$__range])) or vector(0)",
+         "thresholds": [["green", null], ["orange", 1]]},
+        {"type": "timeseries", "title": "Denied per 15 minutes by source", "unit": "short", "datasource": "loki", "stack": true,
+         "description": "The AgentToolDenialsSpike alert fires when one source passes its threshold in 15 minutes.",
+         "expr": "sum by (source) (count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | decision=\"reject\" [15m]))",
+         "legend": "{{source}}"},
+        {"type": "timeseries", "title": "Calls per hour by decision", "unit": "short", "datasource": "loki", "stack": true,
+         "expr": "sum by (decision) (count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" [1h]))",
+         "legend": "{{decision}}"}
+      ]
+    },
+    {
+      "title": "By tool",
+      "panels": [
+        {"type": "stat", "title": "Denied by tool and source", "unit": "short", "datasource": "loki", "w": 12, "h": 6,
+         "expr": "sum by (tool_name, source) (count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | decision=\"reject\" [$__range]))",
+         "legend": "{{tool_name}} ({{source}})"},
+        {"type": "stat", "title": "Asked by tool", "unit": "short", "datasource": "loki", "w": 12, "h": 6,
+         "expr": "sum by (tool_name, source) (count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | source=~\"user_.*\" [$__range]))",
+         "legend": "{{tool_name}} ({{source}})"},
+        {"type": "stat", "title": "Allowed by tool", "unit": "short", "datasource": "loki", "w": 12, "h": 6,
+         "expr": "sum by (tool_name) (count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | decision=\"accept\" [$__range]))",
+         "legend": "{{tool_name}}"},
+        {"type": "stat", "title": "Failed by tool", "unit": "short", "datasource": "loki", "w": 12, "h": 6,
+         "description": "Calls that ran and failed (tool_result success false).",
+         "expr": "sum by (tool_name) (count_over_time({service_name=~\"claude-code.*\"} | event_name=\"tool_result\" | success=\"false\" [$__range]))",
+         "legend": "{{tool_name}}"}
+      ]
+    },
+    {
+      "title": "Trail",
+      "panels": [
+        {"type": "logs", "title": "Denied calls", "w": 24, "h": 10,
+         "description": "One line per denied call. Open a line for tool_name, source, prompt_id and, with OTEL_LOG_TOOL_DETAILS=1, tool_parameters.",
+         "expr": "{service_name=~\"claude-code.*\"} | event_name=\"tool_decision\" | decision=\"reject\""}
+      ]
+    }
+  ]
+}
