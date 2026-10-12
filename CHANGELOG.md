@@ -7,10 +7,15 @@ All notable changes to this project are listed here, newest first. Each release 
 ### Added
 
 - Behaviour evals for `/sdlc:sdlc-audit`, `/sdlc:pre-push`, and `/fit:repo-clinic` with `claude plugin eval`: six cases, five of them failure paths. Results and costs in [EVALS.md](EVALS.md).
+- `ai-ops` 0.2.0: `/ai-ops:tool-audit`, an audit trail of agent tool calls from Claude Code's `tool_decision` and `tool_result` events: allowed, denied, and asked counts per tool on a dashboard, the `AgentToolDenialsSpike` alert, a runbook page, and `tool_audit.py` for the monthly review record.
 
 ### Changed
 
 - `sdlc` 0.2.1: the rules of `/sdlc:pre-push` hold when the user asks for the step. In the first eval run, 2 of 3 runs gave way to an explicit request for the deploy job or `--push`.
+
+### Fixed
+
+- `ai-ops`: `/ai-ops:metering` told teams to put the telemetry variables in the repository's `.claude/settings.json`, where Claude Code ignores them. It now names the shell, user settings, and managed settings.
 
 ## [0.1.0] - 2026-10-12
 
