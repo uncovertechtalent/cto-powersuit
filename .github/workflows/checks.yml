@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0  # check_release.py compares with the last release tag
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python }}
@@ -32,8 +33,14 @@ jobs:
         run: python plugins/security/tests/test_security.py
       - name: Repo clinic lint cases
         run: python plugins/fit/skills/repo-clinic/test_lint.py
+      - name: Changelog draft tests
+        run: python plugins/sdlc/tests/test_changelog_draft.py
+      - name: Release check tests
+        run: python scripts/test_release.py
       - name: Repository consistency
         run: python scripts/check_repo.py
+      - name: Release metadata and plugin versions
+        run: python scripts/check_release.py
 
   validate:
     name: Plugin manifests

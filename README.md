@@ -56,7 +56,7 @@ The plugins are independent. Install the ones you need. Each module works withou
 
 ## Install
 
-The only source of this project is [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Install it only with the two owner-qualified commands below, `claude plugin marketplace add uncovertechtalent/cto-powersuit` and `npx skills add uncovertechtalent/cto-powersuit`, or from a clone of that repository. The project publishes no ZIP downloads and no release archives. A copy that offers a download button is not this project. To check any other skill or MCP server before you install it, use the provenance check of the security module: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), step 7.
+The only source of this project is [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Install it only with the two owner-qualified commands below, `claude plugin marketplace add uncovertechtalent/cto-powersuit` and `npx skills add uncovertechtalent/cto-powersuit`, or from a clone of that repository. Releases are git tags with release notes and carry no attached files. A copy elsewhere that offers a download button is not this project. To check any other skill or MCP server before you install it, use the provenance check of the security module: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), step 7.
 
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
@@ -91,6 +91,31 @@ npx skills add uncovertechtalent/cto-powersuit
 ```
 
 The skills CLI copies the skill folders only. Skills that copy templates, the hooks and the MCP server need the plugin install above or a clone of this repository.
+
+## Versions and rollback
+
+Each release is a git tag `v<version>` on `main` with an entry in [CHANGELOG.md](CHANGELOG.md). The suit version sits in `.claude-plugin/marketplace.json` under `metadata.version`. Each plugin keeps its own version in its `plugin.json`, and a release raises the version of every plugin whose files changed since the last tag. `claude plugin update` compares that version only, so CI fails a change to a plugin that does not raise it.
+
+The install commands above follow `main`. To pin a release, add its tag to the source:
+
+```bash
+claude plugin marketplace add uncovertechtalent/cto-powersuit#v0.1.0
+npx skills add uncovertechtalent/cto-powersuit#v0.1.0
+```
+
+Both installers pass the ref to `git clone --branch`, so a tag or a branch name works and a commit SHA does not. `claude plugin marketplace update` stays on the pinned tag. The skills CLI writes the ref to `skills-lock.json`, and `npx skills update` keeps it.
+
+To roll back, or to move a pin to another release, remove the marketplace, add it again at the release you want, and install the plugins again. Removing the marketplace uninstalls its plugins and deletes their saved options, so note options such as the `vault` path first. Changing the `ref` in `settings.json` by hand does not move the pin: in a test with Claude Code 2.1.286 the marketplace then went missing.
+
+```bash
+claude plugin marketplace remove cto-powersuit
+claude plugin marketplace add uncovertechtalent/cto-powersuit#v0.1.0
+claude plugin install sdlc@cto-powersuit
+```
+
+With the skills CLI, run `npx skills add` again with the tag you want. It overwrites the installed skills and the ref in `skills-lock.json`.
+
+These commands were tested with Claude Code 2.1.286 and skills 1.7.2.
 
 ## Overlay: your private layer
 
@@ -186,9 +211,11 @@ python3 scripts/test_checks.py
 python3 plugins/sdlc/skills/sdlc-audit/test_probe.py
 python3 plugins/gate/tests/test_run.py
 python3 scripts/check_repo.py
+python3 scripts/test_release.py
+python3 scripts/check_release.py
 ```
 
-`scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture. `plugins/sdlc/skills/sdlc-audit/test_probe.py` runs the recorded cases of the sdlc audit's probe. `plugins/gate/tests/test_run.py` tests the gate runner itself on small repositories built in a temporary folder. `scripts/check_repo.py` cross-checks the marketplace, the plugin folders, both READMEs, the demo lines and the overlay section of every skill.
+`scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture. `plugins/sdlc/skills/sdlc-audit/test_probe.py` runs the recorded cases of the sdlc audit's probe. `plugins/gate/tests/test_run.py` tests the gate runner itself on small repositories built in a temporary folder. `scripts/check_repo.py` cross-checks the marketplace, the plugin folders, both READMEs, the demo lines and the overlay section of every skill. `scripts/check_release.py` checks that the changelog and the suit version agree, and that every plugin changed since the last release tag has a higher version. `scripts/test_release.py` tests it on small repositories.
 
 ## License
 

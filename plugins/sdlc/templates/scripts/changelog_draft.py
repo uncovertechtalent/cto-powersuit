@@ -4,7 +4,8 @@
 Reads the first-parent history since the last tag (or --since <ref>), drops bot commits and
 '[skip ci]' commits, and sorts each commit subject into Added, Changed, Fixed, Removed or Security:
 - a Conventional Commits prefix decides first (feat -> Added, fix -> Fixed, revert -> Removed,
-  security -> Security; others -> Changed);
+  security -> Security; the other standard types -> Changed). Any other 'word:' prefix, such as
+  'README:' or a module name, stays in the entry and the words decide;
 - otherwise the words decide: fix, repair, correct, restore -> Fixed; add, new, introduce -> Added;
   remove, delete, drop -> Removed; security, CVE, vulnerability -> Security; anything else -> Changed.
 The rule reads words, so some entries land in the wrong group: edit the draft before it goes into
@@ -15,7 +16,8 @@ Usage: python3 scripts/changelog_draft.py [--since <ref>] [--version 1.4.0] [--d
 import argparse, datetime, re, subprocess, sys
 
 BOTS = {"gate-bot", "github-actions[bot]", "dependabot[bot]", "renovate[bot]"}
-PREFIX = re.compile(r"^(\w+)(\([^)]*\))?!?:\s*")
+TYPES = "feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|security"
+PREFIX = re.compile(rf"^({TYPES})(\([^)]*\))?!?:\s*", re.I)
 GROUPS = ["Added", "Changed", "Fixed", "Removed", "Security"]
 BY_PREFIX = {"feat": "Added", "fix": "Fixed", "revert": "Removed", "security": "Security"}
 WORDS = [
