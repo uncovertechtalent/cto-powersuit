@@ -7,7 +7,8 @@ ID = "security.action-owners"
 DESCRIPTION = ("Workflows and composite actions use actions and reusable workflows only from owners on the "
                "allowlist, and Docker images only from listed prefixes. A new owner in a workflow is a new party "
                "that runs code with the workflow's token. Pinning is the job of gate.actions-pinned; this rule "
-               "reads the owner only. Local actions (./...) are exempt.")
+               "reads the owner only. Local actions (./..., ../... and the self-repository form $/...) are "
+               "exempt.")
 DEFAULTS = {
     "globs": [".github/workflows/*.yml", ".github/workflows/*.yaml",
               ".github/actions/**/action.yml", ".github/actions/**/action.yaml",
@@ -17,7 +18,8 @@ DEFAULTS = {
     "owners": ["actions"],
     "images": [],  # docker:// prefixes, e.g. "docker://ghcr.io/my-org/"; empty: every image is a hit
 }
-# The same reference pattern as gate.actions-pinned.
+# The same reference pattern and local prefixes as gate.actions-pinned. $/ is GitHub's self-repository form.
+LOCAL = ("./", "../", "$/")
 USES = re.compile(r"""(?:^\s*(?:-\s+)?|[{,]\s*)uses\s*:\s*(['"]?)(?P<ref>[^'"\s#,}]+)\1""")
 
 
@@ -28,7 +30,7 @@ def references(text):
             continue
         for m in USES.finditer(line):
             ref = m.group("ref")
-            if not ref.startswith(("./", "../")):
+            if not ref.startswith(LOCAL):
                 yield n, ref
 
 
