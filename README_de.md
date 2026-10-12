@@ -58,7 +58,7 @@ Die Plugins sind unabhängig voneinander. Installiere die, die du brauchst. Jede
 
 ## Installation
 
-Dieses Projekt gibt es nur unter [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Installiere es ausschließlich mit den beiden Befehlen unten, die den Eigentümer des Repositorys ausdrücklich nennen: `claude plugin marketplace add uncovertechtalent/cto-powersuit` und `npx skills add uncovertechtalent/cto-powersuit`, oder aus einem Klon dieses Repositorys. Das Projekt veröffentlicht weder ZIP-Downloads noch Release-Archive. Wer dir eine Kopie mit Download-Button anbietet, bietet nicht dieses Projekt an. Andere Skills und MCP-Server prüfst du vor der Installation mit der Herkunftsprüfung des Security-Moduls: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), Schritt 7.
+Dieses Projekt gibt es nur unter [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Installiere es ausschließlich mit den beiden Befehlen unten, die den Eigentümer des Repositorys ausdrücklich nennen: `claude plugin marketplace add uncovertechtalent/cto-powersuit` und `npx skills add uncovertechtalent/cto-powersuit`, oder aus einem Klon dieses Repositorys. Releases sind Git-Tags mit Release Notes und haben keine angehängten Dateien. Wer dir anderswo eine Kopie mit Download-Button anbietet, bietet nicht dieses Projekt an. Andere Skills und MCP-Server prüfst du vor der Installation mit der Herkunftsprüfung des Security-Moduls: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), Schritt 7.
 
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
@@ -93,6 +93,31 @@ npx skills add uncovertechtalent/cto-powersuit
 ```
 
 Die skills-CLI kopiert nur die Skill-Ordner. Skills, die Vorlagen kopieren, die Hooks und der MCP-Server brauchen die Plugin-Installation oben oder einen Klon dieses Repositorys.
+
+## Versionen und Rollback
+
+Jedes Release ist ein Git-Tag `v<version>` auf `main` mit einem Eintrag in [CHANGELOG.md](CHANGELOG.md). Die Version des Powersuits steht in `.claude-plugin/marketplace.json` unter `metadata.version`. Jedes Plugin hat seine eigene Version in seiner `plugin.json`, und ein Release erhöht die Version jedes Plugins, dessen Dateien sich seit dem letzten Tag geändert haben. `claude plugin update` vergleicht nur diese Version. Deshalb lässt CI eine Änderung an einem Plugin scheitern, die seine Version nicht erhöht.
+
+Die Installationsbefehle oben folgen `main`. Um ein Release festzuhalten, hänge seinen Tag an die Quelle:
+
+```bash
+claude plugin marketplace add uncovertechtalent/cto-powersuit#v0.1.0
+npx skills add uncovertechtalent/cto-powersuit#v0.1.0
+```
+
+Beide Installer geben die Ref an `git clone --branch` weiter. Ein Tag oder ein Branch-Name funktioniert, ein Commit-SHA nicht. `claude plugin marketplace update` bleibt auf dem festgehaltenen Tag. Die skills-CLI schreibt die Ref in `skills-lock.json`, und `npx skills update` behält sie bei.
+
+Für ein Rollback oder einen Wechsel auf ein anderes Release entfernst du den Marketplace, fügst ihn mit dem gewünschten Release wieder hinzu und installierst die Plugins neu. Das Entfernen des Marketplace deinstalliert seine Plugins und löscht ihre gespeicherten Optionen. Notiere dir deshalb vorher Optionen wie den `vault`-Pfad. Die `ref` in `settings.json` von Hand zu ändern, verschiebt den Pin nicht: In einem Test mit Claude Code 2.1.286 fehlte der Marketplace danach.
+
+```bash
+claude plugin marketplace remove cto-powersuit
+claude plugin marketplace add uncovertechtalent/cto-powersuit#v0.1.0
+claude plugin install sdlc@cto-powersuit
+```
+
+Mit der skills-CLI führst du `npx skills add` mit dem gewünschten Tag erneut aus. Der Befehl überschreibt die installierten Skills und die Ref in `skills-lock.json`.
+
+Getestet mit Claude Code 2.1.286 und skills 1.7.2.
 
 ## Overlay: deine private Ebene
 
@@ -188,9 +213,11 @@ python3 scripts/test_checks.py
 python3 plugins/sdlc/skills/sdlc-audit/test_probe.py
 python3 plugins/gate/tests/test_run.py
 python3 scripts/check_repo.py
+python3 scripts/test_release.py
+python3 scripts/check_release.py
 ```
 
-`scripts/test_checks.py` führt den Gate-Check jedes Moduls mit dem Gate-Runner gegen seine Pass- und Fail-Fixtures aus. Das Skript braucht Python 3.9+ und endet mit Exit-Code 1, wenn ein Check eine Fail-Fixture besteht oder an einer Pass-Fixture scheitert. `plugins/sdlc/skills/sdlc-audit/test_probe.py` führt die aufgezeichneten Fälle der Probe des SDLC-Audits aus. `plugins/gate/tests/test_run.py` testet den Gate-Runner selbst an kleinen Repositories, die es in einem temporären Ordner anlegt. `scripts/check_repo.py` gleicht Marketplace, Plugin-Ordner, beide READMEs, die Demo-Zeilen und den Overlay-Abschnitt jedes Skills miteinander ab.
+`scripts/test_checks.py` führt den Gate-Check jedes Moduls mit dem Gate-Runner gegen seine Pass- und Fail-Fixtures aus. Das Skript braucht Python 3.9+ und endet mit Exit-Code 1, wenn ein Check eine Fail-Fixture besteht oder an einer Pass-Fixture scheitert. `plugins/sdlc/skills/sdlc-audit/test_probe.py` führt die aufgezeichneten Fälle der Probe des SDLC-Audits aus. `plugins/gate/tests/test_run.py` testet den Gate-Runner selbst an kleinen Repositories, die es in einem temporären Ordner anlegt. `scripts/check_repo.py` gleicht Marketplace, Plugin-Ordner, beide READMEs, die Demo-Zeilen und den Overlay-Abschnitt jedes Skills miteinander ab. `scripts/check_release.py` prüft, dass Changelog und Version des Powersuits übereinstimmen und dass jedes Plugin, das sich seit dem letzten Release-Tag geändert hat, eine höhere Version trägt. `scripts/test_release.py` testet das an kleinen Repositories.
 
 ## Lizenz
 

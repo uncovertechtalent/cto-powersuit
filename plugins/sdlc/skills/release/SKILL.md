@@ -23,6 +23,8 @@ Gets a release ready to ship and to undo.
    ```
 
    It prints the commits since the last tag on the main line, grouped into Added, Changed, Fixed, Removed and Security, without bot commits. The grouping reads words, so edit the draft: merge duplicates, write each entry for a user, drop internal noise. Add the edited entry to `CHANGELOG.md` above the previous release.
+
+   If the repository is a Claude Code plugin marketplace, raise the `version` in the `plugin.json` of every plugin whose files changed since the last tag. `claude plugin update` compares that version only, so a change without a bump never reaches the users who installed the plugin.
 2. **Write the rollback plan.** One of:
    - Redeploy the previous artifact or tag (name the command and how long it takes).
    - Revert the merge commit and let the pipeline deploy it.

@@ -1,6 +1,6 @@
 {
   "name": "gate",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Deploy gate for any repository: a standard-library runner, a rules folder with pass and fail fixtures per rule, run records with findings that close only on a passing rerun, and a GitHub Actions workflow whose deploy job waits for the gate.",
   "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
   "license": "MIT",
