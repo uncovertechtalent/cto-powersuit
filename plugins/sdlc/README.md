@@ -19,6 +19,7 @@ claude plugin install sdlc@cto-powersuit
 | `/sdlc:work-item` | Walks one change through the stages and keeps a trace table with the record of each stage |
 | `/sdlc:ticket` | Writes a ticket with problem, testable acceptance criteria, risk and labels; sets up the label scheme |
 | `/sdlc:change-review` | Reviews a diff against the ticket and a checklist for agent-written code; the human approves |
+| `/sdlc:pre-push` | Runs the check jobs of the repository's own workflows locally in a microVM with preloop before a push; deploy jobs never run, and a red run stops the push |
 | `/sdlc:test-strategy` | Sets test levels, the one pre-PR command, the flaky-test rule and the agent rule |
 | `/sdlc:release` | Drafts the changelog entry, writes the rollback plan, lists feature flags, records the release |
 
@@ -29,6 +30,7 @@ claude plugin install sdlc@cto-powersuit
 | Request | `sdlc:ticket` |
 | RFC, decision | `decisions` |
 | Build | `sdlc:work-item` |
+| Pre-push | `sdlc:pre-push` |
 | Review | `sdlc:change-review` |
 | Test | `sdlc:test-strategy` |
 | Gate | `gate` |
