@@ -79,6 +79,8 @@ claude "/sdlc:change-review owner/repo#42 kb"
 
 It is interactive on purpose: the comment draws on private notes, so the user sees it before it goes public.
 
+`review-pr.sh` in this skill's folder runs the same review end to end with the limits of the CI workflow, for repositories whose CI has no token yet. It loads this plugin from a clean clone of the suit's `main`. It gives the model the pull request as files, with no shell and no network, and the knowledge base through its MCP search tools only. It then scans the comment, saves it, and posts or updates one comment: `review-pr.sh <owner/repo> <n>`, then `--post-saved` after reading it.
+
 ## Rules
 
 - Never approve, request changes as the user, merge or push.
