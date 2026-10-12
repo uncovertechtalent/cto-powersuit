@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit review settings. Public guidance only: everything this file points at is in this
+# repository. CodeRabbit gets no private knowledge base, no MCP server, and no secret.
+language: en-US
+tone_instructions: "Plain short sentences. Before you flag a design choice, check CHANGELOG.md, README.md and the files named in the path instructions; if one records the choice, do not flag it."
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  in_progress_fortune: false
+  assess_linked_issues: true
+  path_filters:
+    - "!.github/claude-code/package-lock.json"
+  path_instructions:
+    - path: "**"
+      instructions: |
+        Recorded choices in this repository, not findings:
+        - Every plugin keeps its own version in plugins/<name>/.claude-plugin/plugin.json, and any change to a plugin's shipped files after a release tag needs a version bump (scripts/check_release.py). Tests, evals, fixtures and plugin READMEs do not need one.
+        - Scripts use the Python standard library only and run on Python 3.9 and later.
+        - Releases are git tags with a CHANGELOG.md entry. From the release after v0.1.0, release.yml attaches a source tarball, its sha256 and a build provenance attestation; the tarball is for checking, not an install path. v0.1.0 has no assets on purpose.
+        - Private overlay content ($POWERSUIT_OVERLAY) never enters this repository.
+    - path: "plugins/**/SKILL.md"
+      instructions: |
+        Every SKILL.md ends with the "## Overlay" section that scripts/check_repo.py checks; do not suggest removing or moving it. Skills are written in plain, short English sentences for a model to follow. A skill that posts, pushes, tags or deploys does so only on the user's go; flag any step that does it without one.
+    - path: "README*.md"
+      instructions: |
+        README.md and README_de.md must have identical code blocks (scripts/check_repo.py). Every plugin has a table row and an install line in both.
+    - path: ".github/**"
+      instructions: |
+        Every outside action is pinned to a full commit SHA with its release in a comment; tools are pinned by hash (.github/zizmor/requirements.txt, .github/claude-code/package-lock.json). Permissions are set per job, and the workflow level grants none. Accepted zizmor findings, each with a reason, are in .github/zizmor.yml.
+        change-review.yml is built in two jobs on purpose: the job that runs the model has read-only tools and a read-only token, and the job that posts has no secret and no model. The skill comes from the base branch so a pull request cannot change its own reviewer.
+        release.yml: only the build job has id-token and attestations write; only the publish job has contents write; a manual run never publishes.
+    - path: "plugins/*/checks/**"
+      instructions: |
+        Every gate check comes with pass and fail fixtures under fixtures/, run by scripts/test_checks.py. A new check without both is incomplete.
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "README.md"
+      - "CHANGELOG.md"
+  mcp:
+    usage: disabled
+  learnings:
+    scope: local

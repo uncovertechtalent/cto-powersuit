@@ -2,7 +2,7 @@
 """Tests for the security module: the two gate checks beyond their fixture runs, and the three scripts.
 
 - provenance.py: every recorded case in cases/provenance/ gives its risk grade and exactly its red and amber signals;
-  the recommendation follows the archive install path and the data scope.
+  the recommendation follows the archive install path and the data scope; attested release assets are counted per asset.
 - access_review.py: every case in cases/access-review/ gives exactly its red and amber flags.
 - intake.py: fix-by dates from the default windows, the policy template and a custom policy; dedupe; tracked issues.
 - osv_query.py: purls from an SPDX and a CycloneDX SBOM, and the rows built from recorded OSV answers (no network).
@@ -110,6 +110,75 @@ def provenance_recommendation_axes():
     r = provenance.assess(clean, datetime.date(2026, 10, 11))
     if "marketplace" in " ".join(r["recommendation"]) or r["pin"] not in r["recommendation"][0]:
         bad.append(f"no archive and low risk: {r['recommendation']}")
+    return bad
+
+
+@test
+def provenance_attested_assets():
+    """An attested release asset is no unverified binary; the count is per asset, so an older unattested copy of the same name still is."""
+    bad = []
+    c = json.loads((CASES / "provenance/attested-release.json").read_text())
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    if "gh attestation verify <file> --repo example-vendor/example-mcp" not in " ".join(r["recommendation"]):
+        bad.append(f"attested assets: no verify command in the recommendation {r['recommendation']}")
+    c["release_assets"] = c["release_assets"] + ["example-mcp-1.4.2.tar.gz"]
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    ev = [s["evidence"] for s in r["signals"] if s["id"] == "release-binaries"]
+    if levels(r["signals"], "amber") != ["release-binaries"] or not ev[0].startswith("1 ") or "lookup failed" in ev[0]:
+        bad.append(f"one unattested copy of an attested name: {r['signals']}")
+    c["attestation_unknown"] = 1
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    if not any(s["id"] == "release-binaries" and "lookup failed for 1 of them" in s["evidence"] for s in r["signals"]):
+        bad.append(f"a failed lookup must be named in the evidence: {r['signals']}")
+    del c["attestation_unknown"]
+    del c["attested_assets"]
+    r = provenance.assess(c, datetime.date(2026, 10, 11))
+    if not any(s["id"] == "release-binaries" and s["evidence"].startswith("3 ") for s in r["signals"]):
+        bad.append(f"observations without attested_assets (recorded before the field existed): {r['signals']}")
+    return bad
+
+
+@test
+def provenance_collect_looks_up_attestations():
+    """collect() with recorded gh answers: one lookup per digest, 404 means no attestation, any other error means unknown."""
+    bad, calls = [], []
+    attested, missing, failing = "sha256:" + "a" * 64, "sha256:" + "b" * 64, "sha256:" + "c" * 64
+    answers = {
+        "repos/o/r": {"full_name": "o/r", "owner": {"login": "o", "type": "User"}, "created_at": "2025-01-01T00:00:00Z"},
+        "users/o": {"created_at": "2020-01-01T00:00:00Z"},
+        "repos/o/r/commits?per_page=1": [],
+        "repos/o/r/releases?per_page=10": [
+            {"assets": [{"name": "r-2.tar.gz", "digest": attested}, {"name": "r-2.tar.gz.sha256", "digest": "sha256:" + "d" * 64}]},
+            {"assets": [{"name": "r-1.tar.gz", "digest": missing}, {"name": "r-1.zip", "digest": failing}, {"name": "r-0.zip"}]},
+            {"assets": [{"name": "r-2-copy.tar.gz", "digest": attested}]},
+        ],
+        f"repos/o/r/attestations/{attested}": {"attestations": [{"bundle": {}}]},
+    }
+    errors = {f"repos/o/r/attestations/{missing}": "gh api: HTTP 404: Not Found",
+              f"repos/o/r/attestations/{failing}": "gh api: HTTP 403: API rate limit exceeded"}
+
+    def fake_gh(path, raw=False):
+        calls.append(path)
+        if raw:
+            raise RuntimeError("no readme")
+        if path in errors:
+            raise RuntimeError(errors[path])
+        return answers[path]
+
+    real = provenance.gh
+    provenance.gh = fake_gh
+    try:
+        obs = provenance.collect("o/r", 1)
+    finally:
+        provenance.gh = real
+    if obs["attested_assets"] != ["r-2.tar.gz", "r-2-copy.tar.gz"]:
+        bad.append(f"attested_assets {obs['attested_assets']}")
+    if obs["attestation_unknown"] != 1:
+        bad.append(f"attestation_unknown {obs['attestation_unknown']}, want 1 (the 403)")
+    if calls.count(f"repos/o/r/attestations/{attested}") != 1:
+        bad.append("the same digest was looked up twice")
+    if any(c.endswith("d" * 64) for c in calls):
+        bad.append("a .sha256 file (not a binary) was looked up")
     return bad
 
 

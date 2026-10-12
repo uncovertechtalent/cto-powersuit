@@ -6,11 +6,15 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ### Added
 
+- Release provenance: pushing a tag `v<x.y.z>` builds a source tarball of the tag and its sha256, attests both with build provenance, and attaches them to the GitHub release. Check a file with `gh attestation verify <file> --repo uncovertechtalent/cto-powersuit` ([Versions and rollback](README.md#versions-and-rollback)). v0.1.0 has no files and no attestation.
+- CI: zizmor on `.github` with pinned wheel hashes, Dependabot for the actions, zizmor and Claude Code pins (monthly, grouped, 7-day cooldown), CODEOWNERS, a change-review workflow that runs `/sdlc:change-review` from the base branch on each pull request and posts one comment, and a `.coderabbit.yaml` with public path instructions.
 - Behaviour evals for `/sdlc:sdlc-audit`, `/sdlc:pre-push`, and `/fit:repo-clinic` with `claude plugin eval`: six cases, five of them failure paths. Results and costs in [EVALS.md](EVALS.md).
 - `ai-ops` 0.2.0: `/ai-ops:tool-audit`, an audit trail of agent tool calls from Claude Code's `tool_decision` and `tool_result` events: allowed, denied, and asked counts per tool on a dashboard, the `AgentToolDenialsSpike` alert, a runbook page, and `tool_audit.py` for the monthly review record.
 
 ### Changed
 
+- `sdlc` 0.2.2: `/sdlc:change-review` reads the repository's decision records and conventions before the diff, and writes a recorded choice as a note ("intentional per ADR-NNNN"), not a finding. With `kb`, on the user's machine only, it also reads a private knowledge base and posts one comment that cites public files only, after a private-terms scan: `claude "/sdlc:change-review 42 kb"`.
+- `security` 0.2.1: `provenance.py` looks up a build provenance attestation for each release asset by its sha256 digest. An attested asset no longer counts as an unverified binary, and the recommendation names `gh attestation verify`.
 - `sdlc` 0.2.1: the rules of `/sdlc:pre-push` hold when the user asks for the step. In the first eval run, 2 of 3 runs gave way to an explicit request for the deploy job or `--push`.
 
 ### Fixed

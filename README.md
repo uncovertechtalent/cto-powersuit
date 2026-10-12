@@ -56,7 +56,7 @@ The plugins are independent. Install the ones you need. Each module works withou
 
 ## Install
 
-The only source of this project is [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Install it only with the two owner-qualified commands below, `claude plugin marketplace add uncovertechtalent/cto-powersuit` and `npx skills add uncovertechtalent/cto-powersuit`, or from a clone of that repository. Releases are git tags with release notes and carry no attached files. A copy elsewhere that offers a download button is not this project. To check any other skill or MCP server before you install it, use the provenance check of the security module: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), step 7.
+The only source of this project is [github.com/uncovertechtalent/cto-powersuit](https://github.com/uncovertechtalent/cto-powersuit). Install it only with the two owner-qualified commands below, `claude plugin marketplace add uncovertechtalent/cto-powersuit` and `npx skills add uncovertechtalent/cto-powersuit`, or from a clone of that repository. Releases are git tags with release notes. Every release after v0.1.0 also carries a source tarball of its tag, the tarball's sha256, and a build provenance attestation, so you can check a copy against this repository ([Versions and rollback](#versions-and-rollback)). The tarball is for checking, not a way to install. A copy elsewhere that offers a download button is not this project. To check any other skill or MCP server before you install it, use the provenance check of the security module: [`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md), step 7.
 
 ```bash
 claude plugin marketplace add uncovertechtalent/cto-powersuit
@@ -116,6 +116,15 @@ claude plugin install sdlc@cto-powersuit
 With the skills CLI, run `npx skills add` again with the tag you want. It overwrites the installed skills and the ref in `skills-lock.json`.
 
 These commands were tested with Claude Code 2.1.286 and skills 1.7.2.
+
+Every release after v0.1.0 carries two files: `cto-powersuit-<version>.tar.gz`, a `git archive` of the tag, and `cto-powersuit-<version>.tar.gz.sha256`. When a tag is pushed, the release workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml)) checks the release metadata, builds both files, attests them with build provenance, and attaches them to the GitHub release. If the release does not exist yet, the workflow creates it with the tag's section of the changelog as its notes. v0.1.0 was tagged before the workflow existed and has neither files nor an attestation. To check a file you downloaded:
+
+```bash
+gh attestation verify cto-powersuit-<version>.tar.gz --repo uncovertechtalent/cto-powersuit
+sha256sum -c cto-powersuit-<version>.tar.gz.sha256
+```
+
+`gh attestation verify` checks the Sigstore signature and that the workflow that signed it ran in this repository. Add `--signer-workflow uncovertechtalent/cto-powersuit/.github/workflows/release.yml` to require this release workflow. On macOS, use `shasum -a 256 -c` for the second command. The provenance check of the security module ([`/security:supply-chain`](plugins/security/skills/supply-chain/SKILL.md)) does not flag an attested release asset as an unverified binary. It reads that the attestation exists and leaves the signature to `gh attestation verify`. An attestation shows which repository's workflow built the file, not whether that repository deserves trust; the other signals of the check grade that.
 
 ## Overlay: your private layer
 
@@ -216,6 +225,18 @@ python3 scripts/check_release.py
 ```
 
 `scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture. `plugins/sdlc/skills/sdlc-audit/test_probe.py` runs the recorded cases of the sdlc audit's probe. `plugins/gate/tests/test_run.py` tests the gate runner itself on small repositories built in a temporary folder. `scripts/check_repo.py` cross-checks the marketplace, the plugin folders, both READMEs, the demo lines and the overlay section of every skill. `scripts/check_release.py` checks that the changelog and the suit version agree, and that every plugin changed since the last release tag has a higher version. `scripts/test_release.py` tests it on small repositories.
+
+CI runs these on every push and pull request ([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), and zizmor on the workflows, with each accepted finding and its reason in `.github/zizmor.yml`.
+
+Reviews run in three layers, and each layer sees only the context it may see:
+
+1. **CI self-review.** On a pull request from a branch of this repository, [`.github/workflows/change-review.yml`](.github/workflows/change-review.yml) runs `/sdlc:change-review` from the base branch. It first reads this repository's changelog, the READMEs, the conventions CI enforces, and the linked issue. It then reviews the change against them and posts one comment. A choice those files record becomes a note ("intentional per <file>"), not a finding. The model gets the pull request as files and has no shell and no network. The review is advisory: it reports a neutral check with the finding counts and never fails one; "block" findings become a failing check once the false-positive rate of the first reviews is known. The workflow skips Dependabot and other bots, and needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN`; it skips without it.
+2. **Review with private context, on your own machine only.** With `kb`, the skill also reads your private knowledge base: a `vault-search` MCP server, or a folder your overlay names. It then posts one comment that cites public files only, after you have read it. Nothing private reaches CI or a review bot.
+3. **CodeRabbit** reads [`.coderabbit.yaml`](.coderabbit.yaml): path instructions that point at the choices this repository records, and no MCP knowledge source.
+
+```bash
+claude "/sdlc:change-review 42 kb"
+```
 
 ## Evals
 

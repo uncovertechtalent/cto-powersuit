@@ -51,9 +51,31 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code@2.1.286
+      - name: Install Claude Code (version and tarball hashes pinned in .github/claude-code/package-lock.json)
+        run: |
+          cp .github/claude-code/package.json .github/claude-code/package-lock.json "$RUNNER_TEMP/"
+          npm ci --prefix "$RUNNER_TEMP" --no-audit --no-fund
+          echo "$RUNNER_TEMP/node_modules/.bin" >> "$GITHUB_PATH"
       - name: claude plugin validate --strict
         run: |
+          claude --version
           claude plugin validate --strict .
           for p in plugins/* plugins/*/skills; do claude plugin validate --strict "$p"; done
+
+  zizmor:
+    name: Workflow security (zizmor)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install zizmor (version and wheel hashes pinned in .github/zizmor/requirements.txt)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/zizmor"
+          "$RUNNER_TEMP/zizmor/bin/pip" install --require-hashes --no-deps --only-binary :all: -r .github/zizmor/requirements.txt
+      - name: zizmor .github
+        # Online audits (impostor commits, known-vulnerable actions, stale version comments) read the
+        # GitHub API with the job token. Accepted findings, each with a reason, are in .github/zizmor.yml.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: '"$RUNNER_TEMP/zizmor/bin/zizmor" --format github .github'
