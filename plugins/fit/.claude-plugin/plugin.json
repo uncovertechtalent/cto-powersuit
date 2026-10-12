@@ -1,8 +1,8 @@
 {
   "name": "fit",
-  "version": "0.1.0",
-  "description": "Estate assessment: reads a repository, builds on the sdlc audit and recommends which modules of the suit to fit, in which order and why, with a gate check that every module marked fitted is present.",
+  "version": "0.2.0",
+  "description": "Estate assessment and repo clinic: reads a repository, builds on the sdlc audit and recommends which modules of the suit to fit, in which order and why, with a gate check that every module marked fitted is present; and audits a public repository at its owner's request, drafting one short report and one small pull request.",
   "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
   "license": "MIT",
-  "keywords": ["fit", "assessment", "estate", "roadmap", "onboarding", "modules"]
+  "keywords": ["fit", "assessment", "estate", "roadmap", "onboarding", "modules", "clinic", "review", "open-source"]
 }

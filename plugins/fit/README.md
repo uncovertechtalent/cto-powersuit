@@ -2,6 +2,8 @@
 
 The fitting plan for an existing estate. `/fit:estate-assessment` reads a repository and its docs, runs the sdlc audit, and recommends for every module of the suit whether to fit it now, later or not at all, in an order that respects the dependencies between modules. The result is one page, `docs/fit.md`, with a reason, a first step and an owner per module.
 
+`/fit:repo-clinic` is the same look from the outside, for a public repository whose owner asked for feedback. It runs the sdlc audit, the supply-chain and secrets checks of the `security` module and a provenance read, and drafts one short report with the top three gaps and one small pull request plan with its patch. Secrets and security holes go to a private note. It writes to a clinic folder outside any public repository and never posts, forks, pushes, or opens a pull request.
+
 Modules depend on each other. The gate comes before the module checks, because those checks run in it. The docs tree comes before the handover, because the new owners train on its runbooks. Observability comes before SLOs. A module fitted before its dependencies has no gate to run its check in, no runbooks to train on or no metrics to measure. The assessment writes the order down.
 
 Install:
@@ -15,6 +17,7 @@ claude plugin install fit@cto-powersuit
 | Skill | What it does |
 |---|---|
 | `/fit:estate-assessment` | Runs `/sdlc:sdlc-audit`, finds the fitted modules by their signal files, and writes `docs/fit.md`: per module a recommendation (`fit now`, `fit later`, `not needed`, `fitted`), the reason with its evidence, the first step and the owner, plus the order with dependencies and effort class (hours, days, weeks). Read only apart from `docs/fit.md` |
+| `/fit:repo-clinic` | Audits a public repository at its owner's request, with the consent link as a required input. Writes `report.md` (the top three gaps with evidence and fix, what was checked and what was not, under 300 words), `pr-plan.md` and `fix.patch` (the smallest high-value fix, prepared and not pushed), `private.md` for a secret or a security hole, and a row in `LOG.md`. `lint_clinic.py` checks the folder before anything goes public. Never runs the repository's code |
 
 ## Templates
 

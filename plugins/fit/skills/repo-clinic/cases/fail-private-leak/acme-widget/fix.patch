@@ -1,0 +1,4 @@
+diff --git a/src/server.js b/src/server.js
+@@ src/server.js:42 @@
+-  listen('0.0.0.0')
++  listen('127.0.0.1')
