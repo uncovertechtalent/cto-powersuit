@@ -1,10 +1,10 @@
 # ai-ops
 
-Operations for an engineering team's coding agents: one shared harness, spend metered per API request, and a coordinator pattern for running several agent sessions at once. The knowledge infrastructure plugins are its optional parts:
+Operations for an engineering team's coding agents: one shared harness, spend metered per API request, an audit trail of tool calls, and a coordinator pattern for running several agent sessions at once. The knowledge infrastructure plugins are its optional parts:
 
 | Part | Plugin | What it adds |
 |---|---|---|
-| Harness, metering, coordinator | `ai-ops` (this plugin) | Shared settings, spend per request, state in files |
+| Harness, metering, tool audit, coordinator | `ai-ops` (this plugin) | Shared settings, spend per request, who allowed each tool call, state in files |
 | Output filter | [`vestige`](../vestige/) | A catalog of unwanted output patterns, calibrated to you, with hooks |
 | Stance filters | [`stance`](../stance/) | Receipts, plain register, holding a position under pushback |
 | Knowledge base | [`vault`](../vault/) | A Markdown vault with local search as an MCP server |
@@ -21,6 +21,7 @@ claude plugin install ai-ops@cto-powersuit
 |---|---|
 | `/ai-ops:agent-harness` | Shared settings with narrow permissions, the instruction file, plugin list, MCP servers with secrets from the environment, and `docs/agents.md` with the owner |
 | `/ai-ops:metering` | Claude Code telemetry to the observability stack, spend summed from per-request events, a dashboard and an hourly budget alert |
+| `/ai-ops:tool-audit` | Every tool call with who decided it (a rule, a hook, or a person), allowed, denied, and asked counts per tool on a dashboard, an alert on a spike of denied calls, and a monthly review record from `tool_audit.py` |
 | `/ai-ops:coordinator` | One session routes and verifies, workers do the work, all state in `work/ledger.md`, caps on parallel workers, resume after a stop |
 
 ## Templates
@@ -34,9 +35,12 @@ claude plugin install ai-ops@cto-powersuit
 | `observability/loki/rules/fake/agent-spend.yml` | Hourly budget alert on the summed `api_request` events, with route and runbook |
 | `observability/grafana/specs/agent-spend.json` | Dashboard spec for the `observability` module's generator: spend, requests, spend per hour by model |
 | `docs/fin/agent-spend.md` | The cost page: method, budget table, what to do when the alert fires |
+| `observability/grafana/specs/agent-tool-calls.json` | Dashboard spec: allowed, denied, asked, and hook-blocked calls, per tool and per source, and the trail of denied calls |
+| `observability/loki/rules/fake/agent-tool-calls.yml` | `AgentToolDenialsSpike`: denied calls per decision source in 15 minutes above the threshold, with route and runbook |
+| `docs/agent-tool-calls.md` | The audit page: what the trail records and what it misses, retention and access, the alert runbook, the monthly review |
 | `work/ledger.md` | The coordinator's task ledger |
 
-Metering builds on the `observability` module. The spend page follows the `finops` module's provenance fields (`cost_period`, `cost_source`).
+Metering and the tool audit build on the `observability` module. The spend page follows the `finops` module's provenance fields (`cost_period`, `cost_source`).
 
 ## Gate check
 

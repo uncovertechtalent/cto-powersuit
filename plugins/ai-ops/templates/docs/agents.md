@@ -32,6 +32,10 @@ Claude Code asks on a matching ask rule in every permission mode, the bypass mod
 
 Agent spend is metered per API request: see [Agent spend](doc:fin/agent-spend).
 
+## Audit
+
+Every tool call and who allowed or denied it is recorded: see [Agent tool calls](doc:agent-tool-calls).
+
 ## Owner
 
 <owner> owns this setup. A change to the shared settings, the plugin list or `.mcp.json` goes through a pull request.

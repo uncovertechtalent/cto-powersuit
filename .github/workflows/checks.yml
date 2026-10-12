@@ -33,6 +33,8 @@ jobs:
         run: python plugins/security/tests/test_security.py
       - name: Repo clinic lint cases
         run: python plugins/fit/skills/repo-clinic/test_lint.py
+      - name: Tool audit tests
+        run: python plugins/ai-ops/skills/tool-audit/test_tool_audit.py
       - name: Changelog draft tests
         run: python plugins/sdlc/tests/test_changelog_draft.py
       - name: Release check tests

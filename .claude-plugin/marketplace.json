@@ -13,12 +13,13 @@
     {
       "name": "ai-ops",
       "source": "./plugins/ai-ops",
-      "description": "Operations for a team's coding agents: shared harness, spend per API request with a budget alert, coordinator pattern; gate check on agent settings.",
+      "description": "Operations for a team's coding agents: shared harness, spend per API request with a budget alert, an audit trail of tool calls with a denied-calls alert, coordinator pattern; gate check on agent settings.",
       "category": "development",
       "skills": [
         "./skills/agent-harness",
         "./skills/coordinator",
-        "./skills/metering"
+        "./skills/metering",
+        "./skills/tool-audit"
       ]
     },
     {
