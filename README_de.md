@@ -240,6 +240,26 @@ Reviews laufen in drei Ebenen, und jede Ebene sieht nur den Kontext, den sie seh
 claude "/sdlc:change-review 42 kb"
 ```
 
+### Lokales Review, bis es CI-Tokens gibt
+
+Das Review in der CI braucht das Repository-Secret `CLAUDE_CODE_OAUTH_TOKEN`, und es ist bisher nicht gesetzt, deshalb wird der Workflow übersprungen. Bis er läuft, führt jede Session das lokale Review auf ihrem Pull Request aus, bevor sie ihn als fertig meldet. Das Skript hält das Design der CI ein:
+- Es lädt das sdlc-Plugin aus einem sauberen Klon von `main` in `~/.cache/powersuit-main`, nie aus dem Pull Request, und nur für diesen Lauf. Nichts wird installiert, keine Einstellungsdatei ändert sich.
+- Das Modell bekommt den Pull Request als Dateien, ohne Shell und ohne Netzwerk, und läuft mit `--restricted`.
+- Die private Wissensbasis erreicht es nur über deren MCP-Suchwerkzeuge (standardmäßig der Server `vault-search` aus deiner Claude-Konfiguration).
+- Das Skript, nicht das Modell, prüft den Kommentar mit dem Private-Terms-Check und postet oder aktualisiert einen Kommentar pro Pull Request. Der Kommentar endet mit einer Zeile, die ihn als beratendes, lokal ausgeführtes Review kennzeichnet.
+
+```bash
+git clone https://github.com/uncovertechtalent/cto-powersuit.git ~/.cache/powersuit-main
+install -d ~/.config/powersuit
+ln -sf ~/.cache/powersuit-main/plugins/sdlc/skills/change-review/review-pr.sh ~/.config/powersuit/review-pr.sh
+~/.config/powersuit/review-pr.sh uncovertechtalent/cto-powersuit 42
+~/.config/powersuit/review-pr.sh uncovertechtalent/cto-powersuit 42 --post-saved
+```
+
+Der Link folgt `main`: Jeder Lauf aktualisiert den Cache, also ändern sich Skript und Grenzen mit dem Reviewer. Ein Lauf speichert den Kommentar, zeigt Züge, Dauer und Kostenschätzung und fragt im Terminal vor dem Posten. `--post-saved` postet den gespeicherten Kommentar ohne neues Review, damit online steht, was du gelesen hast. Es verweigert das, wenn sich der Kopf des Pull Requests seit diesem Review bewegt hat. Das Skript postet nicht, wenn der Private-Terms-Check einen Begriff findet. Es postet auch nicht, wenn der Check nicht laufen kann (keine Liste oder eine leere), außer du gibst nach dem Lesen `--allow-unscanned` an. Pull Requests aus Forks und von Bots sowie Entwürfe brauchen `--allow-external`: Die CI überspringt sie, und hier hat das Modell privaten Kontext. Zwei Unterschiede zur CI: Das Skript prüft den Kopf des Pull Requests, die CI das Merge-Ergebnis, und es findet den Server der Wissensbasis nur in deiner Claude-Konfiguration auf Benutzerebene. Jeder Lauf löscht beim Beenden seinen temporären Ordner und sein Transkript unter `~/.claude/projects`.
+
+Text in einem Pull Request kann versuchen, das Review zu lenken und hier auch privaten Kontext in den Kommentar zu ziehen. Der Scan, die Regel, nur öffentliche Dateien zu zitieren, und dein Lesen vor `--post-saved` sind die Kontrollen. Das Review fließt in deine Merge-Entscheidung ein und ist nie ein Beleg, dass eine Änderung sicher ist.
+
 ## Evals
 
 `claude plugin eval` führt Verhaltensfälle für drei Skills aus: `/sdlc:sdlc-audit` und `/sdlc:pre-push` in `plugins/sdlc/evals/` sowie `/fit:repo-clinic` in `plugins/fit/evals/`. Fünf der sechs Fälle prüfen einen Fehlerpfad, in dem der Skill ablehnen oder anhalten muss. Jeder Lauf ist ein Modellaufruf auf deinem Konto. Deshalb laufen die Fälle lokal und nicht in CI.

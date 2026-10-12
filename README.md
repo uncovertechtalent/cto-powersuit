@@ -238,6 +238,26 @@ Reviews run in three layers, and each layer sees only the context it may see:
 claude "/sdlc:change-review 42 kb"
 ```
 
+### Local review until CI tokens exist
+
+The CI review needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN`, and it is not set yet, so the workflow skips. Until it runs, every session runs the local reviewer on its pull request before it reports the pull request ready. The reviewer keeps the CI design:
+- It loads the sdlc plugin from a clean clone of `main` in `~/.cache/powersuit-main`, never from the pull request, for that run only. Nothing is installed and no settings file changes.
+- The model gets the pull request as files, with no shell and no network, and runs with `--restricted`.
+- The private knowledge base is reached only through its MCP search tools (by default the `vault-search` server from your Claude config).
+- The script, not the model, scans the comment with the private-terms check and posts or updates one comment per pull request. The comment ends with a line saying it is an advisory review run locally.
+
+```bash
+git clone https://github.com/uncovertechtalent/cto-powersuit.git ~/.cache/powersuit-main
+install -d ~/.config/powersuit
+ln -sf ~/.cache/powersuit-main/plugins/sdlc/skills/change-review/review-pr.sh ~/.config/powersuit/review-pr.sh
+~/.config/powersuit/review-pr.sh uncovertechtalent/cto-powersuit 42
+~/.config/powersuit/review-pr.sh uncovertechtalent/cto-powersuit 42 --post-saved
+```
+
+The link follows `main`: every run refreshes the cache, so the runner and its limits update with the reviewer. A run saves the comment, prints the turns, the time, and the cost estimate, and on a terminal asks before posting. `--post-saved` posts the saved comment without a new review, so what you read is what goes out. It refuses if the pull request head moved since that review. The script refuses to post when the private-terms check finds a term. It also refuses when the check cannot run (no list, or an empty one), unless you add `--allow-unscanned` after reading the comment. Pull requests from forks and bots, and drafts, need `--allow-external`: CI skips them, and here the model has private context. Two differences from CI: the runner reviews the pull request head, where CI reviews the merge result, and it finds the knowledge-base server only in your user-level Claude config. Each run deletes its temporary folder and its transcript under `~/.claude/projects` when it exits.
+
+Text in a pull request can try to steer the review, and here also try to pull private context into the comment. The scan, the rule to cite public files only, and your reading before `--post-saved` are the controls. The review is input to your merge decision, never evidence that a change is safe.
+
 ## Evals
 
 `claude plugin eval` runs behaviour cases for three skills: `/sdlc:sdlc-audit` and `/sdlc:pre-push` in `plugins/sdlc/evals/`, and `/fit:repo-clinic` in `plugins/fit/evals/`. Five of the six cases are failure paths, where the skill must refuse or stop. Every run is a model call on your account, so the cases run locally and not in CI.
