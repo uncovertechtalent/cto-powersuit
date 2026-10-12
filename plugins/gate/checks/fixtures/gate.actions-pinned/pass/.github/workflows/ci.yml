@@ -11,6 +11,7 @@ jobs:
           name: report
           path: report/
       - uses: ./.github/actions/build
+      - uses: $/.github/actions/build  # the self-repository form is local too
       - uses: docker://alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000
   shared:
     uses: example-org/workflows/.github/workflows/release.yml@0123456789abcdef0123456789abcdef01234567

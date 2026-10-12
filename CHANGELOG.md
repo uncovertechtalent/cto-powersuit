@@ -19,6 +19,7 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ### Fixed
 
+- `gate` 0.2.1 and `security` 0.2.2: `gate.actions-pinned` and `security.action-owners` treat GitHub's self-repository form (`uses: $/...`) as local, like `./`. Before, the pin check reported it as `no-ref` and the owner check as owner `$` ([#11](https://github.com/uncovertechtalent/cto-powersuit/issues/11)).
 - `ai-ops`: `/ai-ops:metering` told teams to put the telemetry variables in the repository's `.claude/settings.json`, where Claude Code ignores them. It now names the shell, user settings, and managed settings.
 
 ## [0.1.0] - 2026-10-12

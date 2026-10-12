@@ -7,5 +7,6 @@ jobs:
       - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567 # v7.0.1
       - uses: "Actions/setup-python@0123456789abcdef0123456789abcdef01234567" # owners compare without case
       - uses: ./.github/actions/build
+      - uses: $/.github/actions/build  # the self-repository form is local too
       # - uses: some-org/unlisted-action@0123456789abcdef0123456789abcdef01234567 (a comment, not a reference)
       - run: echo "uses: some-org/in-a-string@0123456789abcdef0123456789abcdef01234567"
