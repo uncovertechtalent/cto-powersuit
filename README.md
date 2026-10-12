@@ -217,6 +217,19 @@ python3 scripts/check_release.py
 
 `scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture. `plugins/sdlc/skills/sdlc-audit/test_probe.py` runs the recorded cases of the sdlc audit's probe. `plugins/gate/tests/test_run.py` tests the gate runner itself on small repositories built in a temporary folder. `scripts/check_repo.py` cross-checks the marketplace, the plugin folders, both READMEs, the demo lines and the overlay section of every skill. `scripts/check_release.py` checks that the changelog and the suit version agree, and that every plugin changed since the last release tag has a higher version. `scripts/test_release.py` tests it on small repositories.
 
+## Evals
+
+`claude plugin eval` runs behaviour cases for three skills: `/sdlc:sdlc-audit` and `/sdlc:pre-push` in `plugins/sdlc/evals/`, and `/fit:repo-clinic` in `plugins/fit/evals/`. Five of the six cases are failure paths, where the skill must refuse or stop. Every run is a model call on your account, so the cases run locally and not in CI.
+
+```bash
+cd plugins/sdlc
+claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
+cd ../fit
+claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
+```
+
+`--scaffold` runs each case's `scaffold.sh`, which builds a small fixture repository in the run's workspace. On macOS, put `/Library/Developer/CommandLineTools/usr/bin` first on `PATH`: the eval sandbox breaks the `/usr/bin/git` shim, and the skills read git history. A full run costs about $4. [EVALS.md](EVALS.md) has the results.
+
 ## License
 
 MIT. `plugins/stance/THIRD_PARTY_NOTICES.md` lists the code adapted from caveman.
