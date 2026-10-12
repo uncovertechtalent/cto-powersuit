@@ -5,7 +5,10 @@ description: >
   agent-written code: diff size, scope against the ticket, tests touched,
   secrets, new dependencies, migrations, generated files and changed tests. Use
   when a pull request is open, before asking a person to review, or when an
-  agent wrote most of the diff. Activates on "/change-review", "review this PR",
+  agent wrote most of the diff. Reads the repository's recorded decisions and
+  conventions first, so a deliberate choice is not flagged; with `kb` it also
+  reads a private knowledge base on the user's machine and posts one comment that
+  cites public files only. Activates on "/change-review", "review this PR",
   "check this diff", "review the agent's change", "is this ready to merge".
 user-invocable: true
 ---
@@ -17,7 +20,9 @@ Checks one diff against the ticket and a fixed list, and writes a review the hum
 ## Inputs
 
 - A pull request (`gh pr view <n>` and `gh pr diff <n>`) or a local range (`git diff main...HEAD`).
-- The ticket the change names.
+- The ticket the change names: the issue the pull request links (`gh issue view <n>`), or the decision it cites.
+- The repository's own record of its decisions and conventions, where present: decision records (`docs/decisions/`, `docs/adr/`, files named `adr-*.md`), `docs/`, `CLAUDE.md`, `AGENTS.md`, `CHANGELOG.md`, and the sections of `README.md` that the change touches.
+- With `kb` in the arguments, and only on the user's machine: a private knowledge base (see below).
 
 ## Checklist
 
@@ -40,16 +45,46 @@ Agent-written diffs need extra care on three items: changed tests, dependencies 
 
 ## Steps
 
-1. Read the ticket, then the diff, then the files around each changed hunk.
-2. Run the checklist. If the user agrees, run `/sdlc:pre-push` (the check jobs of the workflows, locally), or the pre-PR command from `docs/sdlc.md` when preloop is not installed.
+1. Read the ticket, then the repository's decisions and conventions, then the diff, then the files around each changed hunk. Read the decision records whose title or summary matches a changed path or topic, and note which ones a later record supersedes.
+2. Run the checklist. A choice that a recorded decision covers is not a finding: write it as a note, "intentional per ADR-NNNN" (or the file and line that records it). Flag it only when the change contradicts the record, or when the record no longer fits what the change does; then name the record. If the user agrees, run `/sdlc:pre-push` (the check jobs of the workflows, locally), or the pre-PR command from `docs/sdlc.md` when preloop is not installed.
 3. Write the review: findings ordered **block**, **should**, **note**, each with file, line and the fix.
 4. Post it as a pull request comment only when the user says so (`gh pr review <n> --comment --body-file <file>`).
+
+## Private knowledge base (local runs only)
+
+A review that knows the team's history catches more: the decision behind a pattern, a trap that bit before, an incident in the same file. That history often sits in a private knowledge base that must never reach a public repository, a CI runner, or a review bot. This section runs only when both hold:
+
+- the user asked for it, with `kb` in the arguments ("/sdlc:change-review 42 kb");
+- a private knowledge base is reachable on this machine: a search tool such as the `vault-search` MCP server (`vault_search`, `vault_read`), or a folder that `$POWERSUIT_OVERLAY/sdlc/README.md` names.
+
+In CI neither holds, and none may be added there. Without both, skip this section and say so in one line.
+
+1. **Search.** Query the knowledge base for the files, modules, and decisions the diff touches: decisions and their reasons, known traps, prior incidents, and rejected alternatives. Read only the notes that match.
+2. **Translate.** Turn what you learn into findings about the public change. Each finding cites public evidence only: a file and line in the repository, the diff, a public page, or a public issue. Never quote, name, or link a private note, and never copy its wording. If a finding cannot be stated without private detail, drop it and tell the user in the session instead.
+3. **Write one comment** to a file in a new, empty temporary folder. Start it with the heading "Change review with local context", list the findings ordered block, should, note, and say in its last line which public files it cites.
+4. **Scan it** with the private-terms check (`/security:private-terms`) and the term list your pre-push hook uses, by default `$POWERSUIT_OVERLAY/security/private-terms.txt`. A hit (exit 1) stops the post, and you rewrite the line. If the check is not installed or finds no list (exit 2), tell the user the comment is unscanned:
+
+   ```bash
+   python3 ~/.config/private-terms/private_terms.py scan <folder> --terms <term list>
+   ```
+
+5. **Post it** as one comment, after the user has read it in the session: `gh pr comment <n> --body-file <file>` (add `--repo <owner/repo>` outside the checkout). An unscanned comment goes out only on the user's explicit go.
+
+The one-liner, run in the repository's checkout or from anywhere with `owner/repo#n`:
+
+```bash
+claude "/sdlc:change-review 42 kb"
+claude "/sdlc:change-review owner/repo#42 kb"
+```
+
+It is interactive on purpose: the comment draws on private notes, so the user sees it before it goes public.
 
 ## Rules
 
 - Never approve, request changes as the user, merge or push.
 - Each finding names file and line. No finding without evidence.
 - Mask secrets in every output.
+- Private knowledge stays private: no note from a private knowledge base is quoted, named, or linked in a comment, a commit, or a file in the repository.
 
 ## Overlay
 

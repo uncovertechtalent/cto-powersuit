@@ -228,7 +228,17 @@ python3 scripts/check_release.py
 
 `scripts/test_checks.py` führt den Gate-Check jedes Moduls mit dem Gate-Runner gegen seine Pass- und Fail-Fixtures aus. Das Skript braucht Python 3.9+ und endet mit Exit-Code 1, wenn ein Check eine Fail-Fixture besteht oder an einer Pass-Fixture scheitert. `plugins/sdlc/skills/sdlc-audit/test_probe.py` führt die aufgezeichneten Fälle der Probe des SDLC-Audits aus. `plugins/gate/tests/test_run.py` testet den Gate-Runner selbst an kleinen Repositories, die es in einem temporären Ordner anlegt. `scripts/check_repo.py` gleicht Marketplace, Plugin-Ordner, beide READMEs, die Demo-Zeilen und den Overlay-Abschnitt jedes Skills miteinander ab. `scripts/check_release.py` prüft, dass Changelog und Version des Powersuits übereinstimmen und dass jedes Plugin, das sich seit dem letzten Release-Tag geändert hat, eine höhere Version trägt. `scripts/test_release.py` testet das an kleinen Repositories.
 
-CI führt diese Befehle bei jedem Push und jedem Pull Request aus ([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), dazu zizmor auf die Workflows; jeder akzeptierte Befund steht mit Begründung in `.github/zizmor.yml`. Bei einem Pull Request aus einem Branch dieses Repositorys führt [`.github/workflows/change-review.yml`](.github/workflows/change-review.yml) `/sdlc:change-review` vom Basis-Branch aus und postet das Review als einen Kommentar. Der Workflow braucht das Repository-Secret `CLAUDE_CODE_OAUTH_TOKEN` und wird ohne es übersprungen.
+CI führt diese Befehle bei jedem Push und jedem Pull Request aus ([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), dazu zizmor auf die Workflows; jeder akzeptierte Befund steht mit Begründung in `.github/zizmor.yml`.
+
+Reviews laufen in drei Ebenen, und jede Ebene sieht nur den Kontext, den sie sehen darf:
+
+1. **Selbst-Review in der CI.** Bei einem Pull Request aus einem Branch dieses Repositorys führt [`.github/workflows/change-review.yml`](.github/workflows/change-review.yml) `/sdlc:change-review` vom Basis-Branch aus. Der Skill liest zuerst den Changelog, die READMEs, die Konventionen, die CI durchsetzt, und das verknüpfte Issue. Dann prüft er die Änderung dagegen und postet einen Kommentar. Eine Entscheidung, die diese Dateien festhalten, wird zur Notiz ("intentional per <Datei>"), nicht zum Befund. Der Workflow braucht das Repository-Secret `CLAUDE_CODE_OAUTH_TOKEN` und wird ohne es übersprungen.
+2. **Review mit privatem Kontext, nur auf deinem eigenen Rechner.** Mit `kb` liest der Skill zusätzlich deine private Wissensbasis: einen `vault-search`-MCP-Server oder einen Ordner, den dein Overlay nennt. Dann postet er einen Kommentar, der nur öffentliche Dateien zitiert, nachdem du ihn gelesen hast. Nichts Privates erreicht die CI oder einen Review-Bot.
+3. **CodeRabbit** liest [`.coderabbit.yaml`](.coderabbit.yaml): Pfad-Anweisungen, die auf die Entscheidungen zeigen, die dieses Repository festhält, und keine MCP-Wissensquelle.
+
+```bash
+claude "/sdlc:change-review 42 kb"
+```
 
 ## Evals
 

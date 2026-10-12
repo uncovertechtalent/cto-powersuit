@@ -226,7 +226,17 @@ python3 scripts/check_release.py
 
 `scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture. `plugins/sdlc/skills/sdlc-audit/test_probe.py` runs the recorded cases of the sdlc audit's probe. `plugins/gate/tests/test_run.py` tests the gate runner itself on small repositories built in a temporary folder. `scripts/check_repo.py` cross-checks the marketplace, the plugin folders, both READMEs, the demo lines and the overlay section of every skill. `scripts/check_release.py` checks that the changelog and the suit version agree, and that every plugin changed since the last release tag has a higher version. `scripts/test_release.py` tests it on small repositories.
 
-CI runs these on every push and pull request ([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), and zizmor on the workflows, with each accepted finding and its reason in `.github/zizmor.yml`. On a pull request from a branch of this repository, [`.github/workflows/change-review.yml`](.github/workflows/change-review.yml) runs `/sdlc:change-review` from the base branch and posts the review as one comment. It needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN` and skips without it.
+CI runs these on every push and pull request ([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), and zizmor on the workflows, with each accepted finding and its reason in `.github/zizmor.yml`.
+
+Reviews run in three layers, and each layer sees only the context it may see:
+
+1. **CI self-review.** On a pull request from a branch of this repository, [`.github/workflows/change-review.yml`](.github/workflows/change-review.yml) runs `/sdlc:change-review` from the base branch. It first reads this repository's changelog, the READMEs, the conventions CI enforces, and the linked issue. It then reviews the change against them and posts one comment. A choice those files record becomes a note ("intentional per <file>"), not a finding. The workflow needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN` and skips without it.
+2. **Review with private context, on your own machine only.** With `kb`, the skill also reads your private knowledge base: a `vault-search` MCP server, or a folder your overlay names. It then posts one comment that cites public files only, after you have read it. Nothing private reaches CI or a review bot.
+3. **CodeRabbit** reads [`.coderabbit.yaml`](.coderabbit.yaml): path instructions that point at the choices this repository records, and no MCP knowledge source.
+
+```bash
+claude "/sdlc:change-review 42 kb"
+```
 
 ## Evals
 
