@@ -633,7 +633,7 @@ Q_CANARY = "QUARANTINE-CANARY-7f3a"
 Q_REPLY_MARK = "REPLY-MARKER-0b1c"
 Q_TEXT = (f"A post about local embeddings. {Q_CANARY}\n"
           "See https://example.org/a and https://docs.example.com/b?x=1\n"
-          "Hidden​characters\U000e0041here.\n")
+          "Hidden\u200bcharacters\U000e0041here.\n")
 Q_HOME = os.path.expanduser("~")
 Q_STORE = os.path.join(Q_HOME, "quarantine")
 
@@ -841,6 +841,43 @@ def quarantine_read_envelope_has_no_raw_text():
 
 
 @test
+def quarantine_hash_survives_crlf_and_a_leading_newline():
+    """An email with CRLF line ends and a paste that starts with a newline read back as written (#15 review)."""
+    bad = []
+    with q_env() as t:
+        for name, text in (("crlf", "Line one." + "\r\n" + Q_CANARY + "\r\n"),
+                           ("leading", "\n\nStarts after blank lines. " + Q_CANARY + "\n")):
+            res, _ = q_save(t, text, name + ".txt")
+            row = {r["id"]: r for r in map(json.loads, q_run("list")[1].splitlines())}[res["id"]]
+            if not row["sha256_ok"]:
+                bad.append(f"{name}: list reads sha256_ok false right after save")
+            if quarantine.read_item(Path(res["path"]))[1] != text:
+                bad.append(f"{name}: body changed on the way back")
+            with q_backend():
+                env = json.loads(q_run("read", res["id"])[1])
+            if env["quarantine_read"]["integrity"] != "ok":
+                bad.append(f"{name}: integrity {env['quarantine_read']['integrity']}")
+            if env["measured"]["hidden_chars"] != 0:
+                bad.append(f"{name}: hidden_chars {env['measured']['hidden_chars']}")
+    return bad
+
+
+@test
+def quarantine_hidden_characters_and_clean_source():
+    """Soft hyphen, U+180E, variation selectors and the tag block are stripped; the source holds no invisible character."""
+    sample = "a\u00adb\u180ec\ufe0fd\U000e0100e\u200bf\U000e0041g\rh"
+    cleaned, n = quarantine.strip_hidden(sample)
+    bad = [] if (cleaned, n) == ("abcdefgh", 7) else [f"strip_hidden: {cleaned!r} {n}"]
+    import unicodedata
+    for f in (MODULE / "skills/quarantine/quarantine.py", MODULE / "skills/quarantine/SKILL.md", Path(__file__)):
+        text = f.read_text(encoding="utf-8")
+        hits = [hex(ord(c)) for c in text if unicodedata.category(c) in ("Cf", "Co") or 0xFE00 <= ord(c) <= 0xFE0F]
+        if hits:
+            bad.append(f"{f.name}: invisible characters {sorted(set(hits))}")
+    return bad
+
+
+@test
 def quarantine_reader_gets_fenced_stripped_truncated_text():
     bad = []
     with q_env() as t:
@@ -855,7 +892,7 @@ def quarantine_reader_gets_fenced_stripped_truncated_text():
         if not re.match(r"^QDOC-[0-9a-f]{16}$", marker):
             bad.append(f"marker {marker[:30]}")
         doc = user.split(marker + "\n", 1)[1].rsplit("\n" + marker, 1)[0]
-        if Q_CANARY not in doc or "​" in doc or "\U000e0041" in doc or len(doc) != quarantine.MAX_CHARS:
+        if Q_CANARY not in doc or "\u200b" in doc or "\U000e0041" in doc or len(doc) != quarantine.MAX_CHARS:
             bad.append("text not stripped of hidden characters or not cut at MAX_CHARS")
         a = quarantine.build_messages("x")[1]["content"].split("\n", 1)[0]
         b = quarantine.build_messages("x")[1]["content"].split("\n", 1)[0]
@@ -903,7 +940,7 @@ def quarantine_reply_is_typed_cleaned_capped_or_refused():
     with q_env() as t:
         res, _ = q_save(t)
         reply = q_reply(kind="manifesto", language="english", topic="T" * 500,
-                        summary="Line one.​\n\n\x1b[31mLine two." + "x" * 2000,
+                        summary="Line one.\u200b\n\n\x1b[31mLine two." + "x" * 2000,
                         key_points=["p"] * 9 + [7], addresses_ai="yes", extra_field=Q_REPLY_MARK)
         with q_backend(reply):
             rc, out, _ = q_run("read", res["id"])
@@ -914,7 +951,7 @@ def quarantine_reply_is_typed_cleaned_capped_or_refused():
             bad.append(f"enum, language or bool not checked: {s['kind']} {s['language']} {s['addresses_ai']}")
         if len(s["topic"]) > quarantine.CAPS["topic"] or len(s["summary"]) > quarantine.CAPS["summary"]:
             bad.append("caps not applied")
-        if any(c in s["summary"] for c in ("​", "\x1b", "\n")) or len(s["key_points"]) != quarantine.MAX_POINTS:
+        if any(c in s["summary"] for c in ("\u200b", "\x1b", "\n")) or len(s["key_points"]) != quarantine.MAX_POINTS:
             bad.append("summary not cleaned or points not capped")
         if Q_REPLY_MARK in out:
             bad.append("an unknown reply key came through")
@@ -982,6 +1019,16 @@ def q_guard_cases(script, link):
         ("Bash", {"command": 'cat "~/quarantine/x.md"'}, "/tmp"),
         ("Bash", {"command": 'git commit -m "notes on ~/quarantine" && cat ~/quarantine/x.md'}, "/tmp"),
         ("Bash", {"command": f"{script.parent}/../quarantine/quarantine.py.bak read x ~/quarantine/x.md"}, H),
+        # From the #15 review: operators before the script, and the bare name in other positions.
+        ("Bash", {"command": f"true;cp${{IFS}}$HOME/quarantine/x.md${{IFS}}/tmp/x;/usr/bin/python3 {S} list"}, H),
+        ("Bash", {"command": f"cat ~/quarantine/x.md;python3 {S} list"}, H),
+        ("Bash", {"command": "cp -r quarantine /tmp/q"}, H),
+        ("Bash", {"command": "tar cf /tmp/q.tar quarantine ."}, H),
+        ("Bash", {"command": "find quarantine -name '*.md' -exec cat {} +"}, H),
+        ("Bash", {"command": "grep -r foo quarantine -l"}, H),
+        ("Bash", {"command": "grep -e foo quarantine"}, H),
+        ("Bash", {"command": "ls notes && grep -rl x quarantine"}, H),
+        ("Bash", {"command": "LC_ALL=C cat quarantine"}, H),
     ]
     allow = [
         ("Read", {"file_path": f"{H}/vault/_inbox/note.md"}, H), ("Read", {"file_path": f"{H}/quarantine-notes.md"}, H),
@@ -1005,6 +1052,11 @@ def q_guard_cases(script, link):
         ("Bash", {"command": f"git commit -q -F - <<'EOF'\nAdd the store at ~/quarantine.\nItems: {Q}/<id>.md\nEOF"}, "/tmp"),
         ("Bash", {"command": "cat > /tmp/note.txt <<EOF\nThe store lives at ~/quarantine and nothing there runs.\nEOF"}, "/tmp"),
         ("WebFetch", {"url": "https://example.org/quarantine"}, H),
+        ("Bash", {"command": "git grep quarantine"}, H),
+        ("Bash", {"command": "grep -e quarantine notes"}, H),
+        ("Bash", {"command": "rg --regexp=quarantine notes && grep -c quarantine notes/a.md"}, H),
+        ("Bash", {"command": "grep -e foo -e quarantine notes"}, H),
+        ("Bash", {"command": "LC_ALL=C grep quarantine notes"}, H),
     ]
     return deny, allow
 
@@ -1080,6 +1132,14 @@ def quarantine_settings_snippet():
         bad.append(f"absolute rules {abs_rules}")
     if not hook["hooks"][0]["command"].endswith("quarantine.py guard") or "Bash" not in hook["matcher"]:
         bad.append(f"hook entry {hook}")
+    orig = quarantine.SCRIPT
+    quarantine.SCRIPT = "/opt/a b/quarantine.py"
+    try:
+        cmd = quarantine.settings_snippet()["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+    finally:
+        quarantine.SCRIPT = orig
+    if cmd != "python3 '/opt/a b/quarantine.py' guard":
+        bad.append(f"a path with a space is not quoted: {cmd}")
     return bad
 
 

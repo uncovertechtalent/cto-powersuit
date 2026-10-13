@@ -80,7 +80,7 @@ The envelope has three parts:
 | Part | Written by | Fields |
 |---|---|---|
 | `quarantine_read` | the script | id, source, kind, sha256, `integrity` (`ok` while the file matches the hash taken at save time, `changed` after an edit), `truncated` |
-| `measured` | the script, no model | bytes, lines, words, URL count, domains, code fences, and `hidden_chars`: zero-width, bidi and tag characters, which hide text from a human reader. They are stripped before the model sees the text |
+| `measured` | the script, no model | bytes, lines, words, URL count, domains, code fences, and `hidden_chars`: zero-width, bidi, tag and variation-selector characters, the soft hyphen, and a bare carriage return, which hide text from a human reader. They are stripped before the model sees the text |
 | `summary` | the reader model, then typed, cleaned and capped by the script | kind, language, topic (120 characters), summary (700), up to five key points (200 each), `addresses_ai`, `asks_reader_to_act` |
 
 The reader gets the item between two lines that carry a random marker, new for every read, and at most 24,000 characters of it. Unknown reply keys are dropped. A reply that is not valid JSON is refused without being echoed. The raw text and the raw reply are never printed, errors included, and a read log in the store records each read without its text.
