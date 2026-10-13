@@ -3,6 +3,6 @@
   "private": true,
   "description": "The Claude Code version the Plugin manifests job validates with. npm ci installs it from package-lock.json, so the tarball hashes are pinned too.",
   "dependencies": {
-    "@anthropic-ai/claude-code": "2.1.286"
+    "@anthropic-ai/claude-code": "2.1.291"
   }
 }
