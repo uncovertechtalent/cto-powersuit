@@ -4,6 +4,16 @@ Security for a repository and the coding agents that work in it. The skills secu
 
 The skills read, draft and propose. They never change repository settings, rulesets or organisation policies, never install anything without the user's go, and never print a secret value.
 
+## Zero trust
+
+The module works on one principle: nothing is trusted because of where it comes from. That covers inputs, identities, dependencies, and reports. Each is verified at the point where it is used, and every actor, human or agent, gets the least access its job needs. A report, such as a scan result or an agent's summary, counts once it has been checked against the thing it describes.
+
+- `/security:supply-chain`: an action, package, skill, or MCP server counts by its pinned commit SHA, its provenance grade, and its known vulnerabilities, checked before install. Its name, its stars, and its owner's reputation count for nothing.
+- `/security:private-terms`: every push is checked on the machine that pushes, before anything leaves it, whoever wrote the commits.
+- `/security:secrets`: every tracked file is scanned, whoever wrote it, and an exposed key is rotated, since nobody can prove it went unused.
+- `/security:access-review`: every admin, key, and bypass actor is reviewed against the rules each window, and a merge past a rule is a finding, whoever made it.
+- `/security:quarantine`: third-party text never reaches an agent that holds tools. A reader with no tools turns it into a fixed-shape summary, and the agent treats every field as data.
+
 Install:
 
 ```bash
