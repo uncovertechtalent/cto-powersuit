@@ -14,7 +14,7 @@ The module works on one principle: nothing is trusted because of where it comes 
 - `/security:access-review`: every admin, key, and bypass actor is reviewed against the rules each window, and a merge past a rule is a finding, whoever made it.
 - `/security:quarantine`: third-party text never reaches an agent that holds tools. A reader with no tools turns it into a fixed-shape summary, and the agent treats every field as data.
 
-Principle page, with what the platform behind machinebehavior.io already does and the gaps it still has: [machinebehavior.io/inside/docs/sre/principle-zero-trust/](https://machinebehavior.io/inside/docs/sre/principle-zero-trust/).
+Principle: what the platform behind machinebehavior.io already does, and the gaps it still has: [machinebehavior.io/inside/docs/sre/principle-zero-trust/](https://machinebehavior.io/inside/docs/sre/principle-zero-trust/).
 
 Install:
 
