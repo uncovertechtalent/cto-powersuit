@@ -11,10 +11,15 @@
   its LOCAL prefixes and USES pattern match gate.actions-pinned.
 - security.private-terms: each fail fixture gives one hit of its kind; no output shows a term; n/a without a list; list errors
   name a line only; the allow file; tracked files and built folders; the pre-push hook against a local remote; the scan CLI.
+- quarantine.py: save marks and stores an item without printing it, and refuses a store inside a vault, an overlay, a
+  protected folder or a git work tree; list and remove stay inside the store; read returns the envelope and never the
+  raw text, sends the reader fenced, stripped and truncated text with no tools in the request, and types, cleans and
+  caps the reply or refuses it without an echo; the guard denies every known route into the store and allows the
+  known near misses, as a function and as a hook process; the settings snippet. Canary strings only; no network.
 
 Standard library only, Python 3.9+. Usage: python3 plugins/security/tests/test_security.py [-v]
 """
-import contextlib, datetime, importlib.util, io, json, os, shutil, subprocess, sys, tempfile
+import contextlib, datetime, importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -41,6 +46,7 @@ secrets = load(MODULE / "checks/secrets.py", "rule_secrets")
 owners = load(MODULE / "checks/action_owners.py", "rule_action_owners")
 pinned = load(MODULE.parent / "gate/checks/actions_pinned.py", "rule_actions_pinned")
 private = load(MODULE / "checks/private_terms.py", "rule_private_terms")
+quarantine = load(MODULE / "skills/quarantine/quarantine.py", "quarantine")
 PT = MODULE / "checks/fixtures/security.private-terms"
 PT_LIST = PT / "overlay/security/private-terms.txt"
 # Words of the made-up fixture terms. No output of the rule may contain one.
@@ -616,6 +622,524 @@ def private_terms_scan_cli():
         p = run_cli(str(PT / "fail"))
     if p.returncode != 2:
         bad.append(f"scan without a list: exit {p.returncode}, want 2")
+    return bad
+
+
+# ---------------------------------------------------------------- quarantine
+# Test text is a harmless canary string, never real injection text. The reader
+# backend is a fake, so these cases check the envelope and the request, not a model.
+
+Q_CANARY = "QUARANTINE-CANARY-7f3a"
+Q_REPLY_MARK = "REPLY-MARKER-0b1c"
+Q_TEXT = (f"A post about local embeddings. {Q_CANARY}\n"
+          "See https://example.org/a and https://docs.example.com/b?x=1\n"
+          "Hidden\u200bcharacters\U000e0041here.\n")
+Q_HOME = os.path.expanduser("~")
+Q_STORE = os.path.join(Q_HOME, "quarantine")
+
+
+@contextlib.contextmanager
+def q_env(**extra):
+    """A temporary store, vault and scratch folder; the caller's variables come back afterwards."""
+    keys = ("QUARANTINE_ROOT", "QUARANTINE_PROTECT", "VAULT_PATH", "POWERSUIT_OVERLAY", "QUARANTINE_GUARD_LOG")
+    saved = {k: os.environ.pop(k, None) for k in keys}
+    with tempfile.TemporaryDirectory() as tmp:
+        t = Path(os.path.realpath(tmp))
+        (t / "vault").mkdir()
+        (t / "scratch").mkdir()
+        os.environ.update({"QUARANTINE_ROOT": str(t / "quarantine"), "VAULT_PATH": str(t / "vault"),
+                           "QUARANTINE_GUARD_LOG": str(t / "guard.log")})
+        os.environ.update(extra)
+        try:
+            yield t
+        finally:
+            for k in keys:
+                os.environ.pop(k, None)
+                if saved[k] is not None:
+                    os.environ[k] = saved[k]
+
+
+def q_run(*argv):
+    out, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        try:
+            rc = quarantine.main(list(argv))
+        except SystemExit as e:
+            rc = e.code
+    return rc, out.getvalue(), err.getvalue()
+
+
+def q_save(t, text=Q_TEXT, name="paste.txt"):
+    src = t / "scratch" / name
+    src.write_text(text, encoding="utf-8")
+    rc, out, err = q_run("save", "--source", "https://www.example.org/r/test/comments/abc/x/", "--kind", "post", str(src))
+    if rc != 0:
+        raise AssertionError(f"save failed: {err}")
+    return json.loads(out), out
+
+
+def q_reply(**over):
+    obj = {"kind": "post", "language": "en", "topic": "Local embeddings",
+           "summary": "The author describes a local embedding app.", "key_points": ["Runs on a laptop."],
+           "addresses_ai": False, "asks_reader_to_act": True}
+    obj.update(over)
+    return json.dumps(obj)
+
+
+@contextlib.contextmanager
+def q_backend(reply=None):
+    """Replace the reader backend; the calls land in the yielded list."""
+    calls = []
+    orig = quarantine.call_backend
+
+    def fake(messages, url, model, timeout=180):
+        calls.append(messages)
+        return q_reply() if reply is None else reply
+
+    quarantine.call_backend = fake
+    try:
+        yield calls
+    finally:
+        quarantine.call_backend = orig
+
+
+@test
+def quarantine_save_marks_the_item_and_prints_no_text():
+    bad = []
+    with q_env() as t:
+        res, out = q_save(t)
+        p = Path(res["path"])
+        if Q_CANARY in out:
+            bad.append("save printed the text")
+        if p.parent != t / "quarantine" or not res["id"].endswith("example-org-r-test-comments-abc-x"):
+            bad.append(f"item path {p}")
+        if (oct(p.parent.stat().st_mode & 0o777), oct(p.stat().st_mode & 0o777)) != ("0o700", "0o600"):
+            bad.append("modes are not 0700 and 0600")
+        if (p.parent / ".ignore").read_text() != "*\n":
+            bad.append("no .ignore in the store")
+        meta, body = quarantine.read_item(p)
+        if (meta.get("trust"), body, meta.get("sha256")) != ("external", Q_TEXT, res["sha256"]):
+            bad.append(f"front matter or body differ: {meta}")
+        src = t / "scratch" / "move.txt"
+        src.write_text(Q_TEXT)
+        rc, out, _ = q_run("save", "--source", "chat paste", "--move", str(src))
+        if rc != 0 or src.exists() or not json.loads(out)["moved"]:
+            bad.append("--move did not copy and delete")
+        if not q_save(t)[0]["id"].endswith("-2"):
+            bad.append("the same source twice did not get a suffix")
+    return bad
+
+
+@test
+def quarantine_save_from_the_clipboard():
+    bad = []
+    orig = quarantine.clipboard
+    quarantine.clipboard = lambda: Q_TEXT.encode()
+    try:
+        with q_env():
+            rc, out, _ = q_run("save", "--source", "clip", "--from-clipboard")
+            if rc != 0 or Q_CANARY in out:
+                bad.append(f"clipboard save: exit {rc}")
+            elif quarantine.read_item(Path(json.loads(out)["path"]))[1] != Q_TEXT:
+                bad.append("clipboard text not stored as given")
+    finally:
+        quarantine.clipboard = orig
+    return bad
+
+
+@test
+def quarantine_store_placement_and_empty_input_are_refused():
+    bad = []
+    with q_env() as t:
+        empty = t / "scratch" / "empty.txt"
+        empty.write_text("  \n")
+        rc, _, err = q_run("save", "--source", "x", str(empty))
+        if rc != 2 or "empty" not in err:
+            bad.append(f"empty input: exit {rc}")
+        cases = {"inside the vault": {"QUARANTINE_ROOT": str(t / "vault" / "_quarantine")},
+                 "inside a protected folder": {"QUARANTINE_PROTECT": str(t / "scratch"),
+                                               "QUARANTINE_ROOT": str(t / "scratch" / "q")},
+                 "inside the overlay": {"POWERSUIT_OVERLAY": str(t / "scratch"),
+                                        "QUARANTINE_ROOT": str(t / "scratch" / "q")}}
+        (t / "repo" / ".git").mkdir(parents=True)
+        cases["inside a git work tree"] = {"QUARANTINE_ROOT": str(t / "repo" / "q")}
+        src = t / "scratch" / "in.txt"
+        src.write_text(Q_TEXT)
+        for name, env in cases.items():
+            saved = {k: os.environ.get(k) for k in env}
+            os.environ.update(env)
+            try:
+                rc, _, err = q_run("save", "--source", "x", str(src))
+            finally:
+                for k, v in saved.items():
+                    os.environ.pop(k, None)
+                    if v is not None:
+                        os.environ[k] = v
+            if rc != 2 or "outside" not in err:
+                bad.append(f"store {name}: exit {rc}")
+    return bad
+
+
+@test
+def quarantine_list_and_remove():
+    bad = []
+    with q_env() as t:
+        a, _ = q_save(t)
+        b, _ = q_save(t)
+        rc, out, _ = q_run("list")
+        rows = [json.loads(x) for x in out.splitlines()]
+        if rc != 0 or Q_CANARY in out or sorted(r["id"] for r in rows) != sorted([a["id"], b["id"]]):
+            bad.append(f"list: {out[:200]}")
+        if any((r["trust"], r["sha256_ok"]) != ("external", True) for r in rows):
+            bad.append("list rows not marked or hash mismatch")
+        p = Path(a["path"])
+        p.write_text(p.read_text() + "edited\n")
+        rows = {r["id"]: r for r in map(json.loads, q_run("list")[1].splitlines())}
+        if rows[a["id"]]["sha256_ok"] or not rows[b["id"]]["sha256_ok"]:
+            bad.append("sha256_ok does not follow the changed item")
+        rc, out, _ = q_run("remove", a["id"])
+        if rc != 0 or p.exists() or not Path(b["path"]).exists():
+            bad.append("remove did not delete exactly one item")
+        outside = t / "vault" / "atom.md"
+        outside.write_text("keep\n")
+        if q_run("remove", str(outside))[0] != 2 or not outside.exists():
+            bad.append("remove reached a file outside the store")
+    return bad
+
+
+@test
+def quarantine_read_envelope_has_no_raw_text():
+    bad = []
+    with q_env() as t:
+        res, _ = q_save(t)
+        with q_backend() as calls:
+            rc, out, err = q_run("read", res["id"])
+        if rc != 0:
+            return [f"read: exit {rc} {err}"]
+        env = json.loads(out)
+        if Q_CANARY in out:
+            bad.append("the envelope carries the raw text")
+        if set(env) != {"quarantine_read", "measured", "summary", "notice"}:
+            bad.append(f"envelope keys {sorted(env)}")
+        q = env["quarantine_read"]
+        if (q["id"], q["kind"], q["integrity"], q["trust"], q["backend"]) != (res["id"], "post", "ok", "external", "ollama"):
+            bad.append(f"quarantine_read {q}")
+        m = env["measured"]
+        if (m["domains"], m["urls"], m["hidden_chars"]) != (["docs.example.com", "example.org"], 2, 2):
+            bad.append(f"measured {m}")
+        if len(calls) != 1:
+            bad.append(f"{len(calls)} backend calls")
+        log = (t / "quarantine" / ".reads.log").read_text()
+        if len(log.splitlines()) != 1 or Q_CANARY in log:
+            bad.append("read log wrong or carries text")
+        p = Path(res["path"])
+        p.write_text(p.read_text() + "edited\n")
+        with q_backend():
+            if json.loads(q_run("read", res["id"])[1])["quarantine_read"]["integrity"] != "changed":
+                bad.append("a changed item does not read integrity changed")
+    return bad
+
+
+@test
+def quarantine_hash_survives_crlf_and_a_leading_newline():
+    """An email with CRLF line ends and a paste that starts with a newline read back as written (#15 review)."""
+    bad = []
+    with q_env() as t:
+        for name, text in (("crlf", "Line one." + "\r\n" + Q_CANARY + "\r\n"),
+                           ("leading", "\n\nStarts after blank lines. " + Q_CANARY + "\n")):
+            res, _ = q_save(t, text, name + ".txt")
+            row = {r["id"]: r for r in map(json.loads, q_run("list")[1].splitlines())}[res["id"]]
+            if not row["sha256_ok"]:
+                bad.append(f"{name}: list reads sha256_ok false right after save")
+            if quarantine.read_item(Path(res["path"]))[1] != text:
+                bad.append(f"{name}: body changed on the way back")
+            with q_backend():
+                env = json.loads(q_run("read", res["id"])[1])
+            if env["quarantine_read"]["integrity"] != "ok":
+                bad.append(f"{name}: integrity {env['quarantine_read']['integrity']}")
+            if env["measured"]["hidden_chars"] != 0:
+                bad.append(f"{name}: hidden_chars {env['measured']['hidden_chars']}")
+    return bad
+
+
+@test
+def quarantine_hidden_characters_and_clean_source():
+    """Soft hyphen, U+180E, variation selectors and the tag block are stripped; the source holds no invisible character."""
+    sample = "a\u00adb\u180ec\ufe0fd\U000e0100e\u200bf\U000e0041g\rh"
+    cleaned, n = quarantine.strip_hidden(sample)
+    bad = [] if (cleaned, n) == ("abcdefgh", 7) else [f"strip_hidden: {cleaned!r} {n}"]
+    import unicodedata
+    for f in (MODULE / "skills/quarantine/quarantine.py", MODULE / "skills/quarantine/SKILL.md", Path(__file__)):
+        text = f.read_text(encoding="utf-8")
+        hits = [hex(ord(c)) for c in text if unicodedata.category(c) in ("Cf", "Co") or 0xFE00 <= ord(c) <= 0xFE0F]
+        if hits:
+            bad.append(f"{f.name}: invisible characters {sorted(set(hits))}")
+    return bad
+
+
+@test
+def quarantine_reader_gets_fenced_stripped_truncated_text():
+    bad = []
+    with q_env() as t:
+        res, _ = q_save(t, Q_TEXT + "filler words " * 4000)
+        with q_backend() as calls:
+            q_run("read", res["id"])
+        msgs = calls[0]
+        if [m["role"] for m in msgs] != ["system", "user"]:
+            bad.append("messages are not one system and one user message")
+        user = msgs[1]["content"]
+        marker = user.split("\n", 1)[0]
+        if not re.match(r"^QDOC-[0-9a-f]{16}$", marker):
+            bad.append(f"marker {marker[:30]}")
+        doc = user.split(marker + "\n", 1)[1].rsplit("\n" + marker, 1)[0]
+        if Q_CANARY not in doc or "\u200b" in doc or "\U000e0041" in doc or len(doc) != quarantine.MAX_CHARS:
+            bad.append("text not stripped of hidden characters or not cut at MAX_CHARS")
+        a = quarantine.build_messages("x")[1]["content"].split("\n", 1)[0]
+        b = quarantine.build_messages("x")[1]["content"].split("\n", 1)[0]
+        if a == b:
+            bad.append("the marker repeats between reads")
+    return bad
+
+
+@test
+def quarantine_backend_request_has_no_tools():
+    seen = {}
+
+    class Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps({"message": {"content": q_reply()}}).encode()
+
+    def fake_urlopen(req, timeout=0):
+        seen["url"], seen["payload"] = req.full_url, json.loads(req.data)
+        return Resp()
+
+    orig = quarantine.urllib.request.urlopen
+    quarantine.urllib.request.urlopen = fake_urlopen
+    try:
+        content = quarantine.call_backend(quarantine.build_messages("x"), "http://h:1", "m")
+    finally:
+        quarantine.urllib.request.urlopen = orig
+    p = seen["payload"]
+    bad = [] if json.loads(content)["kind"] == "post" else ["reply not passed through"]
+    if seen["url"] != "http://h:1/api/chat" or "tools" in p or p["format"] != quarantine.SCHEMA:
+        bad.append(f"request: {seen['url']} keys {sorted(p)}")
+    if p["stream"] is not False or p["options"]["temperature"] != 0:
+        bad.append("request is streamed or not at temperature 0")
+    return bad
+
+
+@test
+def quarantine_reply_is_typed_cleaned_capped_or_refused():
+    bad = []
+    with q_env() as t:
+        res, _ = q_save(t)
+        reply = q_reply(kind="manifesto", language="english", topic="T" * 500,
+                        summary="Line one.\u200b\n\n\x1b[31mLine two." + "x" * 2000,
+                        key_points=["p"] * 9 + [7], addresses_ai="yes", extra_field=Q_REPLY_MARK)
+        with q_backend(reply):
+            rc, out, _ = q_run("read", res["id"])
+        s = json.loads(out)["summary"]
+        if set(s) != {"kind", "language", "topic", "summary", "key_points", "addresses_ai", "asks_reader_to_act"}:
+            bad.append(f"summary keys {sorted(s)}")
+        if (s["kind"], s["language"], s["addresses_ai"]) != ("other", "und", None):
+            bad.append(f"enum, language or bool not checked: {s['kind']} {s['language']} {s['addresses_ai']}")
+        if len(s["topic"]) > quarantine.CAPS["topic"] or len(s["summary"]) > quarantine.CAPS["summary"]:
+            bad.append("caps not applied")
+        if any(c in s["summary"] for c in ("\u200b", "\x1b", "\n")) or len(s["key_points"]) != quarantine.MAX_POINTS:
+            bad.append("summary not cleaned or points not capped")
+        if Q_REPLY_MARK in out:
+            bad.append("an unknown reply key came through")
+        for reply in (f"not json {Q_REPLY_MARK}", json.dumps([Q_REPLY_MARK]), q_reply(summary="")):
+            with q_backend(reply):
+                rc, out, err = q_run("read", res["id"])
+            if rc != 2 or out or Q_REPLY_MARK in err or Q_CANARY in err:
+                bad.append(f"bad reply not refused cleanly: exit {rc}")
+        with q_backend() as calls:
+            rc, out, _ = q_run("read", res["id"], "--measure-only")
+        if rc != 0 or calls or "summary" in json.loads(out) or Q_CANARY in out:
+            bad.append("--measure-only called the model or printed text")
+    return bad
+
+
+@test
+def quarantine_reader_refuses_files_outside_the_store():
+    bad = []
+    with q_env() as t:
+        q_save(t)
+        outside = t / "vault" / "atom.md"
+        outside.write_text(f"vault atom {Q_CANARY}\n")
+        link = t / "quarantine" / "link.md"
+        link.symlink_to(outside)
+        for ref in (str(outside), str(t / "quarantine" / ".." / "vault" / "atom.md"), "link", str(link),
+                    "no-such-item", str(t / "quarantine" / ".reads.log")):
+            with q_backend() as calls:
+                rc, out, err = q_run("read", ref)
+            if rc != 2 or calls or Q_CANARY in out + err:
+                bad.append(f"read {ref}: exit {rc}, {len(calls)} calls")
+    return bad
+
+
+def q_guard_cases(script, link):
+    S, Q, H = str(script), Q_STORE, Q_HOME
+    deny = [
+        ("Read", {"file_path": f"{Q}/2026-10-13-x.md"}, H), ("Read", {"file_path": "~/quarantine/x.md"}, "/tmp"),
+        ("Read", {"file_path": "quarantine/x.md"}, H), ("Read", {"file_path": "../quarantine/x.md"}, f"{H}/vault"),
+        ("Read", {"file_path": Q}, H), ("Read", {"file_path": str(link)}, "/tmp"),
+        ("Edit", {"file_path": f"{Q}/x.md"}, H), ("Write", {"file_path": f"{Q}/new.md", "content": Q_CANARY}, H),
+        ("NotebookEdit", {"notebook_path": f"{Q}/n.ipynb"}, H),
+        ("Grep", {"pattern": Q_CANARY, "path": Q}, H), ("Grep", {"pattern": "x", "path": "~/quarantine/sub"}, H),
+        ("Grep", {"pattern": "x"}, Q), ("Glob", {"pattern": "**/*.md", "path": Q}, H),
+        ("Glob", {"pattern": f"{Q}/**/*.md"}, H), ("Glob", {"pattern": "quarantine/*.md"}, H),
+        ("Bash", {"command": f"cat {Q}/x.md"}, "/tmp"), ("Bash", {"command": "cat ~/quarantine/x.md"}, "/tmp"),
+        ("Bash", {"command": 'head -5 "$HOME/quarantine/x.md"'}, "/tmp"),
+        ("Bash", {"command": "grep -r CANARY ${HOME}/quarantine"}, "/tmp"),
+        ("Bash", {"command": "ls ~/quarantine"}, "/tmp"), ("Bash", {"command": "rg foo quarantine"}, H),
+        ("Bash", {"command": "cd quarantine && cat *.md"}, H), ("Bash", {"command": "cat ./quarantine/x.md"}, H),
+        ("Bash", {"command": "cat x.md"}, Q), ("Bash", {"command": "cd ~ && cat quarantine/x.md"}, "/tmp"),
+        ("Bash", {"command": "cd && rg foo quarantine"}, "/tmp"), ("Bash", {"command": "pushd quarantine"}, H),
+        ("Bash", {"command": f"python3 {S} read x; cat ~/quarantine/x.md"}, H),
+        ("Bash", {"command": f"{S} read x && cat ~/quarantine/x.md"}, H),
+        ("Bash", {"command": f"{S} read $(cat ~/quarantine/x.md)"}, H),
+        ("Bash", {"command": f"{S} read ~/quarantine/x.md | tee out"}, H),
+        ("Bash", {"command": f"{S} read ~/quarantine/x.md > out.json"}, H),
+        ("Bash", {"command": f"{S} read ~/quarantine/x.md\ncat ~/quarantine/x.md"}, H),
+        ("Bash", {"command": f"python3 -c \"print(open('{Q}/x.md').read())\""}, "/tmp"),
+        ("Bash", {"command": f"python3 - <<'EOF'\nprint(open('{Q}/x.md').read())\nEOF"}, "/tmp"),
+        ("Bash", {"command": "cat <<'EOF' | sh\ncat ~/quarantine/x.md\nEOF"}, "/tmp"),
+        ("Bash", {"command": 'echo "see this $(cat ~/quarantine/x.md) here now"'}, "/tmp"),
+        ("Bash", {"command": 'echo "see this `cat ~/quarantine/x.md` here now"'}, "/tmp"),
+        ("Bash", {"command": "cat <<EOF\n$(cat ~/quarantine/x.md)\nEOF"}, "/tmp"),
+        ("Bash", {"command": 'bash -c "cat ~/quarantine/x.md and more words"'}, "/tmp"),
+        ("Bash", {"command": 'cat "~/quarantine/x.md"'}, "/tmp"),
+        ("Bash", {"command": 'git commit -m "notes on ~/quarantine" && cat ~/quarantine/x.md'}, "/tmp"),
+        ("Bash", {"command": f"{script.parent}/../quarantine/quarantine.py.bak read x ~/quarantine/x.md"}, H),
+        # From the #15 review: operators before the script, and the bare name in other positions.
+        ("Bash", {"command": f"true;cp${{IFS}}$HOME/quarantine/x.md${{IFS}}/tmp/x;/usr/bin/python3 {S} list"}, H),
+        ("Bash", {"command": f"cat ~/quarantine/x.md;python3 {S} list"}, H),
+        ("Bash", {"command": "cp -r quarantine /tmp/q"}, H),
+        ("Bash", {"command": "tar cf /tmp/q.tar quarantine ."}, H),
+        ("Bash", {"command": "find quarantine -name '*.md' -exec cat {} +"}, H),
+        ("Bash", {"command": "grep -r foo quarantine -l"}, H),
+        ("Bash", {"command": "grep -e foo quarantine"}, H),
+        ("Bash", {"command": "ls notes && grep -rl x quarantine"}, H),
+        ("Bash", {"command": "LC_ALL=C cat quarantine"}, H),
+    ]
+    allow = [
+        ("Read", {"file_path": f"{H}/vault/_inbox/note.md"}, H), ("Read", {"file_path": f"{H}/quarantine-notes.md"}, H),
+        ("Read", {"file_path": f"{H}/vault/quarantine/atom.md"}, H), ("Read", {"file_path": S}, H),
+        ("Write", {"file_path": f"{H}/vault/_inbox/inbound quarantine.md", "content": "x"}, H),
+        ("Grep", {"pattern": "quarantine", "path": f"{H}/vault"}, H),
+        ("Glob", {"pattern": "**/quarantine*.md", "path": f"{H}/vault"}, H),
+        ("Bash", {"command": f"python3 {S} read 2026-10-13-x"}, H),
+        ("Bash", {"command": f"{S} read ~/quarantine/2026-10-13-x.md --measure-only"}, H),
+        ("Bash", {"command": f"python3 -I {S} read {Q}/x.md"}, "/tmp"),
+        ("Bash", {"command": f'{S} save --source "https://example.org/r/x/comments/1/" --from-clipboard'}, H),
+        ("Bash", {"command": f"{S} list"}, Q), ("Bash", {"command": f'{S} save --source "a&b" --move /tmp/p.txt'}, H),
+        ("Bash", {"command": 'git commit -m "add quarantine guard"'}, H),
+        ("Bash", {"command": 'echo "the quarantine store"'}, H), ("Bash", {"command": f"cat {S}"}, H),
+        ("Bash", {"command": "ls ~/quarantine-notes"}, "/tmp"), ("Bash", {"command": "grep -r quarantine ~/vault/_inbox"}, H),
+        ("Bash", {"command": "rg -l quarantine vault/_inbox"}, H),
+        ("Bash", {"command": "cd ~/vault && grep -rl quarantine _inbox"}, "/tmp"),
+        ("Bash", {"command": "cat quarantine/x.md"}, f"{H}/vault"),
+        ("Bash", {"command": 'bd create --title="Fetch" --description="Route long pages into ~/quarantine for the reader." -p 3'}, "/tmp"),
+        ("Bash", {"command": "git commit -q -m 'Quarantine store at ~/quarantine, read via the reader'"}, "/tmp"),
+        ("Bash", {"command": f"git commit -q -F - <<'EOF'\nAdd the store at ~/quarantine.\nItems: {Q}/<id>.md\nEOF"}, "/tmp"),
+        ("Bash", {"command": "cat > /tmp/note.txt <<EOF\nThe store lives at ~/quarantine and nothing there runs.\nEOF"}, "/tmp"),
+        ("WebFetch", {"url": "https://example.org/quarantine"}, H),
+        ("Bash", {"command": "git grep quarantine"}, H),
+        ("Bash", {"command": "grep -e quarantine notes"}, H),
+        ("Bash", {"command": "rg --regexp=quarantine notes && grep -c quarantine notes/a.md"}, H),
+        ("Bash", {"command": "grep -e foo -e quarantine notes"}, H),
+        ("Bash", {"command": "LC_ALL=C grep quarantine notes"}, H),
+    ]
+    return deny, allow
+
+
+@test
+def quarantine_guard_known_deny_and_allow():
+    bad = []
+    script = MODULE / "skills/quarantine/quarantine.py"
+    saved = {k: os.environ.pop(k, None) for k in ("QUARANTINE_ROOT",)}
+    os.environ["QUARANTINE_ROOT"] = Q_STORE
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            link = Path(tmp) / "looks-harmless.md"
+            link.symlink_to(os.path.join(Q_STORE, "x.md"))  # dangling while the store does not exist
+            deny, allow = q_guard_cases(script, link)
+            for tool, inp, cwd in deny:
+                if not quarantine.decide(tool, inp, cwd):
+                    bad.append(f"not denied: {tool} {json.dumps(inp)[:100]} cwd={cwd}")
+            for tool, inp, cwd in allow:
+                hit = quarantine.decide(tool, inp, cwd)
+                if hit:
+                    bad.append(f"denied ({hit['rule']}): {tool} {json.dumps(inp)[:100]} cwd={cwd}")
+        w = quarantine.words("git commit -m \"add quarantine guard\" && cat 'quarantine/x'")
+        if "add quarantine guard" not in w or "quarantine/x" not in w:
+            bad.append(f"words: {w}")
+    finally:
+        os.environ.pop("QUARANTINE_ROOT", None)
+        if saved["QUARANTINE_ROOT"] is not None:
+            os.environ["QUARANTINE_ROOT"] = saved["QUARANTINE_ROOT"]
+    if VERBOSE:
+        print(f"     {len(deny)} deny and {len(allow)} allow cases")
+    return bad
+
+
+@test
+def quarantine_guard_as_a_hook_process():
+    bad = []
+    script = MODULE / "skills/quarantine/quarantine.py"
+    with q_env(QUARANTINE_ROOT=Q_STORE) as t:
+        def hook(stdin):
+            return subprocess.run([sys.executable, str(script), "guard"], input=stdin, capture_output=True,
+                                  text=True, env=dict(os.environ)).stdout
+        deny = hook(json.dumps({"tool_name": "Read", "tool_input": {"file_path": f"{Q_STORE}/x.md"},
+                                "cwd": Q_HOME, "session_id": "test"}))
+        try:
+            ok = json.loads(deny)["hookSpecificOutput"]["permissionDecision"] == "deny"
+        except (ValueError, KeyError):
+            ok = False
+        if not ok:
+            bad.append("deny case gave no deny decision")
+        for name, stdin in (("allow", json.dumps({"tool_name": "Read", "tool_input": {"file_path": f"{Q_HOME}/vault/x.md"}})),
+                            ("malformed", "{not json"), ("empty", ""),
+                            ("odd input", json.dumps({"tool_name": "Read", "tool_input": "x"}))):
+            if hook(stdin) != "":
+                bad.append(f"{name}: the hook printed a decision")
+        lines = (t / "guard.log").read_text().splitlines()
+        if len(lines) != 1 or not re.search(r"tool=Read rule=read-in-store target=\S+x\.md$", lines[0]):
+            bad.append(f"guard log: {lines}")
+    return bad
+
+
+@test
+def quarantine_settings_snippet():
+    with q_env(QUARANTINE_ROOT=Q_STORE):
+        home_rules = quarantine.settings_snippet()["permissions"]["deny"]
+    with q_env(QUARANTINE_ROOT="/srv/quarantine"):
+        abs_rules = quarantine.settings_snippet()["permissions"]["deny"]
+        hook = quarantine.settings_snippet()["hooks"]["PreToolUse"][0]
+    bad = []
+    if home_rules != ["Read(~/quarantine/**)", "Edit(~/quarantine/**)"]:
+        bad.append(f"home rules {home_rules}")
+    if abs_rules != ["Read(//srv/quarantine/**)", "Edit(//srv/quarantine/**)"]:
+        bad.append(f"absolute rules {abs_rules}")
+    if not hook["hooks"][0]["command"].endswith("quarantine.py guard") or "Bash" not in hook["matcher"]:
+        bad.append(f"hook entry {hook}")
+    orig = quarantine.SCRIPT
+    quarantine.SCRIPT = "/opt/a b/quarantine.py"
+    try:
+        cmd = quarantine.settings_snippet()["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+    finally:
+        quarantine.SCRIPT = orig
+    if cmd != "python3 '/opt/a b/quarantine.py' guard":
+        bad.append(f"a path with a space is not quoted: {cmd}")
     return bad
 
 
