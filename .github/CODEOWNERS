@@ -1,14 +1,14 @@
 # Default owner for everything in the repository.
-*                               @uncovertechtalent
+*                               @skjoldar
 
 # Paths that decide what CI checks, what a release ships, and what runs on a user's machine. They name
 # the owner on their own line, so a later change to the default above does not drop them.
-/.github/                       @uncovertechtalent
-/ci/                            @uncovertechtalent
-/.claude-plugin/                @uncovertechtalent
-/scripts/                       @uncovertechtalent
-/plugins/*/hooks/               @uncovertechtalent
-/plugins/sdlc/skills/change-review/review-pr.sh @uncovertechtalent
-/plugins/*/.claude-plugin/      @uncovertechtalent
-/plugins/security/              @uncovertechtalent
-/plugins/gate/                  @uncovertechtalent
+/.github/                       @skjoldar
+/ci/                            @skjoldar
+/.claude-plugin/                @skjoldar
+/scripts/                       @skjoldar
+/plugins/*/hooks/               @skjoldar
+/plugins/sdlc/skills/change-review/review-pr.sh @skjoldar
+/plugins/*/.claude-plugin/      @skjoldar
+/plugins/security/              @skjoldar
+/plugins/gate/                  @skjoldar
