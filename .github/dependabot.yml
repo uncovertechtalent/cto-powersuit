@@ -1,10 +1,15 @@
 # Dependabot keeps the pinned CI tools current, the same shape as on the three sites: monthly, one
 # grouped pull request per ecosystem, and each one runs the checks like any other pull request.
 # - github-actions: the commit-SHA pins in .github/workflows; it moves the SHA and the version comment together.
-# - pip: zizmor in .github/zizmor/requirements.txt; it moves the version and the wheel hashes together.
-# - npm: Claude Code in .github/claude-code/package-lock.json, the version the Plugin manifests job validates with.
+# - pip: zizmor in ci/zizmor/requirements.txt; it moves the version and the wheel hashes together.
+# - npm: Claude Code in ci/claude-code/package-lock.json, the version the Plugin manifests job validates with.
 # The cooldown waits 7 days after a release before proposing it, so a release that is pulled or found
 # compromised in its first week never reaches a pull request here.
+# The tool pins live in ci/, not under .github/: Dependabot's service refused the npm pull request for
+# the pin in .github/claude-code ("The request contains invalid or unauthorized changes", job
+# 1623164188, #13); only the github-actions ecosystem writes under .github/. If a pull request still
+# fails, bump by hand: `npm install --package-lock-only @anthropic-ai/claude-code@<version>` in
+# ci/claude-code, and for zizmor take the new version's wheel hashes from PyPI into ci/zizmor/requirements.txt.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -18,7 +23,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: pip
-    directory: "/.github/zizmor"
+    directory: "/ci/zizmor"
     schedule:
       interval: monthly
     cooldown:
@@ -28,7 +33,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: npm
-    directory: "/.github/claude-code"
+    directory: "/ci/claude-code"
     schedule:
       interval: monthly
     cooldown:

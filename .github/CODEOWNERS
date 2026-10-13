@@ -4,6 +4,7 @@
 # Paths that decide what CI checks, what a release ships, and what runs on a user's machine. They name
 # the owner on their own line, so a later change to the default above does not drop them.
 /.github/                       @uncovertechtalent
+/ci/                            @uncovertechtalent
 /.claude-plugin/                @uncovertechtalent
 /scripts/                       @uncovertechtalent
 /plugins/*/hooks/               @uncovertechtalent
