@@ -25,8 +25,9 @@ Commands:
 
 Guards: a string anywhere in the file that matches a secret pattern stops the run; on a repository that is not private
 (public or internal), every security item and every item marked "private" is kept back for a private channel, because
-an issue there discloses it before the fix, and the scorecard still counts it; an @mention or an owner/repo#n
-reference stops the run;
+an issue there discloses it before the fix, and the scorecard still counts it; an @mention, an owner/repo#n
+reference or a GitHub issue link outside a code span, in a title, an evidence, a fix or the review name, stops the
+run; a check is one skill, /plugin:skill;
 --create stops before any write without triage or write access. Needs gh for --create. Standard library only.
 """
 import argparse, json, re, subprocess, sys, tempfile, unicodedata
@@ -69,7 +70,8 @@ SEV_KEYS = [s[0] for s in SEVERITIES]
 LABELS = ([(f"area:{k}", c, d) for k, _, c, d in AREAS] + [(f"kind:{k}", c, d) for k, c, d in KINDS]
           + [(f"severity:{k}", c, d) for k, c, d in SEVERITIES])
 FILED_LABELS = [l for l in LABELS if l[0] != "kind:lead"]  # what --create adds: a review files no lead
-MENTION = re.compile(r"(?<![\w`])(?:@[A-Za-z0-9][A-Za-z0-9-]*|[\w.-]+/[\w.-]+#\d+|https?://github\.com/[^/\s]+/[^/\s]+/(?:issues|pull)/\d+)")  # pings a person or cross-links an issue
+CODE_SPAN = re.compile(r"`[^`\n]*`")  # GitHub links nothing inside a complete code span
+MENTION = re.compile(r"(?<!\w)(?:@[A-Za-z0-9][A-Za-z0-9-]*|[\w.-]+/[\w.-]+#\d+|https?://github\.com/[^/\s]+/[^/\s]+/(?:issues|pull)/\d+)")  # pings a person or cross-links an issue
 MULTILINE = re.compile(r"\.(evidence|fix)$")  # the only fields that may span lines
 SECRET = re.compile(r"(\bsk-ant-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{32,}|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{30,}"
                     r"|\bgithub_pat_[A-Za-z0-9_]{40,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
@@ -92,7 +94,7 @@ def validate(doc):
     if not isinstance(doc, dict) or not isinstance(doc.get("findings"), list):
         return ["the file needs a findings list"]
     seen, titles = set(), set()
-    if isinstance(doc.get("review"), str) and MENTION.search(doc["review"]):
+    if isinstance(doc.get("review"), str) and mentions(doc["review"]):
         problems.append("review: has an @mention or an owner/repo#n reference; it goes into every issue body")
     for i, f in enumerate(doc["findings"]):
         at = f"findings[{i}]" + (f" {f.get('id')}" if isinstance(f, dict) and f.get("id") else "")
@@ -128,12 +130,12 @@ def validate(doc):
         for key in ("evidence", "fix"):
             if not isinstance(f.get(key), str) or not f[key].strip():
                 problems.append(f"{at}: no {key}")
-        if isinstance(f.get("check"), str) and "`" in f["check"]:
-            problems.append(f"{at}: check holds a backtick; name the skill, such as /security:secrets")
-        for key in ("title", "evidence", "fix", "check"):
-            if isinstance(f.get(key), str) and MENTION.search(f[key]):
-                problems.append(f"{at}: {key} has an @mention, an owner/repo#n reference or an issue link, which notifies people "
-                                "or cross-links issues; write it in a code span")
+        if f.get("check") not in (None, "") and not SKILL_RX.match(str(f["check"])):
+            problems.append(f"{at}: check {f['check']!r}, want one skill as /plugin:skill, such as /security:secrets")
+        for key in ("title", "evidence", "fix"):
+            if isinstance(f.get(key), str) and mentions(f[key]):
+                problems.append(f"{at}: {key} has an @mention, an owner/repo#n reference or an issue link outside a code "
+                                "span, which notifies people or cross-links issues; write it in a code span")
         if f.get("private") not in (None, True, False):
             problems.append(f"{at}: private must be true or false")
     for key, kind in (("checks", list), ("verdicts", dict)):
@@ -158,7 +160,14 @@ def validate(doc):
 
 def area_hint(value):
     """When a plugin name was given as an area, name the area the plugin belongs to."""
-    return f" ({value} is a plugin; its area is {PLUGIN_AREA[value]})" if value in PLUGIN_AREA and value not in AREA_KEYS else ""
+    if isinstance(value, str) and value in PLUGIN_AREA and value not in AREA_KEYS:
+        return f" ({value} is a plugin; its area is {PLUGIN_AREA[value]})"
+    return ""
+
+
+def mentions(text):
+    """An @mention, an owner/repo#n reference or an issue link outside a complete code span."""
+    return MENTION.search(CODE_SPAN.sub("", text))
 
 
 def scan(value, path):

@@ -35,7 +35,7 @@ There is no space after the colon. The labels of `/sdlc:ticket` (`area: <part>`,
    - `area`, `kind`, and `severity`;
    - `title`: one line naming the gap, at most 300 characters;
    - `evidence`: a file and line, or the check and its result;
-   - `fix` and `check`: the change, and the skill that found it. Only `evidence` and `fix` may span lines;
+   - `fix` and `check`: the change, and the one skill that found it, written `/plugin:skill`. Only `evidence` and `fix` may span lines;
    - `private: true` for an item outside the security area that must not go into a public issue, such as an AI agent that can read customer data.
 
    Put each check in its plugin's area, as the cockpit groups the modules, so scorecards from different reviews compare:
@@ -77,7 +77,7 @@ There is no space after the colon. The labels of `/sdlc:ticket` (`area: <part>`,
    - An item this review already filed, found by the `<date>/<id>` marker in an issue body, open or closed, is skipped. A second run files nothing twice.
    - An item whose title an existing issue already has is held, with that issue's link. Check it, then run again with `--force` to file the item anyway. An older review that used the same ids has another date, so its issues never block this one.
    - On a repository that is not private (public, or internal to an enterprise), every item of the security area, whatever its kind, every finding of a `security`, `compliance`, or `red-team` check whatever its area, and every item marked `private` is kept back and listed as `KEPT BACK`, because an issue there discloses a hole before the fix. File those as a private security advisory or in a private tracker. Keep them in the file: the scorecard still counts them. The dry run marks them. When every item is kept back, the run stops.
-   - A string anywhere in the file that matches a secret pattern stops the run in every mode. So does an `@handle` or an `owner/repo#n` reference in a title, an evidence, or a fix: it would notify people or cross-link issues. Put a handle or a reference that must stay in a code span.
+   - A string anywhere in the file that matches a secret pattern stops the run in every mode. So does an `@handle`, an `owner/repo#n` reference, or a link to a GitHub issue or pull request in a title, an evidence, a fix, or the review name: it would notify people or cross-link issues. Put a handle or a reference that must stay in a code span.
    - `--create` needs the review date in the file, and triage or write access. It stops before any write when the access is read-only. In a review with read-only access, give the team the file and the dry-run output, and the team runs `--create`.
 5. **Write the scorecard.**
 
