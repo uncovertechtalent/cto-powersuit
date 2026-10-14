@@ -17,6 +17,7 @@ claude plugin install fit@cto-powersuit
 | Skill | What it does |
 |---|---|
 | `/fit:estate-assessment` | Runs `/sdlc:sdlc-audit`, finds the fitted modules by their signal files, and writes `docs/fit.md`: per module a recommendation (`fit now`, `fit later`, `not needed`, `fitted`), the reason with its evidence, the first step and the owner, plus the order with dependencies and effort class (hours, days, weeks). Read only apart from `docs/fit.md` |
+| `/fit:file-findings` | Files a review's findings as GitHub Issues in the company's own repository with the cockpit's labels: `area:<area>`, `kind:finding`, `kind:decision` or `kind:action`, and `severity:<level>`. A dry run prints every issue first. `--create` adds the missing labels and files each item once. Security findings never go into a public issue, and a secret pattern stops the run. `scorecard` writes one scorecard per area: checks run, findings by severity, and a one-line verdict |
 | `/fit:repo-clinic` | Audits a public repository at its owner's request, with the consent link as a required input. Writes `report.md` (the top three gaps with evidence and fix, what was checked and what was not, under 300 words), `pr-plan.md` and `fix.patch` (the smallest high-value fix, prepared and not pushed), `private.md` for a secret or a security hole, and a row in `LOG.md`. `lint_clinic.py` checks the folder before anything goes public. Never runs the repository's code |
 
 ## Templates
@@ -24,6 +25,8 @@ claude plugin install fit@cto-powersuit
 | Lands at | What it is |
 |---|---|
 | `docs/fit.md` | The fit page: module table, order table and the module signal table, with docs front matter |
+| `findings.json` (from `templates/review/`) | The review's items, checks and verdicts, the input of `/fit:file-findings` |
+| `docs/scorecard.md` | The scorecard by hand: a row per area, then per area the checks, the findings by severity and the verdict |
 
 The module signal table lives in `templates/docs/fit.md` and nowhere else in this plugin. The skill reads it from there, and the gate check reads the copy in the client's `docs/fit.md`.
 

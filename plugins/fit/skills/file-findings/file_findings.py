@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+"""File the findings of a CTO review as GitHub Issues, and write one scorecard per area.
+
+The findings file is JSON (see templates/review/findings.json):
+  {"review": "...", "repo": "<owner>/<repo>", "date": "YYYY-MM-DD",
+   "checks":   [{"area": "security", "skill": "/security:secrets", "status": "ran" | "not run", "note": "..."}],
+   "verdicts": {"security": "one line"},
+   "findings": [{"id": "SEC-1", "area": "security", "kind": "finding", "severity": "high",
+                 "title": "...", "evidence": "...", "fix": "...", "check": "/security:secrets"}]}
+
+Labels follow the cockpit taxonomy (machinebehavior.io/inside/cockpit/): area:<key> for the eight areas and
+kind:<kind>, with no space after the colon, plus severity:<level> with the fix-by windows of
+/security:vuln-intake. A review files findings, decisions and actions, never leads.
+
+Commands:
+  check     <file>                         validate the file; exit 1 on any problem
+  issues    <file> [--repo R] [--create]   print every issue it would file (the default dry run); with --create,
+                                           create the missing labels, skip findings already filed, and create the rest
+  scorecard <file> [--out F]               write the scorecards: per area, the checks run, findings by severity,
+                                           and the one-line verdict
+
+Guards: a value that matches a secret pattern stops the run; on a public repository, security findings stop the
+run, because a public issue discloses them before the fix. Needs gh for --create. Standard library only.
+"""
+import argparse, json, re, subprocess, sys, tempfile, unicodedata
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+AREAS = [  # key, title, label colour, label description: the cockpit's labels
+    ("direction", "Direction", "7353D6", "CTO area: where the company stands, and the big technical decisions"),
+    ("delivery", "Delivery", "C77D00", "CTO area: how code gets from an idea to production"),
+    ("operations", "Operations", "12925F", "CTO area: keeping it running, and seeing what it does"),
+    ("money", "Money", "D9533F", "CTO area: what the platform costs, and where the money goes"),
+    ("security", "Security and risk", "D93445", "CTO area: protecting systems and data, staying compliant, testing for failure"),
+    ("ai", "AI", "2F6FD6", "CTO area: running AI in the company, and being found by AI"),
+    ("people", "People", "C63E92", "CTO area: hiring the team, and handing the work over"),
+    ("knowledge", "Knowledge", "138C80", "CTO area: the layer under every module, what agents know and how they answer"),
+]
+KINDS = [
+    ("finding", "8E7A55", "Kind: a gap that an audit or a review found"),
+    ("decision", "6C7680", "Kind: a choice still to make"),
+    ("action", "56605B", "Kind: work to do"),
+    ("lead", "9A8C00", "Kind: a sales lead or an application"),
+]
+SEVERITIES = [  # the fix-by windows of /security:vuln-intake
+    ("critical", "B60205", "Severity: fix within 7 days"),
+    ("high", "D93F0B", "Severity: fix within 30 days"),
+    ("medium", "FBCA04", "Severity: fix within 90 days"),
+    ("low", "0E8A16", "Severity: fix within 180 days"),
+]
+AREA_KEYS = [a[0] for a in AREAS]
+TITLES = {a[0]: a[1] for a in AREAS}
+FILED_KINDS = ("finding", "decision", "action")
+SEV_KEYS = [s[0] for s in SEVERITIES]
+LABELS = ([(f"area:{k}", c, d) for k, _, c, d in AREAS] + [(f"kind:{k}", c, d) for k, c, d in KINDS]
+          + [(f"severity:{k}", c, d) for k, c, d in SEVERITIES])
+SECRET = re.compile(r"(\bsk-ant-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{32,}|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{30,}"
+                    r"|\bgithub_pat_[A-Za-z0-9_]{40,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
+ID_RX = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$")
+REPO_RX = re.compile(r"^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}$")
+MARKER = "<!-- powersuit-finding: {} -->"
+MAX_TITLE = 300
+VERDICT_TODO = "<one line: where this area stands and the first thing to do>"
+
+
+def bad_chars(text):
+    """Control and format characters (bidi marks, zero widths, soft hyphens) and line or paragraph separators."""
+    return [c for c in text if unicodedata.category(c) in ("Cc", "Cf", "Zl", "Zp") and c not in "\n\t"]
+
+
+def validate(doc):
+    problems = []
+    if not isinstance(doc, dict) or not isinstance(doc.get("findings"), list):
+        return ["the file needs a findings list"]
+    seen = set()
+    for i, f in enumerate(doc["findings"]):
+        at = f"findings[{i}]" + (f" {f.get('id')}" if isinstance(f, dict) and f.get("id") else "")
+        if not isinstance(f, dict):
+            problems.append(f"{at}: not an object")
+            continue
+        fid = str(f.get("id", ""))
+        if not ID_RX.match(fid):
+            problems.append(f"{at}: id {fid!r}, want letters, digits, dot, dash or underscore, up to 40")
+        elif fid in seen:
+            problems.append(f"{at}: id {fid} appears twice")
+        seen.add(fid)
+        if f.get("area") not in AREA_KEYS:
+            problems.append(f"{at}: area {f.get('area')!r}, want one of {', '.join(AREA_KEYS)}")
+        if f.get("kind") not in FILED_KINDS:
+            problems.append(f"{at}: kind {f.get('kind')!r}, want one of {', '.join(FILED_KINDS)} (a review files no leads)")
+        sev = f.get("severity")
+        if f.get("kind") == "finding" and sev not in SEV_KEYS:
+            problems.append(f"{at}: a finding needs a severity, one of {', '.join(SEV_KEYS)}")
+        elif sev is not None and sev not in SEV_KEYS:
+            problems.append(f"{at}: severity {sev!r}, want one of {', '.join(SEV_KEYS)}")
+        title = f.get("title")
+        if not isinstance(title, str) or not title.strip():
+            problems.append(f"{at}: no title")
+        else:
+            if len(title) > MAX_TITLE:
+                problems.append(f"{at}: title has {len(title)} characters, at most {MAX_TITLE}")
+            if bad_chars(title) or "\n" in title or "\t" in title:
+                problems.append(f"{at}: title holds a line break or a control or format character")
+        for key in ("evidence", "fix"):
+            if not isinstance(f.get(key), str) or not f[key].strip():
+                problems.append(f"{at}: no {key}")
+        for key in ("title", "evidence", "fix", "check"):
+            v = f.get(key)
+            if isinstance(v, str):
+                if SECRET.search(v):
+                    problems.append(f"{at}: {key} matches a secret pattern; mask the value (kind, prefix, hash prefix)")
+                if key != "title" and bad_chars(v):
+                    problems.append(f"{at}: {key} holds a control or format character")
+    for i, c in enumerate(doc.get("checks") or []):
+        if not isinstance(c, dict) or c.get("area") not in AREA_KEYS or not c.get("skill") or c.get("status") not in ("ran", "not run"):
+            problems.append(f"checks[{i}]: want area (one of the eight), skill, and status 'ran' or 'not run'")
+    for k, v in (doc.get("verdicts") or {}).items():
+        if k not in AREA_KEYS or not isinstance(v, str) or "\n" in v:
+            problems.append(f"verdicts.{k}: want an area key and one line")
+    return problems
+
+
+def labels_of(f):
+    out = [f"area:{f['area']}", f"kind:{f['kind']}"]
+    if f.get("severity"):
+        out.append(f"severity:{f['severity']}")
+    return out
+
+
+def body_of(f, doc):
+    lines = []
+    if f.get("severity"):
+        lines += [f"Severity: {f['severity']}. Area: {TITLES[f['area']]}. Kind: {f['kind']}.", ""]
+    else:
+        lines += [f"Area: {TITLES[f['area']]}. Kind: {f['kind']}.", ""]
+    lines += ["## Evidence", "", f["evidence"].strip(), "", "## Fix", "", f["fix"].strip(), ""]
+    if f.get("check"):
+        lines += [f"Found by `{f['check']}`" + (f" in {doc['review']}." if doc.get("review") else "."), ""]
+    lines += [f"<sub>Filed by /fit:file-findings from the CTO Powersuit review. Finding {f['id']}.</sub>", MARKER.format(f["id"])]
+    return "\n".join(lines) + "\n"
+
+
+def gh(*args, input_text=None):
+    p = subprocess.run(["gh", *args], capture_output=True, text=True, input=input_text)
+    if p.returncode != 0:
+        raise RuntimeError(f"gh {' '.join(args[:2])}: {p.stderr.strip() or p.stdout.strip()}")
+    return p.stdout
+
+
+def cmd_check(doc):
+    problems = validate(doc)
+    for p in problems:
+        print("FAIL " + p)
+    n = len(doc.get("findings") or []) if isinstance(doc, dict) else 0
+    print(f"{n} items, {len(problems)} problems")
+    return 1 if problems else 0
+
+
+def cmd_issues(doc, repo, create):
+    problems = validate(doc)
+    if problems:
+        for p in problems:
+            print("FAIL " + p)
+        print(f"{len(problems)} problems: nothing filed")
+        return 1
+    repo = repo or doc.get("repo")
+    if create and not (repo and REPO_RX.match(repo)):
+        print("FAIL --create needs --repo <owner>/<repo> or a repo in the file")
+        return 1
+    findings = doc["findings"]
+    if create:
+        try:
+            info = json.loads(gh("repo", "view", repo, "--json", "visibility,viewerPermission"))
+            public = info.get("visibility") == "PUBLIC"
+            sec = [f["id"] for f in findings if f["area"] == "security" and f["kind"] == "finding"]
+            if public and sec:
+                print(f"FAIL {repo} is public: a public issue discloses a security finding before the fix. "
+                      f"File these privately (a security advisory, or a private tracker): {', '.join(sec)}")
+                return 1
+            have = {l["name"] for l in json.loads(gh("label", "list", "--repo", repo, "--limit", "1000", "--json", "name"))}
+            existing = json.loads(gh("issue", "list", "--repo", repo, "--state", "all", "--limit", "1000",
+                                     "--json", "number,title,body,url"))
+        except (RuntimeError, ValueError) as e:
+            print(f"FAIL {e}")
+            return 1
+        made = []
+        for name, color, desc in LABELS:
+            if name not in have:
+                gh("label", "create", name, "--repo", repo, "--color", color, "--description", desc)
+                made.append(name)
+        print(f"labels: {len(made)} created" + (f" ({', '.join(made)})" if made else "") + f", {len(LABELS) - len(made)} present")
+    else:
+        existing = []
+        print(f"dry run: nothing is created. {len(findings)} issues for {repo or '<repo>'}:\n")
+    filed, skipped = 0, 0
+    for f in findings:
+        labels = labels_of(f)
+        body = body_of(f, doc)
+        hit = next((i for i in existing if MARKER.format(f["id"]) in (i.get("body") or "") or i.get("title") == f["title"]), None)
+        if hit:
+            print(f"{f['id']}: already filed as {hit['url']}")
+            skipped += 1
+            continue
+        if not create:
+            print(f"--- {f['id']}: {f['title']}\nlabels: {', '.join(labels)}\n\n{body}")
+            continue
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as t:
+            t.write(body)
+        args = ["issue", "create", "--repo", repo, "--title", f["title"], "--body-file", t.name]
+        for l in labels:
+            args += ["--label", l]
+        try:
+            url = gh(*args).strip().splitlines()[-1]
+        except RuntimeError as e:
+            print(f"FAIL {f['id']}: {e}")
+            return 1
+        finally:
+            Path(t.name).unlink(missing_ok=True)
+        print(f"{f['id']}: {url}")
+        filed += 1
+    if create:
+        print(f"{filed} filed, {skipped} already filed")
+    return 0
+
+
+def scorecard(doc):
+    checks, findings, verdicts = doc.get("checks") or [], doc["findings"], doc.get("verdicts") or {}
+    used = [k for k in AREA_KEYS if any(c["area"] == k for c in checks) or any(f["area"] == k for f in findings)]
+    head = doc.get("review") or "CTO Powersuit review"
+    meta = ", ".join(x for x in (doc.get("date"), f"repository {doc['repo']}" if doc.get("repo") else None) if x)
+    out = [f"# Scorecard: {head}", ""]
+    if meta:
+        out += [meta[:1].upper() + meta[1:] + ".", ""]
+    out += ["| Area | Checks run | Critical | High | Medium | Low | Verdict |", "|---|---:|---:|---:|---:|---:|---|"]
+    def count(k, sev):
+        return sum(1 for f in findings if f["area"] == k and f["kind"] == "finding" and f.get("severity") == sev)
+    for k in used:
+        ran = sum(1 for c in checks if c["area"] == k and c["status"] == "ran")
+        out.append(f"| {TITLES[k]} | {ran} | " + " | ".join(str(count(k, s)) for s in SEV_KEYS)
+                   + f" | {verdicts.get(k, VERDICT_TODO)} |")
+    for k in used:
+        out += ["", f"## {TITLES[k]}", "", "| Check | Status |", "|---|---|"]
+        mine = [c for c in checks if c["area"] == k]
+        out += [f"| `{c['skill']}` | {c['status']}" + (f": {c['note']}" if c.get("note") else "") + " |" for c in mine] or ["| none recorded | |"]
+        out += ["", "| Severity | Findings |", "|---|---:|"] + [f"| {s.capitalize()} | {count(k, s)} |" for s in SEV_KEYS]
+        dec = sum(1 for f in findings if f["area"] == k and f["kind"] == "decision")
+        act = sum(1 for f in findings if f["area"] == k and f["kind"] == "action")
+        ids = [f["id"] for f in findings if f["area"] == k]
+        out += ["", f"Decisions open: {dec}. Actions: {act}." + (f" Items: {', '.join(ids)}." if ids else ""),
+                "", f"Verdict: {verdicts.get(k, VERDICT_TODO)}"]
+    return "\n".join(out) + "\n"
+
+
+def cmd_scorecard(doc, out):
+    problems = validate(doc)
+    if problems:
+        for p in problems:
+            print("FAIL " + p)
+        return 1
+    text = scorecard(doc)
+    if out:
+        Path(out).write_text(text)
+        print(f"wrote {out}")
+    else:
+        print(text, end="")
+    return 0
+
+
+def main():
+    ap = argparse.ArgumentParser(description="File the findings of a CTO review as GitHub Issues, and write the scorecards")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    for name in ("check", "issues", "scorecard"):
+        p = sub.add_parser(name)
+        p.add_argument("file")
+        if name == "issues":
+            p.add_argument("--repo")
+            p.add_argument("--create", action="store_true", help="create the labels and issues; without it, a dry run")
+        if name == "scorecard":
+            p.add_argument("--out")
+    args = ap.parse_args()
+    try:
+        doc = json.loads(Path(args.file).read_text())
+    except (OSError, ValueError) as e:
+        print(f"FAIL {args.file}: {e}")
+        sys.exit(1)
+    if args.cmd == "check":
+        sys.exit(cmd_check(doc))
+    if args.cmd == "issues":
+        sys.exit(cmd_issues(doc, args.repo, args.create))
+    sys.exit(cmd_scorecard(doc, args.out))
+
+
+if __name__ == "__main__":
+    main()

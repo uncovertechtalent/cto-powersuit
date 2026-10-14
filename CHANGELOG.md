@@ -4,6 +4,10 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ## Unreleased
 
+### Added
+
+- `fit` 0.3.0: `/fit:file-findings` files a review's findings as GitHub Issues in the company's own repository, with the cockpit's labels (`area:<area>`, `kind:finding`, `kind:decision`, `kind:action`) and `severity:<level>` with the fix-by windows of `/security:vuln-intake`. A dry run prints every issue before anything is created; `--create` adds the missing labels and never files an item twice. Security findings never go into a public issue, and a secret pattern stops the run. `scorecard` writes one scorecard per area: checks run, findings by severity, and a one-line verdict.
+
 ## [0.2.0] - 2026-10-14
 
 Two new skills, `/security:quarantine` and `/ai-ops:tool-audit`, a local review runner for pull requests, behaviour evals with failure paths, and release provenance: from this release on, every release carries a source tarball with its sha256 and a build provenance attestation.
