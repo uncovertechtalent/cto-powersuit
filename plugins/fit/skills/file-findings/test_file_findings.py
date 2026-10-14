@@ -28,13 +28,17 @@ def opt(name):
 if a[:2] == ["repo", "view"]:
     if state.get("fail_view"):
         sys.stderr.write("GraphQL: Could not resolve to a Repository\n"); sys.exit(1)
-    print(json.dumps({"visibility": state["visibility"], "viewerPermission": "WRITE"}))
+    print(json.dumps({"visibility": state["visibility"], "viewerPermission": state.get("permission", "WRITE")}))
 elif a[:2] == ["label", "list"]:
     print(json.dumps([{"name": n} for n in state["labels"]]))
 elif a[:2] == ["label", "create"]:
+    if state.get("fail_label"):
+        sys.stderr.write("HTTP 403: Resource not accessible by integration\n"); sys.exit(1)
     state["labels"].append(a[2])
-elif a[:2] == ["issue", "list"]:
-    print(json.dumps(state["issues"]))
+elif a[0] == "api" and "--paginate" in a and "/issues?state=all" in a[2]:
+    for i in state["issues"]:
+        print(json.dumps({"number": i["number"], "title": i["title"], "body": i.get("body", ""), "url": i["url"],
+                          "state": i.get("state", "OPEN")}))
 elif a[:2] == ["issue", "create"]:
     if state.get("fail_create"):
         sys.stderr.write("could not add label: 'area:delivery' not found\n"); sys.exit(1)
@@ -125,6 +129,14 @@ def case_validation():
         out.append("bad check status: accepted")
     if not ff.validate(doc(finding(), verdicts={"infra": "x"})):
         out.append("verdict for an unknown area: accepted")
+    key = "AKIA" + "Q7RZ4T2XK9W3B6MN"
+    for name, d in (("secret in review", doc(finding(), review=f"Review {key}")),
+                    ("secret in verdict", doc(finding(), verdicts={"security": f"rotate {key}"})),
+                    ("secret in check note", doc(finding(), checks=[{"area": "security", "skill": "/x", "status": "ran", "note": key}])),
+                    ("bidi in review", doc(finding(), review="Review \u202e")),
+                    ("private not a boolean", doc(finding(private="yes")))):
+        if not ff.validate(d):
+            out.append(f"{name}: accepted")
     ok = [finding(), finding(id="DEL-2", area="delivery", kind="decision", severity=None),
           finding(id="OPS-3", area="operations", kind="action", severity="low"), finding(id="X-4", evidence="multi\nline\tok")]
     for f in ok:
@@ -158,7 +170,7 @@ def case_dry_run():
             out.append(f"dry run called gh: {e.calls()}")
         for want in ("dry run: nothing is created. 2 issues for acme/platform", "--- SEC-1: Actions are pinned by tag",
                      "labels: area:security, kind:finding, severity:high", "labels: area:delivery, kind:decision\n",
-                     "## Evidence", "## Fix", "Found by `/security:supply-chain` in Pilot review.", "<!-- powersuit-finding: SEC-1 -->"):
+                     "## Evidence", "## Fix", "Found by `/security:supply-chain` in Pilot review.", "<!-- powersuit-finding: 2026-10-14/SEC-1 -->"):
             if want not in p.stdout:
                 out.append(f"missing {want!r}")
         return out
@@ -194,17 +206,28 @@ def case_create():
 
 
 def case_dedupe_by_marker_and_title():
+    out = []
+    old = [{"number": 7, "title": "Renamed by the team", "body": "x\n<!-- powersuit-finding: 2026-10-14/SEC-1 -->", "url": "u7", "state": "CLOSED"},
+           {"number": 8, "title": "Decide the branch rule", "body": "", "url": "u8"},
+           {"number": 9, "title": "Old review", "body": "<!-- powersuit-finding: 2026-09-01/OPS-1 -->", "url": "u9"}]
+    d = doc(finding(), finding(id="DEL-2", area="delivery", kind="decision", severity=None, title="Decide the branch rule"),
+            finding(id="OPS-1", area="operations", kind="action", severity=None, title="Write the first runbook"))
     with tempfile.TemporaryDirectory() as tmp:
-        old = [{"number": 7, "title": "Renamed by the team", "body": "x\n<!-- powersuit-finding: SEC-1 -->", "url": "u7"},
-               {"number": 8, "title": "Decide the branch rule", "body": "", "url": "u8"}]
         e = Env(tmp, labels=[n for n, _, _ in ff.LABELS], issues=old)
-        p = e.run("issues", doc(finding(), finding(id="DEL-2", area="delivery", kind="decision", severity=None, title="Decide the branch rule")), "--create")
-        out = []
-        if "SEC-1: already filed as u7" not in p.stdout or "DEL-2: already filed as u8" not in p.stdout:
-            out.append(p.stdout)
-        if any(c[:2] in (["issue", "create"], ["label", "create"]) for c in e.calls()):
-            out.append("created something")
-        return out
+        p = e.run("issues", d, "--create")
+        if "SEC-1: already filed by this review as u7 (closed)" not in p.stdout:
+            out.append(f"marker match: {p.stdout}")
+        if "HOLD DEL-2: u8" not in p.stdout:
+            out.append(f"title-only match not held: {p.stdout}")
+        titles = [i["title"] for i in e.data()["issues"][3:]]
+        if titles != ["Write the first runbook"]:
+            out.append(f"filed {titles}; want only OPS-1 (an older review's marker is not this review's)")
+        if "1 filed, 1 already filed, 1 held" not in p.stdout:
+            out.append(f"summary: {p.stdout}")
+        p = e.run("issues", d, "--create", "--force")
+        if [i["title"] for i in e.data()["issues"][4:]] != ["Decide the branch rule"]:
+            out.append(f"--force did not file the held item: {p.stdout}")
+    return out
 
 
 def case_public_repo_guard():
@@ -218,9 +241,15 @@ def case_public_repo_guard():
             out.append("public guard created something")
     with tempfile.TemporaryDirectory() as tmp:
         e = Env(tmp, visibility="PUBLIC")
-        p = e.run("issues", doc(finding(kind="action", severity=None), finding(id="DEL-1", area="delivery")), "--create")
+        p = e.run("issues", doc(finding(kind="action", severity=None, title="Rotate the keys")), "--create")
+        if p.returncode != 1 or "SEC-1" not in p.stdout:
+            out.append(f"public + security action: exit {p.returncode} {p.stdout}")
+        p = e.run("issues", doc(finding(id="AI-1", area="ai", private=True)), "--create")
+        if p.returncode != 1 or "AI-1" not in p.stdout:
+            out.append(f"public + private item: exit {p.returncode} {p.stdout}")
+        p = e.run("issues", doc(finding(id="DEL-1", area="delivery"), finding(id="AI-2", area="ai", private=False, title="Agents share one token")), "--create")
         if p.returncode != 0 or len(e.data()["issues"]) != 2:
-            out.append(f"public + security action and delivery finding: exit {p.returncode} {p.stdout}")
+            out.append(f"public + delivery finding and a non-private ai item: exit {p.returncode} {p.stdout}")
     return out
 
 
@@ -242,6 +271,28 @@ def case_refusals():
         p = e.run("issues", doc(finding()), "--create")
         if p.returncode != 1 or "Could not resolve" not in p.stdout:
             out.append(f"repo not found: exit {p.returncode}")
+    with tempfile.TemporaryDirectory() as tmp:
+        e = Env(tmp, permission="READ")
+        p = e.run("issues", doc(finding()), "--create")
+        if p.returncode != 1 or "needs triage or write access" not in p.stdout or any(c[0] != "repo" for c in e.calls()):
+            out.append(f"read-only access: exit {p.returncode}, calls {e.calls()}")
+    with tempfile.TemporaryDirectory() as tmp:
+        e = Env(tmp)
+        p = e.run("issues", doc(finding(), date=None), "--create")
+        if p.returncode != 1 or "needs the review date" not in p.stdout or e.calls():
+            out.append(f"no date: exit {p.returncode}")
+    with tempfile.TemporaryDirectory() as tmp:
+        e = Env(tmp, fail_label=True)
+        p = e.run("issues", doc(finding()), "--create")
+        if p.returncode != 1 or "FAIL gh label create: HTTP 403" not in p.stdout or "Traceback" in p.stderr:
+            out.append(f"label create failure: exit {p.returncode} {p.stdout} {p.stderr[-200:]}")
+        if e.data()["issues"]:
+            out.append("filed an issue after a label failure")
+    with tempfile.TemporaryDirectory() as tmp:
+        e = Env(tmp, labels=[n.upper() for n, _, _ in ff.LABELS])
+        p = e.run("issues", doc(finding()), "--create")
+        if any(c[:2] == ["label", "create"] for c in e.calls()) or "labels: 0 created" not in p.stdout:
+            out.append(f"labels that differ in case were created again: {p.stdout}")
     with tempfile.TemporaryDirectory() as tmp:
         e = Env(tmp, fail_create=True)
         p = e.run("issues", doc(finding()), "--create")
@@ -281,6 +332,10 @@ def case_scorecard():
         out.append("an area with no checks and no findings got a section")
     if text.index("| Delivery |") > text.index("| Security and risk |"):
         out.append("areas are not in cockpit order")
+    piped = ff.scorecard(doc(finding(), verdicts={"security": "Fix a|b first"},
+                             checks=[{"area": "security", "skill": "/x", "status": "not run", "note": "no a|b access"}]))
+    if "Fix a\\|b first |" not in piped or "no a\\|b access |" not in piped:
+        out.append("a | in a verdict or a note is not escaped")
     with tempfile.TemporaryDirectory() as tmp:
         e = Env(tmp)
         target = Path(tmp) / "scorecard.md"

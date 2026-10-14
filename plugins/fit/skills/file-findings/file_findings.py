@@ -6,7 +6,8 @@ The findings file is JSON (see templates/review/findings.json):
    "checks":   [{"area": "security", "skill": "/security:secrets", "status": "ran" | "not run", "note": "..."}],
    "verdicts": {"security": "one line"},
    "findings": [{"id": "SEC-1", "area": "security", "kind": "finding", "severity": "high",
-                 "title": "...", "evidence": "...", "fix": "...", "check": "/security:secrets"}]}
+                 "title": "...", "evidence": "...", "fix": "...", "check": "/security:secrets",
+                 "private": false}]}
 
 Labels follow the cockpit taxonomy (machinebehavior.io/inside/cockpit/): area:<key> for the eight areas and
 kind:<kind>, with no space after the colon, plus severity:<level> with the fix-by windows of
@@ -14,13 +15,17 @@ kind:<kind>, with no space after the colon, plus severity:<level> with the fix-b
 
 Commands:
   check     <file>                         validate the file; exit 1 on any problem
-  issues    <file> [--repo R] [--create]   print every issue it would file (the default dry run); with --create,
-                                           create the missing labels, skip findings already filed, and create the rest
+  issues    <file> [--repo R] [--create] [--force]
+                                           print every issue it would file (the default dry run); with --create,
+                                           create the missing labels, skip items this review already filed (marked
+                                           <date>/<id> in the body), hold items whose title an issue already has
+                                           (--force files them), and create the rest
   scorecard <file> [--out F]               write the scorecards: per area, the checks run, findings by severity,
                                            and the one-line verdict
 
-Guards: a value that matches a secret pattern stops the run; on a public repository, security findings stop the
-run, because a public issue discloses them before the fix. Needs gh for --create. Standard library only.
+Guards: a string anywhere in the file that matches a secret pattern stops the run; on a public repository, every
+security item and every item marked "private" stops the run, because a public issue discloses it before the fix;
+--create stops before any write without triage or write access. Needs gh for --create. Standard library only.
 """
 import argparse, json, re, subprocess, sys, tempfile, unicodedata
 from pathlib import Path
@@ -58,7 +63,9 @@ SECRET = re.compile(r"(\bsk-ant-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{32,}|\bAKIA[
                     r"|\bgithub_pat_[A-Za-z0-9_]{40,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
 ID_RX = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$")
 REPO_RX = re.compile(r"^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}$")
-MARKER = "<!-- powersuit-finding: {} -->"
+MARKER = "<!-- powersuit-finding: {} -->"  # <review date>/<id>
+DATE_RX = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+WRITERS = ("TRIAGE", "WRITE", "MAINTAIN", "ADMIN")
 MAX_TITLE = 300
 VERDICT_TODO = "<one line: where this area stands and the first thing to do>"
 
@@ -99,25 +106,45 @@ def validate(doc):
         else:
             if len(title) > MAX_TITLE:
                 problems.append(f"{at}: title has {len(title)} characters, at most {MAX_TITLE}")
-            if bad_chars(title) or "\n" in title or "\t" in title:
-                problems.append(f"{at}: title holds a line break or a control or format character")
+            if "\n" in title or "\t" in title:
+                problems.append(f"{at}: title holds a line break or a tab")
         for key in ("evidence", "fix"):
             if not isinstance(f.get(key), str) or not f[key].strip():
                 problems.append(f"{at}: no {key}")
-        for key in ("title", "evidence", "fix", "check"):
-            v = f.get(key)
-            if isinstance(v, str):
-                if SECRET.search(v):
-                    problems.append(f"{at}: {key} matches a secret pattern; mask the value (kind, prefix, hash prefix)")
-                if key != "title" and bad_chars(v):
-                    problems.append(f"{at}: {key} holds a control or format character")
+        if f.get("private") not in (None, True, False):
+            problems.append(f"{at}: private must be true or false")
     for i, c in enumerate(doc.get("checks") or []):
         if not isinstance(c, dict) or c.get("area") not in AREA_KEYS or not c.get("skill") or c.get("status") not in ("ran", "not run"):
             problems.append(f"checks[{i}]: want area (one of the eight), skill, and status 'ran' or 'not run'")
     for k, v in (doc.get("verdicts") or {}).items():
         if k not in AREA_KEYS or not isinstance(v, str) or "\n" in v:
             problems.append(f"verdicts.{k}: want an area key and one line")
+    problems += scan(doc, "")
     return problems
+
+
+def scan(value, path):
+    """Every string in the file, at any depth: no secret pattern, no control or format character."""
+    if isinstance(value, dict):
+        return [p for k, v in value.items() for p in scan(v, f"{path}.{k}" if path else str(k))]
+    if isinstance(value, list):
+        return [p for i, v in enumerate(value) for p in scan(v, f"{path}[{i}]")]
+    if not isinstance(value, str):
+        return []
+    out = []
+    if SECRET.search(value):
+        out.append(f"{path}: matches a secret pattern; mask the value (kind, prefix, hash prefix)")
+    if bad_chars(value):
+        out.append(f"{path}: holds a control or format character")
+    return out
+
+
+def marker_of(f, doc):
+    return MARKER.format(f"{doc.get('date') or 'undated'}/{f['id']}")
+
+
+def cell(text):
+    return str(text).replace("|", "\\|")
 
 
 def labels_of(f):
@@ -136,7 +163,8 @@ def body_of(f, doc):
     lines += ["## Evidence", "", f["evidence"].strip(), "", "## Fix", "", f["fix"].strip(), ""]
     if f.get("check"):
         lines += [f"Found by `{f['check']}`" + (f" in {doc['review']}." if doc.get("review") else "."), ""]
-    lines += [f"<sub>Filed by /fit:file-findings from the CTO Powersuit review. Finding {f['id']}.</sub>", MARKER.format(f["id"])]
+    lines += [f"<sub>Filed by /fit:file-findings from the CTO Powersuit review. Item {f['id']} of the review of {doc.get('date') or 'an undated day'}.</sub>",
+              marker_of(f, doc)]
     return "\n".join(lines) + "\n"
 
 
@@ -156,7 +184,14 @@ def cmd_check(doc):
     return 1 if problems else 0
 
 
-def cmd_issues(doc, repo, create):
+def existing_issues(repo):
+    """Every issue and pull request of the repository, open and closed, read page by page."""
+    out = gh("api", "--paginate", f"repos/{repo}/issues?state=all&per_page=100",
+             "--jq", ".[] | {number, title, body, url: .html_url, state}")
+    return [json.loads(line) for line in out.splitlines() if line.strip()]
+
+
+def cmd_issues(doc, repo, create, force=False):
     problems = validate(doc)
     if problems:
         for p in problems:
@@ -164,42 +199,53 @@ def cmd_issues(doc, repo, create):
         print(f"{len(problems)} problems: nothing filed")
         return 1
     repo = repo or doc.get("repo")
-    if create and not (repo and REPO_RX.match(repo)):
-        print("FAIL --create needs --repo <owner>/<repo> or a repo in the file")
-        return 1
     findings = doc["findings"]
     if create:
+        if not (repo and REPO_RX.match(repo)):
+            print("FAIL --create needs --repo <owner>/<repo> or a repo in the file")
+            return 1
+        if not DATE_RX.match(str(doc.get("date") or "")):
+            print("FAIL --create needs the review date (YYYY-MM-DD) in the file: it marks each issue as this review's")
+            return 1
         try:
             info = json.loads(gh("repo", "view", repo, "--json", "visibility,viewerPermission"))
-            public = info.get("visibility") == "PUBLIC"
-            sec = [f["id"] for f in findings if f["area"] == "security" and f["kind"] == "finding"]
-            if public and sec:
-                print(f"FAIL {repo} is public: a public issue discloses a security finding before the fix. "
-                      f"File these privately (a security advisory, or a private tracker): {', '.join(sec)}")
+            if info.get("viewerPermission") not in WRITERS:
+                print(f"FAIL {repo}: permission {info.get('viewerPermission')}; filing needs triage or write access. "
+                      "Give the team this file and the dry-run output, and the team runs --create.")
                 return 1
-            have = {l["name"] for l in json.loads(gh("label", "list", "--repo", repo, "--limit", "1000", "--json", "name"))}
-            existing = json.loads(gh("issue", "list", "--repo", repo, "--state", "all", "--limit", "1000",
-                                     "--json", "number,title,body,url"))
+            closed_door = [f["id"] for f in findings if f["area"] == "security" or f.get("private")]
+            if info.get("visibility") == "PUBLIC" and closed_door:
+                print(f"FAIL {repo} is public: a public issue discloses a security item before the fix. File these "
+                      f"privately (a security advisory, or a private tracker), then run again without them: {', '.join(closed_door)}")
+                return 1
+            have = {l["name"].lower() for l in json.loads(gh("label", "list", "--repo", repo, "--limit", "1000", "--json", "name"))}
+            existing = existing_issues(repo)
+            made = []
+            for name, color, desc in LABELS:
+                if name not in have:  # GitHub label names ignore case
+                    gh("label", "create", name, "--repo", repo, "--color", color, "--description", desc)
+                    made.append(name)
         except (RuntimeError, ValueError) as e:
             print(f"FAIL {e}")
             return 1
-        made = []
-        for name, color, desc in LABELS:
-            if name not in have:
-                gh("label", "create", name, "--repo", repo, "--color", color, "--description", desc)
-                made.append(name)
         print(f"labels: {len(made)} created" + (f" ({', '.join(made)})" if made else "") + f", {len(LABELS) - len(made)} present")
     else:
         existing = []
         print(f"dry run: nothing is created. {len(findings)} issues for {repo or '<repo>'}:\n")
-    filed, skipped = 0, 0
+    filed, skipped, held = 0, 0, 0
     for f in findings:
         labels = labels_of(f)
         body = body_of(f, doc)
-        hit = next((i for i in existing if MARKER.format(f["id"]) in (i.get("body") or "") or i.get("title") == f["title"]), None)
-        if hit:
-            print(f"{f['id']}: already filed as {hit['url']}")
+        mine = next((i for i in existing if marker_of(f, doc) in (i.get("body") or "")), None)
+        if mine:
+            print(f"{f['id']}: already filed by this review as {mine['url']} ({mine.get('state', '').lower()})")
             skipped += 1
+            continue
+        same = next((i for i in existing if i.get("title") == f["title"]), None)
+        if same and not force:
+            print(f"HOLD {f['id']}: {same['url']} ({same.get('state', '').lower()}) has the same title. "
+                  "Check it; run again with --force to file this item anyway.")
+            held += 1
             continue
         if not create:
             print(f"--- {f['id']}: {f['title']}\nlabels: {', '.join(labels)}\n\n{body}")
@@ -219,7 +265,7 @@ def cmd_issues(doc, repo, create):
         print(f"{f['id']}: {url}")
         filed += 1
     if create:
-        print(f"{filed} filed, {skipped} already filed")
+        print(f"{filed} filed, {skipped} already filed, {held} held")
     return 0
 
 
@@ -237,11 +283,11 @@ def scorecard(doc):
     for k in used:
         ran = sum(1 for c in checks if c["area"] == k and c["status"] == "ran")
         out.append(f"| {TITLES[k]} | {ran} | " + " | ".join(str(count(k, s)) for s in SEV_KEYS)
-                   + f" | {verdicts.get(k, VERDICT_TODO)} |")
+                   + f" | {cell(verdicts.get(k, VERDICT_TODO))} |")
     for k in used:
         out += ["", f"## {TITLES[k]}", "", "| Check | Status |", "|---|---|"]
         mine = [c for c in checks if c["area"] == k]
-        out += [f"| `{c['skill']}` | {c['status']}" + (f": {c['note']}" if c.get("note") else "") + " |" for c in mine] or ["| none recorded | |"]
+        out += [f"| `{cell(c['skill'])}` | {c['status']}" + (f": {cell(c['note'])}" if c.get("note") else "") + " |" for c in mine] or ["| none recorded | |"]
         out += ["", "| Severity | Findings |", "|---|---:|"] + [f"| {s.capitalize()} | {count(k, s)} |" for s in SEV_KEYS]
         dec = sum(1 for f in findings if f["area"] == k and f["kind"] == "decision")
         act = sum(1 for f in findings if f["area"] == k and f["kind"] == "action")
@@ -275,6 +321,7 @@ def main():
         if name == "issues":
             p.add_argument("--repo")
             p.add_argument("--create", action="store_true", help="create the labels and issues; without it, a dry run")
+            p.add_argument("--force", action="store_true", help="file an item even when an issue has its title")
         if name == "scorecard":
             p.add_argument("--out")
     args = ap.parse_args()
@@ -286,7 +333,7 @@ def main():
     if args.cmd == "check":
         sys.exit(cmd_check(doc))
     if args.cmd == "issues":
-        sys.exit(cmd_issues(doc, args.repo, args.create))
+        sys.exit(cmd_issues(doc, args.repo, args.create, args.force))
     sys.exit(cmd_scorecard(doc, args.out))
 
 
