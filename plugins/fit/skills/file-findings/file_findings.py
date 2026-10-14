@@ -59,6 +59,8 @@ FILED_KINDS = ("finding", "decision", "action")
 SEV_KEYS = [s[0] for s in SEVERITIES]
 LABELS = ([(f"area:{k}", c, d) for k, _, c, d in AREAS] + [(f"kind:{k}", c, d) for k, c, d in KINDS]
           + [(f"severity:{k}", c, d) for k, c, d in SEVERITIES])
+FILED_LABELS = [l for l in LABELS if l[0] != "kind:lead"]  # what --create adds: a review files no lead
+MULTILINE = re.compile(r"\.(evidence|fix)$")  # the only fields that may span lines
 SECRET = re.compile(r"(\bsk-ant-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{32,}|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{30,}"
                     r"|\bgithub_pat_[A-Za-z0-9_]{40,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
 ID_RX = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$")
@@ -136,6 +138,8 @@ def scan(value, path):
         out.append(f"{path}: matches a secret pattern; mask the value (kind, prefix, hash prefix)")
     if bad_chars(value):
         out.append(f"{path}: holds a control or format character")
+    if ("\n" in value or "\r" in value) and not MULTILINE.search(path):
+        out.append(f"{path}: holds a line break; only evidence and fix may span lines")
     return out
 
 
@@ -221,14 +225,14 @@ def cmd_issues(doc, repo, create, force=False):
             have = {l["name"].lower() for l in json.loads(gh("label", "list", "--repo", repo, "--limit", "1000", "--json", "name"))}
             existing = existing_issues(repo)
             made = []
-            for name, color, desc in LABELS:
+            for name, color, desc in FILED_LABELS:
                 if name not in have:  # GitHub label names ignore case
                     gh("label", "create", name, "--repo", repo, "--color", color, "--description", desc)
                     made.append(name)
         except (RuntimeError, ValueError) as e:
             print(f"FAIL {e}")
             return 1
-        print(f"labels: {len(made)} created" + (f" ({', '.join(made)})" if made else "") + f", {len(LABELS) - len(made)} present")
+        print(f"labels: {len(made)} created" + (f" ({', '.join(made)})" if made else "") + f", {len(FILED_LABELS) - len(made)} present")
     else:
         existing = []
         print(f"dry run: nothing is created. {len(findings)} issues for {repo or '<repo>'}:\n")

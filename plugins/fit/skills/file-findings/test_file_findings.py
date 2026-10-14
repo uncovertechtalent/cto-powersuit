@@ -134,7 +134,10 @@ def case_validation():
                     ("secret in verdict", doc(finding(), verdicts={"security": f"rotate {key}"})),
                     ("secret in check note", doc(finding(), checks=[{"area": "security", "skill": "/x", "status": "ran", "note": key}])),
                     ("bidi in review", doc(finding(), review="Review \u202e")),
-                    ("private not a boolean", doc(finding(private="yes")))):
+                    ("private not a boolean", doc(finding(private="yes"))),
+                    ("line break in a check note", doc(finding(), checks=[{"area": "security", "skill": "/x", "status": "ran", "note": "a\nb"}])),
+                    ("line break in review", doc(finding(), review="Pilot\nreview")),
+                    ("line break in check", doc(finding(check="/x\n/y")))):
         if not ff.validate(d):
             out.append(f"{name}: accepted")
     ok = [finding(), finding(id="DEL-2", area="delivery", kind="decision", severity=None),
@@ -154,6 +157,8 @@ def case_labels():
         out.append(f"labels {names}")
     if any(" " in n for n in names):
         out.append("a label has a space")
+    if [n for n, _, _ in ff.FILED_LABELS] != [n for n in want if n != "kind:lead"]:
+        out.append(f"filed labels {[n for n, _, _ in ff.FILED_LABELS]}")
     if ff.labels_of(finding(kind="decision", severity=None)) != ["area:security", "kind:decision"]:
         out.append("a decision without severity gets a severity label")
     return out
@@ -185,7 +190,7 @@ def case_create():
         if p.returncode != 0:
             out.append(f"exit {p.returncode}: {p.stdout}")
         made = [c[2] for c in e.calls() if c[:2] == ["label", "create"]]
-        if "area:security" in made or "kind:finding" in made or len(made) != 14:
+        if "area:security" in made or "kind:finding" in made or "kind:lead" in made or len(made) != 13:
             out.append(f"created labels {made}")
         lc = next((c for c in e.calls() if c[:3] == ["label", "create", "area:delivery"]), [])
         if lc[lc.index("--color") + 1:lc.index("--color") + 2] != ["C77D00"] if lc else True:
@@ -195,7 +200,7 @@ def case_create():
             out.append(f"issues {issues}")
         elif issues[0]["labels"] != ["area:security", "kind:finding", "severity:high"] or issues[1]["labels"] != ["area:delivery", "kind:decision"]:
             out.append(f"issue labels {[i['labels'] for i in issues]}")
-        if "2 filed, 0 already filed" not in p.stdout or "labels: 14 created" not in p.stdout:
+        if "2 filed, 0 already filed" not in p.stdout or "labels: 13 created" not in p.stdout:
             out.append(f"summary: {p.stdout}")
         p2 = e.run("issues", d, "--create")
         if "0 filed, 2 already filed" not in p2.stdout or len(e.data()["issues"]) != 2:

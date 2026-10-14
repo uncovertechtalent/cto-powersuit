@@ -23,7 +23,7 @@ Each check of a review produces findings. This skill puts them where the team al
 | Label | Values |
 |---|---|
 | `area:<key>` | `area:direction`, `area:delivery`, `area:operations`, `area:money`, `area:security`, `area:ai`, `area:people`, `area:knowledge` |
-| `kind:<kind>` | `kind:finding` (a gap a check found), `kind:decision` (a choice still to make), `kind:action` (work to do). `kind:lead` exists for the cockpit, and a review never files one |
+| `kind:<kind>` | `kind:finding` (a gap a check found), `kind:decision` (a choice still to make), `kind:action` (work to do). `kind:lead` exists for the cockpit; a review never files one, and `--create` never adds that label |
 | `severity:<level>` | `severity:critical`, `severity:high`, `severity:medium`, `severity:low`: the fix-by windows of `/security:vuln-intake`, 7, 30, 90, and 180 days. Every finding has one; a decision or an action may |
 
 There is no space after the colon. The labels of `/sdlc:ticket` (`area: <part>`, with a space) name parts of the system and live next to these. The colours and descriptions of the area and kind labels are the cockpit's.
@@ -35,7 +35,7 @@ There is no space after the colon. The labels of `/sdlc:ticket` (`area: <part>`,
    - `area`, `kind`, and `severity`;
    - `title`: one line naming the gap, at most 300 characters;
    - `evidence`: a file and line, or the check and its result;
-   - `fix` and `check`: the change, and the skill that found it;
+   - `fix` and `check`: the change, and the skill that found it. Only `evidence` and `fix` may span lines;
    - `private: true` for an item outside the security area that must not go into a public issue, such as an AI agent that can read customer data.
 
    Mask any secret: give its kind, its prefix, and a hash prefix, as `/security:secrets` prints them, and never the value. Set `date` to the review day: it marks each issue as this review's. List every check under `checks`, each `ran` or `not run` with the reason. Write one verdict per area under `verdicts`.
