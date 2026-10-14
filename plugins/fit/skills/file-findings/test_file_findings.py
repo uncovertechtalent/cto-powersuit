@@ -137,11 +137,18 @@ def case_validation():
                     ("private not a boolean", doc(finding(private="yes"))),
                     ("line break in a check note", doc(finding(), checks=[{"area": "security", "skill": "/x", "status": "ran", "note": "a\nb"}])),
                     ("line break in review", doc(finding(), review="Pilot\nreview")),
-                    ("line break in check", doc(finding(check="/x\n/y")))):
+                    ("line break in check", doc(finding(check="/x\n/y"))),
+                    ("mention in evidence", doc(finding(evidence="Ask @alice about it"))),
+                    ("mention at start", doc(finding(fix="@team-sec rotates it"))),
+                    ("cross-repo reference", doc(finding(evidence="Same as acme/infra#12"))),
+                    ("verdicts as a list", doc(finding(), verdicts=["x"])),
+                    ("checks as an object", doc(finding(), checks={"a": 1}))):
         if not ff.validate(d):
             out.append(f"{name}: accepted")
     ok = [finding(), finding(id="DEL-2", area="delivery", kind="decision", severity=None),
-          finding(id="OPS-3", area="operations", kind="action", severity="low"), finding(id="X-4", evidence="multi\nline\tok")]
+          finding(id="OPS-3", area="operations", kind="action", severity="low"), finding(id="X-4", evidence="multi\nline\tok"),
+          finding(id="X-5", evidence="uses `actions/checkout@v4` and issue #12; mail ops@example.com"),
+          finding(id="X-6", fix="ask `@alice`, see `acme/infra#12`")]
     for f in ok:
         if problems_for(f):
             out.append(f"valid {f['id']} rejected: {problems_for(f)}")
@@ -193,7 +200,7 @@ def case_create():
         if "area:security" in made or "kind:finding" in made or "kind:lead" in made or len(made) != 13:
             out.append(f"created labels {made}")
         lc = next((c for c in e.calls() if c[:3] == ["label", "create", "area:delivery"]), [])
-        if lc[lc.index("--color") + 1:lc.index("--color") + 2] != ["C77D00"] if lc else True:
+        if not lc or lc[lc.index("--color") + 1] != "C77D00":
             out.append(f"area:delivery colour: {lc}")
         issues = e.data()["issues"]
         if [i["title"] for i in issues] != ["Actions are pinned by tag", "Decide the branch rule"]:
@@ -249,6 +256,16 @@ def case_public_repo_guard():
         p = e.run("issues", doc(finding(kind="action", severity=None, title="Rotate the keys")), "--create")
         if p.returncode != 1 or "SEC-1" not in p.stdout:
             out.append(f"public + security action: exit {p.returncode} {p.stdout}")
+        p = e.run("issues", doc(finding(id="AI-1", area="ai", private=True)), "--create")
+        if p.returncode != 1 or "AI-1" not in p.stdout:
+            out.append(f"public + private item: exit {p.returncode} {p.stdout}")
+    with tempfile.TemporaryDirectory() as tmp:
+        e = Env(tmp, visibility="INTERNAL")
+        p = e.run("issues", doc(finding()), "--create")
+        if p.returncode != 1 or "is internal" not in p.stdout or e.data()["issues"]:
+            out.append(f"internal + security finding: exit {p.returncode} {p.stdout}")
+    with tempfile.TemporaryDirectory() as tmp:
+        e = Env(tmp, visibility="PUBLIC")
         p = e.run("issues", doc(finding(id="AI-1", area="ai", private=True)), "--create")
         if p.returncode != 1 or "AI-1" not in p.stdout:
             out.append(f"public + private item: exit {p.returncode} {p.stdout}")

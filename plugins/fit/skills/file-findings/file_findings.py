@@ -23,8 +23,9 @@ Commands:
   scorecard <file> [--out F]               write the scorecards: per area, the checks run, findings by severity,
                                            and the one-line verdict
 
-Guards: a string anywhere in the file that matches a secret pattern stops the run; on a public repository, every
-security item and every item marked "private" stops the run, because a public issue discloses it before the fix;
+Guards: a string anywhere in the file that matches a secret pattern stops the run; on a repository that is not private
+(public or internal), every security item and every item marked "private" stops the run, because an issue there
+discloses it before the fix; an @mention or an owner/repo#n reference stops it too;
 --create stops before any write without triage or write access. Needs gh for --create. Standard library only.
 """
 import argparse, json, re, subprocess, sys, tempfile, unicodedata
@@ -60,6 +61,7 @@ SEV_KEYS = [s[0] for s in SEVERITIES]
 LABELS = ([(f"area:{k}", c, d) for k, _, c, d in AREAS] + [(f"kind:{k}", c, d) for k, c, d in KINDS]
           + [(f"severity:{k}", c, d) for k, c, d in SEVERITIES])
 FILED_LABELS = [l for l in LABELS if l[0] != "kind:lead"]  # what --create adds: a review files no lead
+MENTION = re.compile(r"(?:^|[\s(\[])(?:@[A-Za-z0-9][A-Za-z0-9-]*|[\w.-]+/[\w.-]+#\d+)")  # pings a person or cross-links an issue
 MULTILINE = re.compile(r"\.(evidence|fix)$")  # the only fields that may span lines
 SECRET = re.compile(r"(\bsk-ant-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{32,}|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{30,}"
                     r"|\bgithub_pat_[A-Za-z0-9_]{40,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
@@ -113,8 +115,16 @@ def validate(doc):
         for key in ("evidence", "fix"):
             if not isinstance(f.get(key), str) or not f[key].strip():
                 problems.append(f"{at}: no {key}")
+        for key in ("title", "evidence", "fix"):
+            if isinstance(f.get(key), str) and MENTION.search(f[key]):
+                problems.append(f"{at}: {key} has an @mention or an owner/repo#n reference, which notifies people or "
+                                "cross-links issues; write the handle or the reference in a code span")
         if f.get("private") not in (None, True, False):
             problems.append(f"{at}: private must be true or false")
+    for key, kind in (("checks", list), ("verdicts", dict)):
+        if not isinstance(doc.get(key) or kind(), kind):
+            problems.append(f"{key}: want {'a list of checks' if kind is list else 'an object of area to one line'}")
+            return problems
     for i, c in enumerate(doc.get("checks") or []):
         if not isinstance(c, dict) or c.get("area") not in AREA_KEYS or not c.get("skill") or c.get("status") not in ("ran", "not run"):
             problems.append(f"checks[{i}]: want area (one of the eight), skill, and status 'ran' or 'not run'")
@@ -218,8 +228,8 @@ def cmd_issues(doc, repo, create, force=False):
                       "Give the team this file and the dry-run output, and the team runs --create.")
                 return 1
             closed_door = [f["id"] for f in findings if f["area"] == "security" or f.get("private")]
-            if info.get("visibility") == "PUBLIC" and closed_door:
-                print(f"FAIL {repo} is public: a public issue discloses a security item before the fix. File these "
+            if info.get("visibility") != "PRIVATE" and closed_door:
+                print(f"FAIL {repo} is {str(info.get('visibility')).lower()}: an issue there discloses a security item before the fix. File these "
                       f"privately (a security advisory, or a private tracker), then run again without them: {', '.join(closed_door)}")
                 return 1
             have = {l["name"].lower() for l in json.loads(gh("label", "list", "--repo", repo, "--limit", "1000", "--json", "name"))}
