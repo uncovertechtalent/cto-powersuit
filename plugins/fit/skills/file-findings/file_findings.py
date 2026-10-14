@@ -69,7 +69,7 @@ SEV_KEYS = [s[0] for s in SEVERITIES]
 LABELS = ([(f"area:{k}", c, d) for k, _, c, d in AREAS] + [(f"kind:{k}", c, d) for k, c, d in KINDS]
           + [(f"severity:{k}", c, d) for k, c, d in SEVERITIES])
 FILED_LABELS = [l for l in LABELS if l[0] != "kind:lead"]  # what --create adds: a review files no lead
-MENTION = re.compile(r"(?<![\w`])(?:@[A-Za-z0-9][A-Za-z0-9-]*|[\w.-]+/[\w.-]+#\d+)")  # pings a person or cross-links an issue
+MENTION = re.compile(r"(?<![\w`])(?:@[A-Za-z0-9][A-Za-z0-9-]*|[\w.-]+/[\w.-]+#\d+|https?://github\.com/[^/\s]+/[^/\s]+/(?:issues|pull)/\d+)")  # pings a person or cross-links an issue
 MULTILINE = re.compile(r"\.(evidence|fix)$")  # the only fields that may span lines
 SECRET = re.compile(r"(\bsk-ant-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{32,}|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{30,}"
                     r"|\bgithub_pat_[A-Za-z0-9_]{40,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
@@ -132,8 +132,8 @@ def validate(doc):
             problems.append(f"{at}: check holds a backtick; name the skill, such as /security:secrets")
         for key in ("title", "evidence", "fix", "check"):
             if isinstance(f.get(key), str) and MENTION.search(f[key]):
-                problems.append(f"{at}: {key} has an @mention or an owner/repo#n reference, which notifies people or "
-                                "cross-links issues; write the handle or the reference in a code span")
+                problems.append(f"{at}: {key} has an @mention, an owner/repo#n reference or an issue link, which notifies people "
+                                "or cross-links issues; write it in a code span")
         if f.get("private") not in (None, True, False):
             problems.append(f"{at}: private must be true or false")
     for key, kind in (("checks", list), ("verdicts", dict)):
@@ -297,7 +297,7 @@ def cmd_issues(doc, repo, create, force=False):
                     if f["area"] == "security" or f.get("private") else "")
             print(f"--- {f['id']}: {f['title']}\nlabels: {', '.join(labels)}{note}\n\n{body}")
             continue
-        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as t:
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as t:
             t.write(body)
         args = ["issue", "create", "--repo", repo, "--title", f["title"], "--body-file", t.name]
         for l in labels:
@@ -352,7 +352,7 @@ def cmd_scorecard(doc, out):
         return 1
     text = scorecard(doc)
     if out:
-        Path(out).write_text(text)
+        Path(out).write_text(text, encoding="utf-8")
         print(f"wrote {out}")
     else:
         print(text, end="")
@@ -373,7 +373,7 @@ def main():
             p.add_argument("--out")
     args = ap.parse_args()
     try:
-        doc = json.loads(Path(args.file).read_text())
+        doc = json.loads(Path(args.file).read_text(encoding="utf-8"))
     except (OSError, ValueError) as e:
         print(f"FAIL {args.file}: {e}")
         sys.exit(1)

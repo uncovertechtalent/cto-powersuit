@@ -115,8 +115,8 @@ def case_validation():
     bad = {
         "area": finding(area="infra"), "lead": finding(kind="lead"), "no severity": finding(severity=None),
         "bad severity": finding(kind="action", severity="urgent"), "long title": finding(title="x" * 301),
-        "newline in title": finding(title="a\nb"), "bidi in title": finding(title="safe‮txt.exe"),
-        "zero width": finding(evidence="see​this"), "no evidence": finding(evidence=" "), "no fix": finding(fix=None),
+        "newline in title": finding(title="a\nb"), "bidi in title": finding(title="safe\u202etxt.exe"),
+        "zero width": finding(evidence="see\u200bthis"), "no evidence": finding(evidence=" "), "no fix": finding(fix=None),
         "bad id": finding(id="SEC 1"), "secret": finding(evidence="key AKIA" + "Q7RZ4T2XK9W3B6MN in .env"),
         "secret in title": finding(title="Token ghp_" + "a" * 36 + " leaked"),
     }
@@ -158,6 +158,8 @@ def case_validation():
                     ("mention in evidence", doc(finding(evidence="Ask @alice about it"))),
                     ("mention at start", doc(finding(fix="@team-sec rotates it"))),
                     ("cross-repo reference", doc(finding(evidence="Same as acme/infra#12"))),
+                    ("issue link", doc(finding(evidence="Filed before as https://github.com/acme/infra/issues/12"))),
+                    ("pull request link", doc(finding(fix="See https://github.com/acme/infra/pull/7 for the fix"))),
                     ("mention in bold", doc(finding(evidence="Ask **@alice** first"))),
                     ("quoted mention", doc(finding(fix='Owner: "@alice"'))),
                     ("reference after a comma", doc(finding(evidence="see a,acme/infra#12"))),
@@ -173,7 +175,8 @@ def case_validation():
     ok = [finding(), finding(id="DEL-2", area="delivery", kind="decision", severity=None),
           finding(id="OPS-3", area="operations", kind="action", severity="low"), finding(id="X-4", evidence="multi\nline\tok"),
           finding(id="X-5", evidence="uses `actions/checkout@v4` and issue #12; mail ops@example.com"),
-          finding(id="X-6", fix="ask `@alice`, see `acme/infra#12`")]
+          finding(id="X-6", fix="ask `@alice`, see `acme/infra#12` and `https://github.com/acme/infra/issues/12`"),
+          finding(id="X-7", evidence="Umlaut and repo link: Prüfung, https://github.com/acme/infra")]
     for f in ok:
         if problems_for(f):
             out.append(f"valid {f['id']} rejected: {problems_for(f)}")
