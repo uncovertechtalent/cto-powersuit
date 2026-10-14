@@ -4,21 +4,30 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ## Unreleased
 
+## [0.2.0] - 2026-10-14
+
+Two new skills, `/security:quarantine` and `/ai-ops:tool-audit`, a local review runner for pull requests, behaviour evals with failure paths, and release provenance: from this release on, every release carries a source tarball with its sha256 and a build provenance attestation.
+
+Plugin versions: ai-ops 0.2.0, aieo 0.1.0, compliance 0.1.0, decisions 0.1.0, docs 0.1.0, finops 0.1.0, fit 0.2.0, gate 0.2.1, handover 0.1.1, hiring 0.1.0, observability 0.1.0, red-team 0.1.0, reliability 0.1.0, sdlc 0.2.3, security 0.3.0, stance 0.1.0, vault 0.1.0, vestige 0.1.0.
+
+To roll back, pin v0.1.0 again: remove the marketplace, add it at `#v0.1.0`, and install the plugins again ([Versions and rollback](README.md#versions-and-rollback)).
+
 ### Added
 
 - `security` 0.3.0: `/security:quarantine` keeps third-party text away from agents that hold tools. `quarantine.py save` puts raw text (a post, an email, a README, a web page) into a store outside every indexed folder and git work tree; `read` returns a fixed-shape envelope from a local ollama model with no tools, and never the raw text; `guard` is a PreToolUse hook that, with two deny rules, refuses every other read of the store. A marking convention for knowledge bases: `trust: external` is excluded like a private note, `trust: third-party` stays searchable, with a label on every hit in a search index that reads the marker ([#15](https://github.com/uncovertechtalent/cto-powersuit/pull/15)).
+- `ai-ops` 0.2.0: `/ai-ops:tool-audit`, an audit trail of agent tool calls from Claude Code's `tool_decision` and `tool_result` events: allowed, denied, and asked counts per tool on a dashboard, the `AgentToolDenialsSpike` alert, a runbook page, and `tool_audit.py` for the monthly review record.
 - `sdlc` 0.2.3: `skills/change-review/review-pr.sh`, the local review runner until CI has a token. It runs `/sdlc:change-review <n> kb` with the limits of the CI workflow: the reviewer from a clean clone of `main`, the pull request as files, no shell and no network, the knowledge base through its MCP search tools only. It posts or updates one advisory comment after a private-terms scan, refuses forks, bots and drafts without `--allow-external`, and posts a saved review only while the pull request head is unchanged ([#9](https://github.com/uncovertechtalent/cto-powersuit/issues/9)).
-- CI: a shellcheck job for every tracked shell script.
+- Behaviour evals for `/sdlc:sdlc-audit`, `/sdlc:pre-push`, and `/fit:repo-clinic` with `claude plugin eval`: six cases, five of them failure paths. Results and costs in [EVALS.md](EVALS.md).
 - Release provenance: pushing a tag `v<x.y.z>` builds a source tarball of the tag and its sha256, attests both with build provenance, and attaches them to the GitHub release. Check a file with `gh attestation verify <file> --repo uncovertechtalent/cto-powersuit` ([Versions and rollback](README.md#versions-and-rollback)). v0.1.0 has no files and no attestation.
 - CI: zizmor on `.github` with pinned wheel hashes, Dependabot for the actions, zizmor and Claude Code pins (monthly, grouped, 7-day cooldown), CODEOWNERS, a change-review workflow that runs `/sdlc:change-review` from the base branch on each pull request and posts one comment, and a `.coderabbit.yaml` with public path instructions.
-- Behaviour evals for `/sdlc:sdlc-audit`, `/sdlc:pre-push`, and `/fit:repo-clinic` with `claude plugin eval`: six cases, five of them failure paths. Results and costs in [EVALS.md](EVALS.md).
-- `ai-ops` 0.2.0: `/ai-ops:tool-audit`, an audit trail of agent tool calls from Claude Code's `tool_decision` and `tool_result` events: allowed, denied, and asked counts per tool on a dashboard, the `AgentToolDenialsSpike` alert, a runbook page, and `tool_audit.py` for the monthly review record.
+- CI: a shellcheck job for every tracked shell script.
 
 ### Changed
 
 - `sdlc` 0.2.2: `/sdlc:change-review` reads the repository's decision records and conventions before the diff, and writes a recorded choice as a note ("intentional per ADR-NNNN"), not a finding. With `kb`, on the user's machine only, it also reads a private knowledge base and posts one comment that cites public files only, after a private-terms scan: `claude "/sdlc:change-review 42 kb"`.
 - `security` 0.2.1: `provenance.py` looks up a build provenance attestation for each release asset by its sha256 digest. An attested asset no longer counts as an unverified binary, and the recommendation names `gh attestation verify`.
 - `sdlc` 0.2.1: the rules of `/sdlc:pre-push` hold when the user asks for the step. In the first eval run, 2 of 3 runs gave way to an explicit request for the deploy job or `--push`.
+- `security`: the module README links the zero trust principle page, with what the platform behind machinebehavior.io already does and the gaps it still has ([#17](https://github.com/uncovertechtalent/cto-powersuit/pull/17)).
 
 ### Fixed
 
