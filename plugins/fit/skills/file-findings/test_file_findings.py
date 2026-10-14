@@ -127,6 +127,19 @@ def case_validation():
         out.append("duplicate ids: accepted")
     if not ff.validate(doc(finding(), checks=[{"area": "security", "skill": "/x", "status": "maybe"}])):
         out.append("bad check status: accepted")
+    hint = " ".join(ff.validate(doc(finding(area="compliance"))))
+    if "compliance is a plugin; its area is security" not in hint:
+        out.append(f"no area hint for a plugin name: {hint}")
+    mixed = " ".join(ff.validate(doc(finding(), checks=[{"area": "delivery", "skill": "/compliance:control-map", "status": "ran"}])))
+    if "/compliance:control-map belongs to area security" not in mixed:
+        out.append(f"no message for a check in the wrong area: {mixed}")
+    ok_checks = [{"area": "security", "skill": "/compliance:control-map", "status": "ran"},
+                 {"area": "operations", "skill": "/reliability:nines-per-service", "status": "not run", "note": "no metrics yet"},
+                 {"area": "ai", "skill": "/other-vendor:scan", "status": "ran"}]
+    if ff.validate(doc(finding(), checks=ok_checks)):
+        out.append(f"valid checks rejected: {ff.validate(doc(finding(), checks=ok_checks))}")
+    if sorted(set(ff.PLUGIN_AREA.values())) != sorted(ff.AREA_KEYS):
+        out.append("the module map leaves an area without a plugin")
     if not ff.validate(doc(finding(), verdicts={"infra": "x"})):
         out.append("verdict for an unknown area: accepted")
     key = "AKIA" + "Q7RZ4T2XK9W3B6MN"
@@ -142,7 +155,8 @@ def case_validation():
                     ("mention at start", doc(finding(fix="@team-sec rotates it"))),
                     ("cross-repo reference", doc(finding(evidence="Same as acme/infra#12"))),
                     ("verdicts as a list", doc(finding(), verdicts=["x"])),
-                    ("checks as an object", doc(finding(), checks={"a": 1}))):
+                    ("checks as an object", doc(finding(), checks={"a": 1})),
+                    ("check in another area", doc(finding(), checks=[{"area": "delivery", "skill": "/compliance:control-map", "status": "ran"}]))):
         if not ff.validate(d):
             out.append(f"{name}: accepted")
     ok = [finding(), finding(id="DEL-2", area="delivery", kind="decision", severity=None),

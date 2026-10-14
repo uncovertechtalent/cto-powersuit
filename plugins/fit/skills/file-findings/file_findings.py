@@ -55,6 +55,13 @@ SEVERITIES = [  # the fix-by windows of /security:vuln-intake
     ("low", "0E8A16", "Severity: fix within 180 days"),
 ]
 AREA_KEYS = [a[0] for a in AREAS]
+PLUGIN_AREA = {  # the cockpit's module map (machinebehavior.io cto-powersuit/modules.json and site/powersuit.yml)
+    "fit": "direction", "decisions": "direction", "sdlc": "delivery", "gate": "delivery", "docs": "delivery",
+    "reliability": "operations", "observability": "operations", "finops": "money",
+    "security": "security", "compliance": "security", "red-team": "security", "ai-ops": "ai", "aieo": "ai",
+    "hiring": "people", "handover": "people", "vestige": "knowledge", "vault": "knowledge", "stance": "knowledge",
+}
+SKILL_RX = re.compile(r"^/([a-z0-9-]+):[a-z0-9-]+$")
 TITLES = {a[0]: a[1] for a in AREAS}
 FILED_KINDS = ("finding", "decision", "action")
 SEV_KEYS = [s[0] for s in SEVERITIES]
@@ -96,7 +103,7 @@ def validate(doc):
             problems.append(f"{at}: id {fid} appears twice")
         seen.add(fid)
         if f.get("area") not in AREA_KEYS:
-            problems.append(f"{at}: area {f.get('area')!r}, want one of {', '.join(AREA_KEYS)}")
+            problems.append(f"{at}: area {f.get('area')!r}, want one of {', '.join(AREA_KEYS)}{area_hint(f.get('area'))}")
         if f.get("kind") not in FILED_KINDS:
             problems.append(f"{at}: kind {f.get('kind')!r}, want one of {', '.join(FILED_KINDS)} (a review files no leads)")
         sev = f.get("severity")
@@ -127,12 +134,23 @@ def validate(doc):
             return problems
     for i, c in enumerate(doc.get("checks") or []):
         if not isinstance(c, dict) or c.get("area") not in AREA_KEYS or not c.get("skill") or c.get("status") not in ("ran", "not run"):
-            problems.append(f"checks[{i}]: want area (one of the eight), skill, and status 'ran' or 'not run'")
+            problems.append(f"checks[{i}]: want area (one of the eight), skill, and status 'ran' or 'not run'"
+                            + (area_hint(c.get("area")) if isinstance(c, dict) else ""))
+            continue
+        m = SKILL_RX.match(str(c["skill"]))
+        home = PLUGIN_AREA.get(m.group(1)) if m else None
+        if home and c["area"] != home:
+            problems.append(f"checks[{i}]: {c['skill']} belongs to area {home} on the scorecard, not {c['area']}")
     for k, v in (doc.get("verdicts") or {}).items():
         if k not in AREA_KEYS or not isinstance(v, str) or "\n" in v:
             problems.append(f"verdicts.{k}: want an area key and one line")
     problems += scan(doc, "")
     return problems
+
+
+def area_hint(value):
+    """When a plugin name was given as an area, name the area the plugin belongs to."""
+    return f" ({value} is a plugin; its area is {PLUGIN_AREA[value]})" if value in PLUGIN_AREA and value not in AREA_KEYS else ""
 
 
 def scan(value, path):

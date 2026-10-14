@@ -38,6 +38,21 @@ There is no space after the colon. The labels of `/sdlc:ticket` (`area: <part>`,
    - `fix` and `check`: the change, and the skill that found it. Only `evidence` and `fix` may span lines;
    - `private: true` for an item outside the security area that must not go into a public issue, such as an AI agent that can read customer data.
 
+   Put each check in its plugin's area, as the cockpit groups the modules, so scorecards from different reviews compare:
+
+   | Area | Plugins |
+   |---|---|
+   | `direction` | `fit`, `decisions` |
+   | `delivery` | `sdlc`, `gate`, `docs` |
+   | `operations` | `reliability`, `observability` |
+   | `money` | `finops` |
+   | `security` | `security`, `compliance`, `red-team` |
+   | `ai` | `ai-ops`, `aieo` |
+   | `people` | `hiring`, `handover` |
+   | `knowledge` | `vestige`, `vault`, `stance` |
+
+   The check fails a check row in another area. A finding takes the area of the gap, which can differ from its check: a secret that `/sdlc:sdlc-audit` finds is a `security` finding.
+
    Mask any secret: give its kind, its prefix, and a hash prefix, as `/security:secrets` prints them, and never the value. Set `date` to the review day: it marks each issue as this review's. List every check under `checks`, each `ran` or `not run` with the reason. Write one verdict per area under `verdicts`.
 2. **Check the file.**
 
