@@ -87,6 +87,8 @@ There is no space after the colon. The labels of `/sdlc:ticket` (`area: <part>`,
 
    It writes one row per area in the cockpit's order, then a section per area with its checks, its findings by severity, its open decisions and actions, and the verdict. Only areas with a check or an item appear. A missing verdict prints a placeholder: fill it in the file and run the command again. `${CLAUDE_PLUGIN_ROOT}/templates/docs/scorecard.md` has the same shape for writing by hand, with docs front matter.
 
+   The scorecard counts the kept-back items too, with their ids, and the verdicts may describe a hole. On a repository that is not private, keep the scorecard out of the repository and share it through the same private channel as the kept-back items.
+
 ## Output
 
 `findings.json`, the dry-run listing, the links of the filed issues, and the scorecard.
