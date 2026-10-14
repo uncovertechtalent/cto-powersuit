@@ -24,8 +24,9 @@ Commands:
                                            and the one-line verdict
 
 Guards: a string anywhere in the file that matches a secret pattern stops the run; on a repository that is not private
-(public or internal), every security item and every item marked "private" stops the run, because an issue there
-discloses it before the fix; an @mention or an owner/repo#n reference stops it too;
+(public or internal), every security item and every item marked "private" is kept back for a private channel, because
+an issue there discloses it before the fix, and the scorecard still counts it; an @mention or an owner/repo#n
+reference stops the run;
 --create stops before any write without triage or write access. Needs gh for --create. Standard library only.
 """
 import argparse, json, re, subprocess, sys, tempfile, unicodedata
@@ -127,7 +128,9 @@ def validate(doc):
         for key in ("evidence", "fix"):
             if not isinstance(f.get(key), str) or not f[key].strip():
                 problems.append(f"{at}: no {key}")
-        for key in ("title", "evidence", "fix"):
+        if isinstance(f.get("check"), str) and "`" in f["check"]:
+            problems.append(f"{at}: check holds a backtick; name the skill, such as /security:secrets")
+        for key in ("title", "evidence", "fix", "check"):
             if isinstance(f.get(key), str) and MENTION.search(f[key]):
                 problems.append(f"{at}: {key} has an @mention or an owner/repo#n reference, which notifies people or "
                                 "cross-links issues; write the handle or the reference in a code span")
@@ -250,10 +253,11 @@ def cmd_issues(doc, repo, create, force=False):
                 print(f"FAIL {repo}: permission {info.get('viewerPermission')}; filing needs triage or write access. "
                       "Give the team this file and the dry-run output, and the team runs --create.")
                 return 1
-            closed_door = [f["id"] for f in findings if f["area"] == "security" or f.get("private")]
-            if info.get("visibility") != "PRIVATE" and closed_door:
-                print(f"FAIL {repo} is {str(info.get('visibility')).lower()}: an issue there discloses a security item before the fix. File these "
-                      f"privately (a security advisory, or a private tracker), then run again without them: {', '.join(closed_door)}")
+            visibility = str(info.get("visibility")).lower()
+            kept = {f["id"] for f in findings if visibility != "private" and (f["area"] == "security" or f.get("private"))}
+            if kept and len(kept) == len(findings):
+                print(f"FAIL {repo} is {visibility}: every item is a security or private item, and an issue there discloses it "
+                      f"before the fix. File them privately (a security advisory, or a private tracker): {', '.join(sorted(kept))}")
                 return 1
             have = {l["name"].lower() for l in json.loads(gh("label", "list", "--repo", repo, "--limit", "1000", "--json", "name"))}
             existing = existing_issues(repo)
@@ -267,10 +271,14 @@ def cmd_issues(doc, repo, create, force=False):
             return 1
         print(f"labels: {len(made)} created" + (f" ({', '.join(made)})" if made else "") + f", {len(FILED_LABELS) - len(made)} present")
     else:
-        existing = []
+        existing, kept = [], set()
         print(f"dry run: nothing is created. {len(findings)} issues for {repo or '<repo>'}:\n")
     filed, skipped, held = 0, 0, 0
     for f in findings:
+        if f["id"] in kept:
+            print(f"KEPT BACK {f['id']}: {repo} is {visibility}. File it privately (a security advisory, or a private tracker); "
+                  "the scorecard still counts it.")
+            continue
         labels = labels_of(f)
         body = body_of(f, doc)
         mine = next((i for i in existing if marker_of(f, doc) in (i.get("body") or "")), None)
@@ -285,7 +293,9 @@ def cmd_issues(doc, repo, create, force=False):
             held += 1
             continue
         if not create:
-            print(f"--- {f['id']}: {f['title']}\nlabels: {', '.join(labels)}\n\n{body}")
+            note = ("\nkept back on a repository that is not private: file it privately"
+                    if f["area"] == "security" or f.get("private") else "")
+            print(f"--- {f['id']}: {f['title']}\nlabels: {', '.join(labels)}{note}\n\n{body}")
             continue
         with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as t:
             t.write(body)
@@ -302,7 +312,7 @@ def cmd_issues(doc, repo, create, force=False):
         print(f"{f['id']}: {url}")
         filed += 1
     if create:
-        print(f"{filed} filed, {skipped} already filed, {held} held")
+        print(f"{filed} filed, {skipped} already filed, {held} held, {len(kept)} kept back for a private channel")
     return 0
 
 

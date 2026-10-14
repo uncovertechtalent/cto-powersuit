@@ -163,6 +163,8 @@ def case_validation():
                     ("reference after a comma", doc(finding(evidence="see a,acme/infra#12"))),
                     ("mention in review", doc(finding(), review="Review with @alice")),
                     ("duplicate title", doc(finding(), finding(id="SEC-2"))),
+                    ("backtick in check", doc(finding(check="/sdlc:audit` broken"))),
+                    ("mention in check", doc(finding(check="ask @alice"))),
                     ("verdicts as a list", doc(finding(), verdicts=["x"])),
                     ("checks as an object", doc(finding(), checks={"a": 1})),
                     ("check in another area", doc(finding(), checks=[{"area": "delivery", "skill": "/compliance:control-map", "status": "ran"}]))):
@@ -267,31 +269,42 @@ def case_dedupe_by_marker_and_title():
 
 def case_public_repo_guard():
     out = []
+    for visibility in ("PUBLIC", "INTERNAL"):
+        with tempfile.TemporaryDirectory() as tmp:
+            e = Env(tmp, visibility=visibility)
+            p = e.run("issues", doc(finding(), finding(id="SEC-3", kind="action", severity=None, title="Rotate the keys")), "--create")
+            if p.returncode != 1 or f"is {visibility.lower()}" not in p.stdout or e.data()["issues"]:
+                out.append(f"{visibility} + only security items: exit {p.returncode} {p.stdout}")
+            if any(c[:2] in (["issue", "create"], ["label", "create"]) for c in e.calls()):
+                out.append(f"{visibility}: created something when every item is kept back")
     with tempfile.TemporaryDirectory() as tmp:
         e = Env(tmp, visibility="PUBLIC")
-        p = e.run("issues", doc(finding()), "--create")
-        if p.returncode != 1 or "is public" not in p.stdout or "SEC-1" not in p.stdout:
-            out.append(f"public + security finding: exit {p.returncode} {p.stdout}")
-        if any(c[:2] in (["issue", "create"], ["label", "create"]) for c in e.calls()):
-            out.append("public guard created something")
+        d = doc(finding(), finding(id="SEC-3", kind="action", severity=None, title="Rotate the keys"),
+                finding(id="AI-1", area="ai", private=True, title="An agent reads customer logs"),
+                finding(id="DEL-1", area="delivery", title="No tests before deploy"),
+                finding(id="AI-2", area="ai", private=False, title="Agents share one token"))
+        p = e.run("issues", d, "--create")
+        filed = [i["title"] for i in e.data()["issues"]]
+        if p.returncode != 0 or filed != ["No tests before deploy", "Agents share one token"]:
+            out.append(f"mixed items on a public repository: exit {p.returncode}, filed {filed}")
+        for kid in ("SEC-1", "SEC-3", "AI-1"):
+            if f"KEPT BACK {kid}: acme/platform is public" not in p.stdout:
+                out.append(f"{kid} not listed as kept back")
+        if "2 filed, 0 already filed, 0 held, 3 kept back for a private channel" not in p.stdout:
+            out.append(f"summary: {p.stdout}")
+        card = ff.scorecard(d)
+        if "| Security and risk | 1 | 0 | 1 | 0 | 0 |" not in card:
+            out.append("the scorecard does not count the kept-back security finding")
     with tempfile.TemporaryDirectory() as tmp:
-        e = Env(tmp, visibility="PUBLIC")
-        p = e.run("issues", doc(finding(kind="action", severity=None, title="Rotate the keys")), "--create")
-        if p.returncode != 1 or "SEC-1" not in p.stdout:
-            out.append(f"public + security action: exit {p.returncode} {p.stdout}")
+        e = Env(tmp, visibility="PRIVATE")
+        p = e.run("issues", doc(finding(), finding(id="AI-1", area="ai", private=True, title="An agent reads customer logs")), "--create")
+        if p.returncode != 0 or len(e.data()["issues"]) != 2 or "KEPT BACK" in p.stdout:
+            out.append(f"private repository: exit {p.returncode} {p.stdout}")
     with tempfile.TemporaryDirectory() as tmp:
-        e = Env(tmp, visibility="INTERNAL")
-        p = e.run("issues", doc(finding()), "--create")
-        if p.returncode != 1 or "is internal" not in p.stdout or e.data()["issues"]:
-            out.append(f"internal + security finding: exit {p.returncode} {p.stdout}")
-    with tempfile.TemporaryDirectory() as tmp:
-        e = Env(tmp, visibility="PUBLIC")
-        p = e.run("issues", doc(finding(id="AI-1", area="ai", private=True)), "--create")
-        if p.returncode != 1 or "AI-1" not in p.stdout:
-            out.append(f"public + private item: exit {p.returncode} {p.stdout}")
-        p = e.run("issues", doc(finding(id="DEL-1", area="delivery"), finding(id="AI-2", area="ai", private=False, title="Agents share one token")), "--create")
-        if p.returncode != 0 or len(e.data()["issues"]) != 2:
-            out.append(f"public + delivery finding and a non-private ai item: exit {p.returncode} {p.stdout}")
+        e = Env(tmp)
+        p = e.run("issues", doc(finding(), finding(id="DEL-1", area="delivery", title="No tests before deploy")))
+        if "kept back on a repository that is not private" not in p.stdout.split("--- DEL-1")[0] or "kept back" in p.stdout.split("--- DEL-1")[1]:
+            out.append("the dry run does not mark the items a public repository keeps back")
     return out
 
 
