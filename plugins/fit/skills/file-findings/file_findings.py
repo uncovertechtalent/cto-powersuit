@@ -68,7 +68,7 @@ SEV_KEYS = [s[0] for s in SEVERITIES]
 LABELS = ([(f"area:{k}", c, d) for k, _, c, d in AREAS] + [(f"kind:{k}", c, d) for k, c, d in KINDS]
           + [(f"severity:{k}", c, d) for k, c, d in SEVERITIES])
 FILED_LABELS = [l for l in LABELS if l[0] != "kind:lead"]  # what --create adds: a review files no lead
-MENTION = re.compile(r"(?:^|[\s(\[])(?:@[A-Za-z0-9][A-Za-z0-9-]*|[\w.-]+/[\w.-]+#\d+)")  # pings a person or cross-links an issue
+MENTION = re.compile(r"(?<![\w`])(?:@[A-Za-z0-9][A-Za-z0-9-]*|[\w.-]+/[\w.-]+#\d+)")  # pings a person or cross-links an issue
 MULTILINE = re.compile(r"\.(evidence|fix)$")  # the only fields that may span lines
 SECRET = re.compile(r"(\bsk-ant-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{32,}|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{30,}"
                     r"|\bgithub_pat_[A-Za-z0-9_]{40,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
@@ -90,7 +90,9 @@ def validate(doc):
     problems = []
     if not isinstance(doc, dict) or not isinstance(doc.get("findings"), list):
         return ["the file needs a findings list"]
-    seen = set()
+    seen, titles = set(), set()
+    if isinstance(doc.get("review"), str) and MENTION.search(doc["review"]):
+        problems.append("review: has an @mention or an owner/repo#n reference; it goes into every issue body")
     for i, f in enumerate(doc["findings"]):
         at = f"findings[{i}]" + (f" {f.get('id')}" if isinstance(f, dict) and f.get("id") else "")
         if not isinstance(f, dict):
@@ -115,6 +117,9 @@ def validate(doc):
         if not isinstance(title, str) or not title.strip():
             problems.append(f"{at}: no title")
         else:
+            if title in titles:
+                problems.append(f"{at}: the title appears twice in the file")
+            titles.add(title)
             if len(title) > MAX_TITLE:
                 problems.append(f"{at}: title has {len(title)} characters, at most {MAX_TITLE}")
             if "\n" in title or "\t" in title:

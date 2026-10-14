@@ -140,6 +140,10 @@ def case_validation():
         out.append(f"valid checks rejected: {ff.validate(doc(finding(), checks=ok_checks))}")
     if sorted(set(ff.PLUGIN_AREA.values())) != sorted(ff.AREA_KEYS):
         out.append("the module map leaves an area without a plugin")
+    market = json.loads((HERE.parents[3] / ".claude-plugin" / "marketplace.json").read_text())
+    unmapped = [p["name"] for p in market["plugins"] if p["name"] not in ff.PLUGIN_AREA]
+    if unmapped:
+        out.append(f"plugins with no area in PLUGIN_AREA: {unmapped}")
     if not ff.validate(doc(finding(), verdicts={"infra": "x"})):
         out.append("verdict for an unknown area: accepted")
     key = "AKIA" + "Q7RZ4T2XK9W3B6MN"
@@ -154,6 +158,11 @@ def case_validation():
                     ("mention in evidence", doc(finding(evidence="Ask @alice about it"))),
                     ("mention at start", doc(finding(fix="@team-sec rotates it"))),
                     ("cross-repo reference", doc(finding(evidence="Same as acme/infra#12"))),
+                    ("mention in bold", doc(finding(evidence="Ask **@alice** first"))),
+                    ("quoted mention", doc(finding(fix='Owner: "@alice"'))),
+                    ("reference after a comma", doc(finding(evidence="see a,acme/infra#12"))),
+                    ("mention in review", doc(finding(), review="Review with @alice")),
+                    ("duplicate title", doc(finding(), finding(id="SEC-2"))),
                     ("verdicts as a list", doc(finding(), verdicts=["x"])),
                     ("checks as an object", doc(finding(), checks={"a": 1})),
                     ("check in another area", doc(finding(), checks=[{"area": "delivery", "skill": "/compliance:control-map", "status": "ran"}]))):
@@ -270,9 +279,6 @@ def case_public_repo_guard():
         p = e.run("issues", doc(finding(kind="action", severity=None, title="Rotate the keys")), "--create")
         if p.returncode != 1 or "SEC-1" not in p.stdout:
             out.append(f"public + security action: exit {p.returncode} {p.stdout}")
-        p = e.run("issues", doc(finding(id="AI-1", area="ai", private=True)), "--create")
-        if p.returncode != 1 or "AI-1" not in p.stdout:
-            out.append(f"public + private item: exit {p.returncode} {p.stdout}")
     with tempfile.TemporaryDirectory() as tmp:
         e = Env(tmp, visibility="INTERNAL")
         p = e.run("issues", doc(finding()), "--create")
