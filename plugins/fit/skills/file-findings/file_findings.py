@@ -179,6 +179,13 @@ def scan(value, path):
     return out
 
 
+def sensitive(f):
+    """An item that never goes into an issue on a repository that is not private: the security area, an item marked
+    private, or a finding from a check of the security area's plugins (security, compliance, red-team)."""
+    m = SKILL_RX.match(str(f.get("check") or ""))
+    return f["area"] == "security" or bool(f.get("private")) or bool(m and PLUGIN_AREA.get(m.group(1)) == "security")
+
+
 def marker_of(f, doc):
     return MARKER.format(f"{doc.get('date') or 'undated'}/{f['id']}")
 
@@ -254,7 +261,7 @@ def cmd_issues(doc, repo, create, force=False):
                       "Give the team this file and the dry-run output, and the team runs --create.")
                 return 1
             visibility = str(info.get("visibility")).lower()
-            kept = {f["id"] for f in findings if visibility != "private" and (f["area"] == "security" or f.get("private"))}
+            kept = {f["id"] for f in findings if visibility != "private" and sensitive(f)}
             if kept and len(kept) == len(findings):
                 print(f"FAIL {repo} is {visibility}: every item is a security or private item, and an issue there discloses it "
                       f"before the fix. File them privately (a security advisory, or a private tracker): {', '.join(sorted(kept))}")
@@ -293,8 +300,7 @@ def cmd_issues(doc, repo, create, force=False):
             held += 1
             continue
         if not create:
-            note = ("\nkept back on a repository that is not private: file it privately"
-                    if f["area"] == "security" or f.get("private") else "")
+            note = "\nkept back on a repository that is not private: file it privately" if sensitive(f) else ""
             print(f"--- {f['id']}: {f['title']}\nlabels: {', '.join(labels)}{note}\n\n{body}")
             continue
         with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as t:

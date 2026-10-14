@@ -140,10 +140,11 @@ def case_validation():
         out.append(f"valid checks rejected: {ff.validate(doc(finding(), checks=ok_checks))}")
     if sorted(set(ff.PLUGIN_AREA.values())) != sorted(ff.AREA_KEYS):
         out.append("the module map leaves an area without a plugin")
-    market = json.loads((HERE.parents[3] / ".claude-plugin" / "marketplace.json").read_text())
-    unmapped = [p["name"] for p in market["plugins"] if p["name"] not in ff.PLUGIN_AREA]
-    if unmapped:
-        out.append(f"plugins with no area in PLUGIN_AREA: {unmapped}")
+    market = HERE.parents[3] / ".claude-plugin" / "marketplace.json"
+    if market.is_file():  # a checkout of the repository; an installed plugin has no marketplace file here
+        unmapped = [p["name"] for p in json.loads(market.read_text())["plugins"] if p["name"] not in ff.PLUGIN_AREA]
+        if unmapped:
+            out.append(f"plugins with no area in PLUGIN_AREA: {unmapped}")
     if not ff.validate(doc(finding(), verdicts={"infra": "x"})):
         out.append("verdict for an unknown area: accepted")
     key = "AKIA" + "Q7RZ4T2XK9W3B6MN"
@@ -284,16 +285,17 @@ def case_public_repo_guard():
         e = Env(tmp, visibility="PUBLIC")
         d = doc(finding(), finding(id="SEC-3", kind="action", severity=None, title="Rotate the keys"),
                 finding(id="AI-1", area="ai", private=True, title="An agent reads customer logs"),
-                finding(id="DEL-1", area="delivery", title="No tests before deploy"),
-                finding(id="AI-2", area="ai", private=False, title="Agents share one token"))
+                finding(id="DEL-1", area="delivery", title="No tests before deploy", check="/sdlc:sdlc-audit"),
+                finding(id="AI-2", area="ai", private=False, title="Agents share one token", check="/ai-ops:agent-harness"),
+                finding(id="AI-3", area="ai", title="The model endpoint takes prompt injection", check="/red-team:pressure-test"))
         p = e.run("issues", d, "--create")
         filed = [i["title"] for i in e.data()["issues"]]
         if p.returncode != 0 or filed != ["No tests before deploy", "Agents share one token"]:
             out.append(f"mixed items on a public repository: exit {p.returncode}, filed {filed}")
-        for kid in ("SEC-1", "SEC-3", "AI-1"):
+        for kid in ("SEC-1", "SEC-3", "AI-1", "AI-3"):
             if f"KEPT BACK {kid}: acme/platform is public" not in p.stdout:
                 out.append(f"{kid} not listed as kept back")
-        if "2 filed, 0 already filed, 0 held, 3 kept back for a private channel" not in p.stdout:
+        if "2 filed, 0 already filed, 0 held, 4 kept back for a private channel" not in p.stdout:
             out.append(f"summary: {p.stdout}")
         card = ff.scorecard(d)
         if "| Security and risk | 1 | 0 | 1 | 0 | 0 |" not in card:
@@ -305,7 +307,7 @@ def case_public_repo_guard():
             out.append(f"private repository: exit {p.returncode} {p.stdout}")
     with tempfile.TemporaryDirectory() as tmp:
         e = Env(tmp)
-        p = e.run("issues", doc(finding(), finding(id="DEL-1", area="delivery", title="No tests before deploy")))
+        p = e.run("issues", doc(finding(), finding(id="DEL-1", area="delivery", title="No tests before deploy", check="/sdlc:sdlc-audit")))
         if "kept back on a repository that is not private" not in p.stdout.split("--- DEL-1")[0] or "kept back" in p.stdout.split("--- DEL-1")[1]:
             out.append("the dry run does not mark the items a public repository keeps back")
     return out
