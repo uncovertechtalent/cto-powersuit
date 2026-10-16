@@ -58,7 +58,7 @@ SEVERITIES = [  # the fix-by windows of /security:vuln-intake
 ]
 AREA_KEYS = [a[0] for a in AREAS]
 PLUGIN_AREA = {  # the cockpit's module map (machinebehavior.io cto-powersuit/modules.json and site/powersuit.yml)
-    "fit": "direction", "decisions": "direction", "sdlc": "delivery", "gate": "delivery", "docs": "delivery",
+    "fit": "direction", "decisions": "direction", "direction": "direction", "sdlc": "delivery", "gate": "delivery", "docs": "delivery",
     "reliability": "operations", "observability": "operations", "finops": "money",
     "security": "security", "compliance": "security", "red-team": "security", "ai-ops": "ai", "aieo": "ai",
     "hiring": "people", "handover": "people", "vestige": "knowledge", "vault": "knowledge", "stance": "knowledge",

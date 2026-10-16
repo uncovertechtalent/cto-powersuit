@@ -42,7 +42,7 @@ There is no space after the colon. The labels of `/sdlc:ticket` (`area: <part>`,
 
    | Area | Plugins |
    |---|---|
-   | `direction` | `fit`, `decisions` |
+   | `direction` | `fit`, `decisions`, `direction` |
    | `delivery` | `sdlc`, `gate`, `docs` |
    | `operations` | `reliability`, `observability` |
    | `money` | `finops` |

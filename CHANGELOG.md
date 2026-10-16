@@ -7,6 +7,11 @@ All notable changes to this project are listed here, newest first. Each release 
 ### Added
 
 - `fit` 0.3.0: `/fit:file-findings` files a review's findings as GitHub Issues in the company's own repository, with the cockpit's labels (`area:<area>`, `kind:finding`, `kind:decision`, `kind:action`) and `severity:<level>` with the fix-by windows of `/security:vuln-intake`. A dry run prints every issue before anything is created; `--create` adds the missing labels, files each item of a review once, and holds an item whose title an issue already has. Security items and items marked private never go into an issue on a repository that is not private: they are kept back for a private channel and still count on the scorecard. A secret pattern or an @mention stops the run, and read-only access stops it before any write. `scorecard` writes one scorecard per area: checks run, findings by severity, and a one-line verdict.
+- `direction` 0.1.0: the module for the direction area. `/direction:review` reads the tracker (`bd list --json --all --limit 0`, `bd ready --json`, `bd blocked --json`) across all areas and writes a dated memo: what moved per area, what is blocked and by what, the proposed allocation of the week, and the decisions the owner must take. Each decision the owner confirms becomes a tracker item with `area:direction` and `kind:decision`, closed with the decision as its reason, and the memo line names the record. The gate check `direction.review-memo` reports a memo without a date or period, without one of the four sections, with a decision line that has no status, or with a decisions section that has no line at all.
+
+### Changed
+
+- `fit` 0.3.0 and `handover` 0.1.2: the module signal tables in `docs/fit.md` and `docs/handover.md` list `direction` (`docs/direction/index.md`).
 
 ## [0.2.0] - 2026-10-14
 

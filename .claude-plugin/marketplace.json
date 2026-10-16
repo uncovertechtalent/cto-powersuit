@@ -57,6 +57,15 @@
       ]
     },
     {
+      "name": "direction",
+      "source": "./plugins/direction",
+      "description": "Direction: a weekly review of the tracker across all areas (what moved, blocked, allocation, decisions needed) that records confirmed decisions, with a gate check on review memos.",
+      "category": "development",
+      "skills": [
+        "./skills/review"
+      ]
+    },
+    {
       "name": "docs",
       "source": "./plugins/docs",
       "description": "Docs tree with owners and review dates, runbooks, a stale-page sweep, a static docs build and a gate check on review fields.",
