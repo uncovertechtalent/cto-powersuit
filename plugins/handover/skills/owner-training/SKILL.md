@@ -54,6 +54,7 @@ Gives the new owner of each module one checklist with four steps: read, run, cha
    |---|---|---|---|---|
    | sdlc | `docs/sdlc.md` | `/sdlc:work-item` for one real change | One row of the stage table or the label scheme | The next pull request names its ticket and passes review |
    | decisions | `docs/decisions/index.md`, the last three ADRs | `/decisions:decision-log-review` | Record one ADR with `/decisions:adr` | The ADR is in the index and passes `decisions.adr-fields` |
+   | direction | `docs/direction/index.md`, the last memo | `/direction:review` for one week | Record one decision from the memo | The memo is in the index and passes `direction.review-memo` |
    | docs | `docs/docs.json`, the space home pages | The docs build | Review one stale page with `/docs:review-sweep` | The build passes and the owner has no overdue page |
    | gate | `gate/gate.json`, `gate/summary.md`, the rules README | `python3 .github/actions/gate/run.py --dry-run` | Add or tune one rule on `warn` with `/gate:add-rule` | The next push runs the gate and the deploy waits for it |
    | reliability | `services/*.yml`, the runbooks, the on-call policy | One runbook in a drill | One SLO target or alert threshold | The status page builds; the drill leaves a record in `incidents/incidents.json` |

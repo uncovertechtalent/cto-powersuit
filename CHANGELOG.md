@@ -11,6 +11,8 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ### Changed
 
+- `direction` 0.1.1: the memo's page type is `reference`, the one the docs module's build and its `docs.review` check accept; the memo has one home, `docs/direction/review-<date>.md`, and an overlay names another folder; the tracker exports go to a `mktemp -d` folder; the report names the share of items without an `area:` label; the check reports a misconfigured `decisions` option once and accepts one pair of parentheses in a drop reason ([#24](https://github.com/uncovertechtalent/cto-powersuit/issues/24)).
+- `fit` 0.3.1 and `handover` 0.1.3: the order table of `/fit:estate-assessment` and the training defaults of `/handover:owner-training` list `direction` ([#24](https://github.com/uncovertechtalent/cto-powersuit/issues/24)).
 - `fit` 0.3.0 and `handover` 0.1.2: the module signal tables in `docs/fit.md` and `docs/handover.md` list `direction` (`docs/direction/index.md`).
 
 ## [0.2.0] - 2026-10-14

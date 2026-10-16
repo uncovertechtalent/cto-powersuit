@@ -1,6 +1,6 @@
 # direction
 
-The direction area of a company that runs its work in a tracker. Once a week, `/direction:review` reads every item in `bd` across all areas and writes one memo: what moved per area in the period, what is blocked and by what, a proposed allocation of the coming week, and the decisions the owner must take. The memo is a proposal. A decision counts once the owner states it: the skill then records it as a tracker item with `area:direction` and `kind:decision`, closed with the decision as its reason, and the memo line names the record. A gate check reports memos that lack a date or a period, miss one of the four sections, or leave a decision without a status.
+The direction area of a company that runs its work in a tracker. Once a week, `/direction:review` reads every item in `bd` across all areas and writes one memo: what moved per area in the period, what is blocked and by what, a proposed allocation of the coming week, and the decisions the owner must take. The memo is a proposal. A decision counts once the owner states it: the skill then records it as a tracker item with `area:direction` and `kind:decision`, closed with the decision as its reason, and the memo line names the record. The item closes at record time because it is the record of the choice; the work that follows goes to `kind:action` items in their own areas, which stay open until done. A gate check reports memos that lack a date or a period, miss one of the four sections, or leave a decision without a status.
 
 The module reads the same labels as the cockpit of the CTO powersuit (`area:` for the eight areas, `kind:` for finding, decision, action, and lead) and needs nothing else from it. Items without an `area:` label stay under "no area label" in every table; the skill never guesses an area.
 
@@ -20,7 +20,7 @@ Every skill checks the overlay first: `$POWERSUIT_OVERLAY/direction/` (see the r
 
 ## Templates
 
-The memo goes under the tracker root (the folder with `.beads/`): `_inbox/Direction review <YYYY-MM-DD>.md` when that root has an `_inbox/` folder, as a vault made by `/vault:vault-init` has; otherwise `docs/direction/review-<YYYY-MM-DD>.md`. The gate check reads the repository form. In a repository the skill copies these files on first use, and an existing file is never overwritten. In a vault it reads the memo template from the plugin and copies nothing.
+The memo goes to `docs/direction/review-<YYYY-MM-DD>.md` under the tracker root (the folder with `.beads/`). An install that keeps its memos elsewhere names the folder in its overlay; a memo outside `docs/direction/` is not read by the gate check. The skill copies these files on first use, and an existing file is never overwritten.
 
 | File in the plugin | Lands at | What it is |
 |---|---|---|
@@ -38,8 +38,9 @@ The page templates carry the front matter of the `docs` module (`owner`, `review
 | `missing date`, `malformed date: <value>` | No `date` in the front matter, or a value that is not an ISO date `YYYY-MM-DD` |
 | `missing period`, `malformed period: <value>` | No `period`, or a value that is not `YYYY-MM-DD/YYYY-MM-DD` with real dates and the start not after the end |
 | `missing section: <name>` | One of the headings What moved, Blocked, Proposed allocation, Decisions needed is absent; headings match by their exact text, at any level |
-| `decision without status: <text>` | A top-level list item under Decisions needed that does not end with `(open)`, `(recorded: <id>)`, or `(dropped: <reason>)`; an indented sub-item belongs to the decision above it |
+| `decision without status: <text>` | A top-level list item under Decisions needed that does not end with `(open)`, `(recorded: <id>)`, or `(dropped: <reason>)`; an indented sub-item belongs to the decision above it; a reason may hold one pair of parentheses |
 | `no decision line and no None. under Decisions needed` | The decisions section has neither a list item nor a line `None.` |
+| `decisions section not in sections: <name>` | The `decisions` option names a section that `sections` does not list; reported once per run |
 
 The result is `fail` on any hit, `pass` when every memo is clean and `n/a` when no file matches. Options: `globs` for another folder, `sections` for other heading names, and `decisions` for the name of the section whose list items are decisions (it must be one of `sections`).
 
