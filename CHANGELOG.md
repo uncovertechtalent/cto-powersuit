@@ -1,5 +1,7 @@
 # Changelog
 
+The CTO powersuit is the open-source toolkit behind CAITO, the fractional Chief AI & Technology Officer role of Stefan Coetzee. A team installs the modules itself, or hires him to run them: [machinebehavior.io/your-next-cto/](https://machinebehavior.io/your-next-cto/).
+
 All notable changes to this project are listed here, newest first. Each release has a date and groups its changes under Added, Changed, Fixed, Removed and Security. A release is the git tag `v<version>` on `main`. Each plugin keeps its own version in its `plugin.json`, and every release lists them. To pin a release or roll back, see [Versions and rollback](README.md#versions-and-rollback).
 
 ## Unreleased

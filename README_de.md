@@ -16,6 +16,12 @@ Die Module kommen als ein Plugin-Marketplace für Claude Code, ein Plugin pro Fu
 
 Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eigenen Daten für dieses Modul, außerhalb des Repositorys gespeichert. Siehe [Overlay](#overlay-deine-private-ebene).
 
+## Wer ihn betreibt
+
+Der CTO-Powersuit ist das Open-Source-Werkzeug hinter CAITO, der Rolle des Fractional Chief AI & Technology Officer, die Stefan Coetzee auf machinebehavior.io anbietet: eine Rolle für die Technologieplattform eines Unternehmens und die KI, die darauf läuft, in Teilzeit besetzt, aus einer Hand. Die Plugin-Seiten, eine pro Modul, stehen unter [machinebehavior.io/cto-powersuit/](https://machinebehavior.io/cto-powersuit/). Die Seite zum Beauftragen, mit den Formen eines Auftrags und dem, was ein erstes Quartal liefert, ist [machinebehavior.io/your-next-cto/](https://machinebehavior.io/your-next-cto/).
+
+> Stefan Coetzee, fractional Chief AI & Technology Officer (CAITO), wearing the CTO powersuit. One role for the technology platform and the AI that runs on it, filled part-time.
+
 ## Drei Wege, den Powersuit zu nutzen
 
 1. **Selbst betreiben.** Dein Team installiert die Module aus diesem Repository und betreibt sie selbst. Siehe [Installation](#installation).
