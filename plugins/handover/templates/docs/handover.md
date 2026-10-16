@@ -62,6 +62,7 @@ The file or files a module leaves in the repository when it is installed. The ga
 |---|---|
 | sdlc | `docs/sdlc.md` |
 | decisions | `docs/decisions/index.md` |
+| direction | `docs/direction/index.md` |
 | docs | `docs/docs.json` |
 | gate | `gate/gate.json` |
 | reliability | `services/*.yml` or `incidents/incidents.json` |

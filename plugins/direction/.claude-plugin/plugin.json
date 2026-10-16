@@ -1,0 +1,9 @@
+{
+  "name": "direction",
+  "version": "0.1.0",
+  "description": "Direction for a company that runs its work in a tracker: a weekly review that reads the tracker across all areas and writes a memo (what moved, what is blocked, the proposed allocation, the decisions needed), records each confirmed decision as a tracker item, and a gate check on review memos.",
+  "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
+  "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
+  "license": "MIT",
+  "keywords": ["direction", "review", "allocation", "decisions", "beads", "cockpit", "ceo"]
+}

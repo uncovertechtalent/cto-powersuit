@@ -30,6 +30,7 @@ For the second and third way: [machinebehavior.io/your-next-cto/](https://machin
 | `aieo` | Visibility in AI search: `llms.txt`, structured data, a fixed query set probed against AI search engines, and dated predictions hashed before a page goes live. A gate check that every prediction file matches its hash. | Python 3.9+ |
 | `compliance` | A control map to ISO 27001, TISAX, NIS2 and GDPR by clause and article number, an AI Act triage, and a legal baseline for a website (Impressum, privacy page, security.txt, no third-party requests on page load). Gate checks for security.txt and third-party requests. | Python 3.9+ |
 | `decisions` | RFCs, architecture decision records (ADRs) and a review of the decision log. Templates for both records and a gate check that every ADR has a status, an owner and a date. | Python 3.9+ for the gate check |
+| `direction` | The direction area: a weekly review that reads the tracker across all areas and writes a memo (what moved per area, what is blocked, the proposed allocation of the week, the decisions needed), and records each confirmed decision as a tracker item. A gate check that every review memo names its date and period, carries the four sections, and gives every decision a status. | Python 3.9+ for the gate check; `bd` (beads) |
 | `docs` | A docs tree where every page has an owner and review dates, runbooks, and a sweep for stale pages. A static docs build and a gate check on the review fields. | Python 3.9+ |
 | `finops` | A cost baseline from invoices and billing exports, showback per team or service, unit costs, a SaaS stack audit (keep, cut or replace) and a FOCUS export. A gate check that every cost figure in the docs carries a date range and a source. | Python 3.9+ |
 | `fit` | The entry assessment: reads a repository and its docs, runs the sdlc audit, and recommends which modules to fit and in which order. A repo clinic that audits a public repository at its owner's request and drafts one short report with the top three gaps and one small pull request, with secrets and security holes kept to a private note. A gate check that every module marked fitted is installed. | `sdlc`; `gate` and `security` for the clinic |
@@ -64,6 +65,7 @@ claude plugin install ai-ops@cto-powersuit
 claude plugin install aieo@cto-powersuit
 claude plugin install compliance@cto-powersuit
 claude plugin install decisions@cto-powersuit
+claude plugin install direction@cto-powersuit
 claude plugin install docs@cto-powersuit
 claude plugin install finops@cto-powersuit
 claude plugin install fit@cto-powersuit

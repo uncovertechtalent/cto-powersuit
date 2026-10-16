@@ -32,6 +32,7 @@ Für den zweiten und dritten Weg: [machinebehavior.io/your-next-cto/](https://ma
 | `aieo` | Sichtbarkeit in KI-Suchen: `llms.txt`, strukturierte Daten, ein fester Satz von Anfragen an KI-Suchmaschinen und datierte Vorhersagen, die vor dem Livegang einer Seite gehasht werden. Ein Gate-Check, der prüft, dass jede Vorhersage-Datei zu ihrem Hash passt. | Python 3.9+ |
 | `compliance` | Eine Control-Map zu ISO 27001, TISAX, NIS2 und DSGVO nach Klausel- und Artikelnummer, eine Triage nach dem AI Act und eine rechtliche Grundausstattung für eine Website (Impressum, Datenschutzseite, security.txt, keine Anfragen an Dritte beim Laden der Seite). Gate-Checks für security.txt und Anfragen an Dritte. | Python 3.9+ |
 | `decisions` | RFCs, Architecture Decision Records (ADRs) und ein Review des Entscheidungslogs. Vorlagen für beide Dokumente und ein Gate-Check, der prüft, dass jeder ADR einen Status, einen Owner und ein Datum hat. | Python 3.9+ für den Gate-Check |
+| `direction` | Der Bereich Direction: ein wöchentliches Review, das den Tracker über alle Bereiche liest und ein Memo schreibt (was sich pro Bereich bewegt hat, was blockiert ist, die vorgeschlagene Verteilung der Woche, die nötigen Entscheidungen), und jede bestätigte Entscheidung als Tracker-Eintrag festhält. Ein Gate-Check, der prüft, dass jedes Review-Memo Datum und Zeitraum nennt, die vier Abschnitte enthält und jeder Entscheidung einen Status gibt. | Python 3.9+ für den Gate-Check; `bd` (beads) |
 | `docs` | Ein Docs-Baum, in dem jede Seite einen Owner und Review-Daten hat, Runbooks und eine Suche nach veralteten Seiten. Ein statischer Docs-Build und ein Gate-Check auf die Review-Felder. | Python 3.9+ |
 | `finops` | Eine Kosten-Baseline aus Rechnungen und Billing-Exporten, Showback pro Team oder Service, Stückkosten, ein Audit des SaaS-Bestands (behalten, kündigen oder ersetzen) und ein FOCUS-Export. Ein Gate-Check, der prüft, dass jede Kostenangabe in den Docs einen Zeitraum und eine Quelle nennt. | Python 3.9+ |
 | `fit` | Die Eingangsbewertung: liest ein Repository und seine Docs, führt das SDLC-Audit aus und empfiehlt, welche Module in welcher Reihenfolge eingesetzt werden. Eine Repo-Sprechstunde, die ein öffentliches Repository auf Wunsch seiner Eigentümer prüft und einen kurzen Bericht mit den drei größten Lücken und einen kleinen Pull Request entwirft; Secrets und Sicherheitslücken landen nur in einer privaten Notiz. Ein Gate-Check, der prüft, dass jedes als eingesetzt markierte Modul installiert ist. | `sdlc`; `gate` und `security` für die Sprechstunde |
@@ -66,6 +67,7 @@ claude plugin install ai-ops@cto-powersuit
 claude plugin install aieo@cto-powersuit
 claude plugin install compliance@cto-powersuit
 claude plugin install decisions@cto-powersuit
+claude plugin install direction@cto-powersuit
 claude plugin install docs@cto-powersuit
 claude plugin install finops@cto-powersuit
 claude plugin install fit@cto-powersuit
