@@ -17,7 +17,7 @@ DATE = re.compile(rf"^{DAY}$")
 PERIOD = re.compile(rf"^({DAY})/({DAY})$")
 HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*#*\s*$")
 LIST_ITEM = re.compile(r"^(?:[-*+]|\d+[.)])\s+(.*)$")   # top-level items only; an indented sub-item is part of its decision
-STATUS = re.compile(r"\((?:open|recorded:\s*[A-Za-z0-9_.-]+(?:\s*,\s*[A-Za-z0-9_.-]+)*|dropped:\s*\S(?:[^()]|\([^()]*\))*)\)\s*$")
+STATUS = re.compile(r"\((?:open|recorded:\s*[A-Za-z0-9_.-]+(?:\s*,\s*[A-Za-z0-9_.-]+)*|dropped:\s*\S[^()]*(?:\([^()]*\)[^()]*)?)\)\s*$")
 NONE = re.compile(r"^\s*None\.?\s*$")
 
 
@@ -78,7 +78,7 @@ def check(ctx):
     hits = []
     decisions = 0
     if decisions_name not in [s.strip().lower() for s in sections]:
-        hits.append({"file": ctx.rel(files[0]), "line": 1, "snippet": "decisions section not in sections: " + str(ctx.options["decisions"])[:40]})
+        hits.append({"file": "gate/gate.json", "line": 1, "snippet": "decisions section not in sections: " + str(ctx.options["decisions"])[:40]})
     for f in files:
         rel = ctx.rel(f)
         text = ctx.read(f)

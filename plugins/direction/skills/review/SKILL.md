@@ -23,11 +23,11 @@ Reads the tracker (`bd`, [beads](https://github.com/steveyegge/beads)) across al
 - **Period**: default the 7 days ending today, from `date +%F`. The owner may name another range.
 - **Areas**: the eight areas of the cockpit by default: `direction`, `delivery`, `operations`, `money`, `security`, `ai`, `people`, `knowledge`. An install with other `area:` labels names them in the overlay.
 - **Owner**: the person who takes the decisions. Ask, unless the overlay names the owner.
-- **Memo**: `docs/direction/review-<YYYY-MM-DD>.md` under the tracker root. The overlay may name another folder; a memo outside `docs/direction/` is not read by the gate check.
+- **Memo**: `docs/direction/review-<YYYY-MM-DD>.md` under the tracker root. The overlay may name another folder; a memo outside `docs/direction/` is not read by the gate check unless the rule's `globs` option names that folder.
 
 ## Steps
 
-1. **Set up.** Copy the templates without overwriting:
+1. **Set up.** With the default memo folder, copy the templates without overwriting:
 
    ```bash
    mkdir -p docs/direction
@@ -39,6 +39,8 @@ Reads the tracker (`bd`, [beads](https://github.com/steveyegge/beads)) across al
    ```json
    {"key": "direction", "name": "Direction", "about": "The weekly direction reviews: what moved, what is blocked, the allocation, and the decisions taken.", "owner": ""}
    ```
+
+   With a memo folder from the overlay, copy nothing and add no space: read the template from `${CLAUDE_PLUGIN_ROOT}/templates/docs/direction/_templates/review.md`.
 
 2. **Read the tracker.** Three commands, all read-only:
 
@@ -55,7 +57,7 @@ Reads the tracker (`bd`, [beads](https://github.com/steveyegge/beads)) across al
 5. **Blocked.** One line per item in `blocked.json`: id, area (from its `area:` label), priority, and each id in `blocked_by` with that item's status looked up in `beads.json`. Where one id blocks several items, say so: that blocker comes first in the allocation. Write "None." when the list is empty.
 6. **Proposed allocation.** Split the five working days of the coming week across the areas, in half days, with one reason per line. Weigh, in this order: open P0 and P1 items per area, a blocker that blocks several items, a `kind:decision` item older than 7 days, an area whose open count rose over the last four weeks (from `created_at` and `closed_at`), and ready items from `ready.json` that nobody has started. An area with no open work gets "none this week". The shares add up to five days.
 7. **Decisions needed.** List, oldest first, every open item with `kind:decision`, as `id: title (open)`. Then add the decisions found in the review, each as one line that names the choice, with `(open)` at its end: a blocker with an empty `owner`, an area whose open count rises for four weeks, a P0 or P1 item untouched for 30 days (`updated_at`). Write "None." when there is nothing.
-8. **Write the memo.** Start from `docs/direction/_templates/review.md`. Fill the front matter: `date` today, `period` as `<start>/<end>` in ISO dates, `areas`, `owner`, `reviewed` today, `review_by` 7 days later. Paste the four sections. Replace every `<placeholder>`. If the memo path exists, show the diff and update it after the owner agrees; git keeps the earlier version. Add the memo to the table in `docs/direction/index.md`.
+8. **Write the memo.** Start from `docs/direction/_templates/review.md`, or from the plugin's copy with a memo folder from the overlay. Fill the front matter: `date` today, `period` as `<start>/<end>` in ISO dates, `areas`, `owner`, `reviewed` today, `review_by` 7 days later. Paste the four sections. Replace every `<placeholder>`. If the memo path exists, show the diff and update it after the owner agrees; git keeps the earlier version. With the default memo folder, add the memo to the table in `docs/direction/index.md`.
 9. **Walk the decisions with the owner.** Show the "Decisions needed" list and ask, for each line, whether the owner decides now, leaves it open, or drops it. Record only what the owner states:
    - *An existing decision item, decided:* append the decision to its notes, then close it with the decision as the reason.
 
@@ -74,7 +76,7 @@ Reads the tracker (`bd`, [beads](https://github.com/steveyegge/beads)) across al
 
      Take the id from the `id` field of the JSON that `bd create --json` prints. Append the notes in a second command: on bd 1.0.3 (`bd version`), `--append-notes` on `bd create` wrote nothing in a test on a throwaway database.
    - *Left open:* change nothing in the tracker. A decision found in the review that the owner wants to keep becomes an open item with the same two labels, without a close; it then shows in the cockpit's queue.
-   - *Dropped:* change nothing in the tracker; the memo line gives the reason, with at most one pair of parentheses inside it.
+   - *Dropped:* change nothing in the tracker; the memo line gives the reason, with at most one pair of parentheses inside it (the check accepts one, not two).
 
    After each recorded decision, change its memo line from `(open)` to `(recorded: <id>)`; a dropped one gets `(dropped: <reason>)`. Where a decision calls for work, offer to create the follow-up items in their own areas with `kind:action`; create them only on the owner's yes.
 10. **Check.** In a repository that runs the gate with this module's rule, run `python3 .github/actions/gate/run.py --only direction.review-memo --dry-run`. Otherwise read the memo: date and period set, the four sections present, every decision line ends with a status.

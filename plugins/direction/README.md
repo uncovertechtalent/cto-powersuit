@@ -20,7 +20,7 @@ Every skill checks the overlay first: `$POWERSUIT_OVERLAY/direction/` (see the r
 
 ## Templates
 
-The memo goes to `docs/direction/review-<YYYY-MM-DD>.md` under the tracker root (the folder with `.beads/`). An install that keeps its memos elsewhere names the folder in its overlay; a memo outside `docs/direction/` is not read by the gate check. The skill copies these files on first use, and an existing file is never overwritten.
+The memo goes to `docs/direction/review-<YYYY-MM-DD>.md` under the tracker root (the folder with `.beads/`). An install that keeps its memos elsewhere names the folder in its overlay; a memo outside `docs/direction/` is not read by the gate check unless the rule's `globs` option names that folder. With the default folder the skill copies these files on first use, and an existing file is never overwritten; with a folder from the overlay it reads the memo template from the plugin and copies nothing.
 
 | File in the plugin | Lands at | What it is |
 |---|---|---|
@@ -38,9 +38,9 @@ The page templates carry the front matter of the `docs` module (`owner`, `review
 | `missing date`, `malformed date: <value>` | No `date` in the front matter, or a value that is not an ISO date `YYYY-MM-DD` |
 | `missing period`, `malformed period: <value>` | No `period`, or a value that is not `YYYY-MM-DD/YYYY-MM-DD` with real dates and the start not after the end |
 | `missing section: <name>` | One of the headings What moved, Blocked, Proposed allocation, Decisions needed is absent; headings match by their exact text, at any level |
-| `decision without status: <text>` | A top-level list item under Decisions needed that does not end with `(open)`, `(recorded: <id>)`, or `(dropped: <reason>)`; an indented sub-item belongs to the decision above it; a reason may hold one pair of parentheses |
+| `decision without status: <text>` | A top-level list item under Decisions needed that does not end with `(open)`, `(recorded: <id>)`, or `(dropped: <reason>)`; an indented sub-item belongs to the decision above it; a reason may hold one pair of parentheses, not two |
 | `no decision line and no None. under Decisions needed` | The decisions section has neither a list item nor a line `None.` |
-| `decisions section not in sections: <name>` | The `decisions` option names a section that `sections` does not list; reported once per run |
+| `decisions section not in sections: <name>` | The `decisions` option names a section that `sections` does not list; reported once per run, on `gate/gate.json`. The fixtures run with the defaults and cannot reach this hit |
 
 The result is `fail` on any hit, `pass` when every memo is clean and `n/a` when no file matches. Options: `globs` for another folder, `sections` for other heading names, and `decisions` for the name of the section whose list items are decisions (it must be one of `sections`).
 
