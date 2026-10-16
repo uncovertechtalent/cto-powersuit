@@ -18,7 +18,7 @@ Jeder Skill liest außerdem ein privates Overlay, wenn es eines gibt: deine eige
 
 ## Wer ihn betreibt
 
-Der CTO-Powersuit ist das Open-Source-Werkzeug hinter CAITO, der Rolle des Fractional Chief AI & Technology Officer, die Stefan Coetzee auf machinebehavior.io anbietet: eine Rolle für die Technologieplattform eines Unternehmens und die KI, die darauf läuft, in Teilzeit besetzt, aus einer Hand. Die Plugin-Seiten, eine pro Modul, stehen unter [machinebehavior.io/cto-powersuit/](https://machinebehavior.io/cto-powersuit/). Die Seite zum Beauftragen, mit den Formen eines Auftrags und dem, was ein erstes Quartal liefert, ist [machinebehavior.io/your-next-cto/](https://machinebehavior.io/your-next-cto/).
+Der CTO-Powersuit ist das Open-Source-Werkzeug hinter CAITO, der Rolle des Fractional Chief AI & Technology Officer, die Stefan Coetzee auf machinebehavior.io anbietet: eine Rolle für die Technologieplattform und die KI, die darauf läuft, in Teilzeit besetzt, mit dem CTO und dem Verantwortlichen für den KI-Betrieb in einer Hand. Die Plugin-Seiten, eine pro Modul, stehen unter [machinebehavior.io/cto-powersuit/](https://machinebehavior.io/cto-powersuit/). Die Seite zum Beauftragen, mit den Formen eines Auftrags und dem, was ein erstes Quartal liefert, ist [machinebehavior.io/your-next-cto/](https://machinebehavior.io/your-next-cto/).
 
 > Stefan Coetzee, fractional Chief AI & Technology Officer (CAITO), wearing the CTO powersuit. One role for the technology platform and the AI that runs on it, filled part-time.
 
