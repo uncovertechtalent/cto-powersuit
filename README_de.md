@@ -103,8 +103,8 @@ Jedes Release ist ein Git-Tag `v<version>` auf `main` mit einem Eintrag in [CHAN
 Die Installationsbefehle oben folgen `main`. Um ein Release festzuhalten, hänge seinen Tag an die Quelle:
 
 ```bash
-claude plugin marketplace add uncovertechtalent/cto-powersuit#v0.2.0
-npx skills add uncovertechtalent/cto-powersuit#v0.2.0
+claude plugin marketplace add uncovertechtalent/cto-powersuit#v0.3.0
+npx skills add uncovertechtalent/cto-powersuit#v0.3.0
 ```
 
 Beide Installer geben die Ref an `git clone --branch` weiter. Ein Tag oder ein Branch-Name funktioniert, ein Commit-SHA nicht. `claude plugin marketplace update` bleibt auf dem festgehaltenen Tag. Die skills-CLI schreibt die Ref in `skills-lock.json`, und `npx skills update` behält sie bei.
