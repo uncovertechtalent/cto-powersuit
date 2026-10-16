@@ -1,0 +1,34 @@
+{
+  "review": "CTO Powersuit review, <company>, <YYYY-MM>",
+  "repo": "<owner>/<repo>",
+  "date": "<YYYY-MM-DD>",
+  "checks": [
+    {"area": "delivery", "skill": "/sdlc:sdlc-audit", "status": "ran"},
+    {"area": "security", "skill": "/security:secrets", "status": "ran"},
+    {"area": "security", "skill": "/security:threat-model", "status": "not run", "note": "no architecture notes yet"}
+  ],
+  "verdicts": {
+    "delivery": "<one line: where this area stands and the first thing to do>"
+  },
+  "findings": [
+    {
+      "id": "DEL-1",
+      "area": "delivery",
+      "kind": "finding",
+      "severity": "high",
+      "title": "The deploy job runs on every push to main with no test or check before it",
+      "evidence": "`.github/workflows/deploy.yml:8`: the deploy job has no `needs:`. `/sdlc:sdlc-audit`: Gate partial, Test missing.",
+      "fix": "Add a test job and make the deploy job wait for it (`needs: test`). `/gate:gate-init` sets up the gate.",
+      "check": "/sdlc:sdlc-audit"
+    },
+    {
+      "id": "DEL-2",
+      "area": "delivery",
+      "kind": "decision",
+      "title": "Decide whether main takes direct pushes or only pull requests",
+      "evidence": "34 of 40 commits on main in 90 days were direct pushes.",
+      "fix": "Write the choice as an ADR with `/decisions:adr`, then set the branch rule to match.",
+      "check": "/sdlc:sdlc-audit"
+    }
+  ]
+}
