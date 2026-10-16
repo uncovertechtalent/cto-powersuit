@@ -4,6 +4,14 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ## Unreleased
 
+### Added
+
+- `direction` 0.1.0: the module for the direction area. `/direction:review` reads the tracker (`bd list --json --all --limit 0`, `bd ready --json`, `bd blocked --json`) across all areas and writes a dated memo: what moved per area, what is blocked and by what, the proposed allocation of the week, and the decisions the owner must take. Each decision the owner confirms becomes a tracker item with `area:direction` and `kind:decision`, closed with the decision as its reason, and the memo line names the record. The gate check `direction.review-memo` reports a memo without a date or period, without one of the four sections, or with a decision line that has no status.
+
+### Changed
+
+- `fit` 0.2.1 and `handover` 0.1.2: the module signal tables in `docs/fit.md` and `docs/handover.md` list `direction` (`docs/direction/index.md`).
+
 ## [0.2.0] - 2026-10-14
 
 Two new skills, `/security:quarantine` and `/ai-ops:tool-audit`, a local review runner for pull requests, behaviour evals with failure paths, and release provenance: from this release on, every release carries a source tarball with its sha256 and a build provenance attestation.
