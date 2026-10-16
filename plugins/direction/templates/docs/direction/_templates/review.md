@@ -8,7 +8,7 @@ owner: <owner>
 labels: direction, review
 reviewed: <YYYY-MM-DD>
 review_by: <YYYY-MM-DD>
-type: report
+type: reference
 ---
 ## What moved
 

@@ -1,6 +1,6 @@
 {
   "name": "handover",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Handover of the platform to named owners: training checklists per installed module, exit criteria for the person handing over, a test plan that proves the platform runs from the docs alone, and a gate check that every installed module has a named owner.",
   "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
   "license": "MIT",

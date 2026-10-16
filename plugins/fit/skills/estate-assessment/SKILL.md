@@ -70,6 +70,7 @@ The skill is read only. The one file it writes is `docs/fit.md`.
    | gate | none | Every module's gate check runs in the gate, so the gate comes before the checks | hours | `/gate:gate-init` |
    | docs | none | Runbooks, owned pages and the handover live in the docs tree | days | `/docs:docs-init` |
    | decisions | none | Records the choices made during the fitting | hours | `/decisions:adr` |
+   | direction | a tracker with `area:` labels | The weekly memo reads every area; items without an `area:` label stay unplaced | hours | `/direction:review` |
    | observability | none | Metrics and logs come before SLOs, alerts and agent metering | days | `/observability:stack-init` |
    | reliability | observability, docs | SLOs need metrics; runbooks are docs pages | weeks | `/reliability:nines-per-service` |
    | finops | none | Needs billing exports and invoices | days | `/finops:cost-baseline` |
