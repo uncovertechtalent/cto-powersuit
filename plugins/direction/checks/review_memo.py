@@ -4,21 +4,27 @@ import re
 
 ID = "direction.review-memo"
 DESCRIPTION = ("Every direction review memo has an ISO date and a period in the front matter, the sections What moved, "
-               "Blocked, Proposed allocation and Decisions needed, and a status (open, recorded: <id>, or "
+               "Blocked, Proposed allocation, and Decisions needed, and a status (open, recorded: <id>, or "
                "dropped: <reason>) at the end of every decision line.")
 DEFAULTS = {
-    "globs": ["docs/direction/review-*.md"],
+    "globs": ["docs/direction/**/review-*.md"],
     "sections": ["What moved", "Blocked", "Proposed allocation", "Decisions needed"],
+    "decisions": "Decisions needed",   # the section whose list items are decisions; one of "sections"
 }
 
 DAY = r"\d{4}-\d{2}-\d{2}"
+DATE = re.compile(rf"^{DAY}$")
 PERIOD = re.compile(rf"^({DAY})/({DAY})$")
 HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*#*\s*$")
-LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+(.*)$")
-STATUS = re.compile(r"\((?:open|recorded:\s*[A-Za-z0-9_.-]+(?:\s*,\s*[A-Za-z0-9_.-]+)*|dropped:\s*[^()]+)\)\s*$")
+LIST_ITEM = re.compile(r"^(?:[-*+]|\d+[.)])\s+(.*)$")   # top-level items only; an indented sub-item is part of its decision
+STATUS = re.compile(r"\((?:open|recorded:\s*[A-Za-z0-9_.-]+(?:\s*,\s*[A-Za-z0-9_.-]+)*|dropped:\s*\S[^()]*)\)\s*$")
+NONE = re.compile(r"^\s*None\.?\s*$")
 
 
 def iso_date(value):
+    """True for YYYY-MM-DD with a real date; fromisoformat alone also takes 20261009 and week dates on Python 3.11+."""
+    if not DATE.match(value):
+        return False
     try:
         datetime.date.fromisoformat(value)
     except ValueError:
@@ -63,7 +69,8 @@ def sections_of(text, body_line):
 
 
 def check(ctx):
-    wanted = [s.strip().lower() for s in ctx.options["sections"]]
+    sections = list(ctx.options["sections"])
+    decisions_name = str(ctx.options["decisions"]).strip().lower()
     files = [f for f in ctx.files(ctx.options["globs"]) if not any(part.startswith("_") for part in ctx.rel(f).split("/"))]
     if not files:
         return {"result": "n/a", "detail": "no file matches " + ", ".join(ctx.options["globs"]), "hits": []}
@@ -89,19 +96,28 @@ def check(ctx):
 
         found = sections_of(text, body_line)
         by_name = {name.lower(): (line, body) for name, line, body in found}
-        for name in ctx.options["sections"]:
+        for name in sections:
             if name.strip().lower() not in by_name:
                 hits.append({"file": rel, "line": 1, "snippet": "missing section: " + name})
+        if decisions_name not in [s.strip().lower() for s in sections]:
+            hits.append({"file": rel, "line": 1, "snippet": "decisions section not in sections: " + str(ctx.options["decisions"])[:40]})
 
-        if wanted and wanted[-1] in by_name:
-            _line, body = by_name[wanted[-1]]
+        if decisions_name in by_name:
+            heading_line, body = by_name[decisions_name]
+            found_any = False
             for n, line in body:
+                if NONE.match(line):
+                    found_any = True
+                    continue
                 m = LIST_ITEM.match(line)
                 if not m:
                     continue
+                found_any = True
                 decisions += 1
                 if not STATUS.search(m.group(1)):
                     hits.append({"file": rel, "line": n, "snippet": "decision without status: " + m.group(1).strip()[:40]})
+            if not found_any:
+                hits.append({"file": rel, "line": heading_line, "snippet": "no decision line and no None. under " + str(ctx.options["decisions"])[:40]})
 
     hits.sort(key=lambda h: (h["file"], h["line"], h["snippet"]))
     detail = f"{len(files)} memos, {decisions} decision lines, {len(hits)} hits"

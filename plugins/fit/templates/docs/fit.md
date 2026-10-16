@@ -18,6 +18,7 @@ Recommendation is one of `fit now`, `fit later`, `not needed` or `fitted`. A mod
 | gate | <recommendation> | <reason> | <first step> | <owner> |
 | docs | <recommendation> | <reason> | <first step> | <owner> |
 | decisions | <recommendation> | <reason> | <first step> | <owner> |
+| direction | <recommendation> | <reason> | <first step> | <owner> |
 | reliability | <recommendation> | <reason> | <first step> | <owner> |
 | observability | <recommendation> | <reason> | <first step> | <owner> |
 | finops | <recommendation> | <reason> | <first step> | <owner> |

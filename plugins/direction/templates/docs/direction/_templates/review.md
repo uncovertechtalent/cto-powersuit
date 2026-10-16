@@ -1,6 +1,6 @@
 ---
 title: "Direction review <YYYY-MM-DD>"
-summary: What moved, what is blocked, the proposed allocation for the week and the decisions needed, from the tracker.
+summary: What moved, what is blocked, the proposed allocation for the week, and the decisions needed, from the tracker.
 date: <YYYY-MM-DD>
 period: <YYYY-MM-DD>/<YYYY-MM-DD>
 areas: direction, delivery, operations, money, security, ai, people, knowledge
@@ -34,7 +34,7 @@ Closed: <`id`: title (area), one per item closed in the period>. Opened at P0 or
 
 | Area | Days | Why |
 |---|---|---|
-| <area> | <half days, the column adds up to 5> | <one reason: P0 or P1 items, a blocker that frees others, a decision older than 7 days, a rising open count, ready items nobody started> |
+| <area> | <half days, the column adds up to 5> | <one reason: P0 or P1 items, a blocker that blocks others, a decision older than 7 days, a rising open count, ready items nobody started> |
 
 ## Decisions needed
 
