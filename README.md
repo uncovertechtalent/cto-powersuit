@@ -230,7 +230,7 @@ python3 scripts/test_release.py
 python3 scripts/check_release.py
 ```
 
-`scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture. `plugins/sdlc/skills/sdlc-audit/test_probe.py` runs the recorded cases of the sdlc audit's probe. `plugins/gate/tests/test_run.py` tests the gate runner itself on small repositories built in a temporary folder. `scripts/check_repo.py` cross-checks the marketplace, the plugin folders, both READMEs, the demo lines and the overlay section of every skill. `scripts/check_release.py` checks that the changelog and the suit version agree, and that every plugin changed since the last release tag has a higher version. `scripts/test_release.py` tests it on small repositories.
+`scripts/test_checks.py` runs every module's gate check with the gate runner against its pass and fail fixtures. It needs Python 3.9+ and exits 1 when a check passes a fail fixture or fails a pass fixture. `plugins/sdlc/skills/sdlc-audit/test_probe.py` runs the recorded cases of the sdlc audit's probe. `plugins/gate/tests/test_run.py` tests the gate runner itself on small repositories built in a temporary folder. `scripts/check_repo.py` cross-checks the marketplace, the plugin folders, both READMEs, the demo lines and the overlay section of every skill. `scripts/check_release.py` checks that the changelog and the suit version agree, and that every plugin changed since the last release tag has a higher version. `scripts/test_release.py` tests it on small repositories. `plugins/sdlc/tests/test_review_pr.py` runs the local review runner against fakes for `gh`, `claude` and `git`: the diff fallback, the size reduction, and the stops that must say so.
 
 CI runs these on every push and pull request ([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), and zizmor on the workflows, with each accepted finding and its reason in `.github/zizmor.yml`.
 
@@ -251,6 +251,7 @@ The CI review needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN`, and it is n
 - The model gets the pull request as files, with no shell and no network, and runs with `--restricted`.
 - The private knowledge base is reached only through its MCP search tools (by default the `vault-search` server from your Claude config).
 - The script, not the model, scans the comment with the private-terms check and posts or updates one comment per pull request. The comment ends with a line saying it is an advisory review run locally.
+- A pull request over 300 files, which GitHub refuses to diff, is diffed from the checkout (`git diff` from the merge base). A diff over 200000 bytes (`POWERSUIT_MAX_DIFF_BYTES`) reaches the model reduced: hand-written files whole, generated or repeated files as a stat and a sample. The comment says so. A run that ends without a review exits 1 and says why. The rules are in [the skill](plugins/sdlc/skills/change-review/SKILL.md#large-pull-requests-review-prsh).
 
 ```bash
 git clone https://github.com/uncovertechtalent/cto-powersuit.git ~/.cache/powersuit-main

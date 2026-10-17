@@ -39,6 +39,8 @@ jobs:
         run: python plugins/ai-ops/skills/tool-audit/test_tool_audit.py
       - name: Changelog draft tests
         run: python plugins/sdlc/tests/test_changelog_draft.py
+      - name: Review runner tests
+        run: python plugins/sdlc/tests/test_review_pr.py
       - name: Release check tests
         run: python scripts/test_release.py
       - name: Repository consistency
