@@ -81,6 +81,23 @@ It is interactive on purpose: the comment draws on private notes, so the user se
 
 `review-pr.sh` in this skill's folder runs the same review end to end with the limits of the CI workflow, for repositories whose CI has no token yet. It loads this plugin from a clean clone of the suit's `main`. It gives the model the pull request as files, with no shell and no network, and the knowledge base through its MCP search tools only. It then scans the comment, saves it, and posts or updates one comment: `review-pr.sh <owner/repo> <n>`, then `--post-saved` after reading it.
 
+### Large pull requests (`review-pr.sh`)
+
+- **GitHub refuses the diff above 300 files** (`gh pr diff` answers HTTP 406, `too_large`). The script then fetches the base branch into its checkout, deeper until it shares a commit with the head, and runs `git diff <merge-base> <head>`: the same three-dot diff the pull request page shows. `pr.json` records the source (`.diff.source` is `gh` or `local-git`, with `.diff.mergeBase`), and the prompt tells the model.
+- **A diff over `$POWERSUIT_MAX_DIFF_BYTES` (default 200000) is reduced** before the model sees it. `pr.diff` keeps the full diff of the files that look hand-written. Every file that looks generated gets one line in `pr.generated-stat.txt` (lines added, lines removed, group, reason, path), and `pr.generated-sample.diff` holds one file for each of the five largest groups of identical changes. A line over 500 characters is cut and marked, in the reduced diff and the sample. The model must say in the comment that these files were sampled.
+- **A file looks generated when** it matches one of four rules, checked in this order:
+
+  | Reason | Rule |
+  |---|---|
+  | `attribute` | `.gitattributes` sets `linguist-generated` for it |
+  | `name` | it is a lock file (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `Cargo.lock`, `Gemfile.lock`, `poetry.lock`, `uv.lock`, `composer.lock`, `go.sum`), ends in `.lock`, `.min.js`, `.min.css`, `.map`, `.snap`, `.pb.go` or `_pb2.py`, or sits in a folder named `dist`, `generated`, `__generated__`, `__snapshots__` or `node_modules` |
+  | `header` | one of its first 10 lines says `@generated`, `DO NOT EDIT`, `Code generated` or `auto-generated`, in any case |
+  | `repeat` | at least 20 files of the pull request have the same added and removed lines |
+
+  The first three follow the checklist's "Generated files" row (lock files, builds, snapshots, docs output) and the markers that tools write. The fourth catches output with no marker, such as one label changed on hundreds of built pages, which is the case that stopped the runner. Files in one `repeat` group carry the identical change, so the sample shows every changed line of the group once.
+- **The residual:** a generated-looking file is not read line by line. The stat lists every one, so a file whose counts do not fit its group stands out, and the checkout holds the full content. A marker line sits in the pull request's own head, so it proves nothing about who wrote the file.
+- **Every stop says so.** A run that ends without a review (gh cannot read the pull request, an empty diff, a base branch that cannot be fetched, a model that fails or returns a blank comment) exits 1 with the reason on stderr and "no review was produced".
+
 ## Rules
 
 - Never approve, request changes as the user, merge or push.
