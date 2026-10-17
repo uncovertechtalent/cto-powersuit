@@ -90,7 +90,7 @@ It is interactive on purpose: the comment draws on private notes, so the user se
   | Reason | Rule |
   |---|---|
   | `attribute` | `.gitattributes` sets `linguist-generated` for it |
-  | `name` | it is a lock file (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `Cargo.lock`, `Gemfile.lock`, `poetry.lock`, `uv.lock`, `composer.lock`, `go.sum`), ends in `.lock`, `.min.js`, `.min.css`, `.map`, `.snap`, `.pb.go` or `_pb2.py`, or sits in a folder named `dist`, `generated`, `__generated__`, `__snapshots__` or `node_modules` |
+  | `name` | it is a lock file (`package-lock.json`, `npm-shrinkwrap.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, `Cargo.lock`, `Gemfile.lock`, `poetry.lock`, `Pipfile.lock`, `uv.lock`, `composer.lock`, `go.sum`), ends in `.lock`, `.min.js`, `.min.css`, `.map`, `.snap`, `.pb.go`, `_pb2.py` or `_pb2_grpc.py`, or sits in a folder named `dist`, `generated`, `__generated__`, `__snapshots__` or `node_modules` |
   | `header` | one of its first 10 lines says `@generated`, `DO NOT EDIT`, `Code generated` or `auto-generated`, in any case |
   | `repeat` | at least 20 files of the pull request have the same added and removed lines |
 
