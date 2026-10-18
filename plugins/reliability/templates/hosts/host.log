@@ -1,0 +1,4 @@
+# <host>.log: change record for this host (<address>, <what it is>), newest at the bottom.
+# Rules for agents and people: read this before changing anything here.
+# Append one line per change, never edit old lines:
+#   YYYY-MM-DD HH:MM TZ | who (person, or agent + session) | what changed (paths, services) | why / ref

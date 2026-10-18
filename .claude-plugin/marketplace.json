@@ -159,10 +159,11 @@
     {
       "name": "reliability",
       "source": "./plugins/reliability",
-      "description": "Availability targets, SLOs, incidents, postmortems, a static status page, on-call and a backup inventory with restore tests, with gate checks on the service catalogue and the backup inventory.",
+      "description": "Availability targets, SLOs, incidents, postmortems, a static status page, on-call, a backup inventory with restore tests, and a change record per server, with gate checks on the service catalogue and the backup inventory.",
       "category": "development",
       "skills": [
         "./skills/backup-inventory",
+        "./skills/host-log",
         "./skills/incident",
         "./skills/nines-per-service",
         "./skills/on-call",
