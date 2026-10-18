@@ -60,7 +60,7 @@ LINE
 
 The quoted `'LINE'` stops the local shell from expanding `$`, backticks, and backslashes in the text, and an apostrophe in the text breaks nothing. Read the last line back with `ssh <user>@<address> 'tail -n 1 /<host>.log'`.
 
-Never put the text of a log line inside a quoted remote command, as in `ssh host "echo '<text>' >> /host.log"`. One apostrophe in the text ends the quote, and the rest of the line runs as commands on your machine. This has happened: an apostrophe in a log line ended the quote, and the words after it ran as commands on the local machine.
+Never put the text of a log line inside a quoted remote command, as in `ssh host "echo '<text>' >> /host.log"`. One apostrophe in the text ends the quote, and the words after it run as commands on your machine. This has happened in practice.
 
 ## Set up a host
 
@@ -92,19 +92,27 @@ Run the commands on the host over ssh. They need sudo without a password prompt;
 2. **Create the log** owned by the login user, mode 644, and link it into the home folder:
 
    ```bash
+   host=$(hostname -s | tr '[:upper:]' '[:lower:]')
    sudo touch "/$host.log" && sudo chown "$(id -un):$(id -gn)" "/$host.log" && sudo chmod 644 "/$host.log"
    ln -sfn "/$host.log" "$HOME/$host.log"
    ```
 
    If the log already exists, leave it as it is and append to it. For a new log, fill the placeholders of `${CLAUDE_PLUGIN_ROOT}/templates/hosts/host.log` (`<host>`, `<address>`, `<what it is>`), save the result as `header.txt`, and send it on stdin like a log line: `ssh <user>@<address> 'cat >> /<host>.log' < header.txt`. The login user owns the file, so this needs no sudo.
 
-3. **Write the banner file.** Fill `<log path>` in `${CLAUDE_PLUGIN_ROOT}/templates/hosts/agents-banner` with `/<host>.log` and install it as `/etc/ssh/agents-banner`, mode 644, owned by root: `printf '%s\n' '<the filled line>' | sudo tee /etc/ssh/agents-banner >/dev/null`. The line holds no apostrophe, so the quoting holds. The banner is sent before login, so anyone who can reach the port reads it. It names the path and the rule, nothing else: no address, no user, no log content.
+3. **Write the banner file.** Fill `<log path>` in `${CLAUDE_PLUGIN_ROOT}/templates/hosts/agents-banner` with `/<host>.log` and install it as `/etc/ssh/agents-banner`, mode 644, owned by root: `printf '%s\n' '<the filled line>' | sudo tee /etc/ssh/agents-banner >/dev/null && sudo chmod 644 /etc/ssh/agents-banner`. The line holds no apostrophe, so the quoting holds. The banner is sent before login, so anyone who can reach the port reads it. It names the path and the rule, nothing else: no address, no user, no log content. The path carries the short hostname, so a host whose name must stay private gets a neutral log name such as `changes.log` in the banner, the header, and the symlink.
 
 4. **Check what sshd does now.** `sudo sshd -T | grep -i '^banner'` shows `banner none` when no banner is set. If a banner is already set (a legal notice, for example), keep it: with the user's agreement, add the AGENTS line to that banner file instead, and skip step 5.
 
 5. **Point sshd at the banner.** `grep -i '^Include' /etc/ssh/sshd_config` shows whether the main file includes `/etc/ssh/sshd_config.d/*.conf`. If it does, create the drop-in with `echo 'Banner /etc/ssh/agents-banner' | sudo tee /etc/ssh/sshd_config.d/10-agents-banner.conf >/dev/null`. If it does not, add the same line to `/etc/ssh/sshd_config` above the first `Match` block, because a line below a `Match` applies to that match only. sshd keeps the first value it reads for a keyword, so check the result with `sudo sshd -T | grep -i '^banner'` after the reload.
 
-6. **Test, then reload.** `sudo sshd -t` prints nothing when the config is valid. Only then reload sshd: `sudo systemctl reload ssh` (the unit is `ssh` on Debian and the systems built on it, `sshd` on Fedora, RHEL, and Arch). Keep the session you are in open until step 7 passes. A reload leaves open sessions running.
+6. **Test, then reload.** `sudo sshd -t` prints nothing when the config is valid. Only then reload sshd. The unit is `ssh` on Debian and the systems built on it, and `sshd` on Fedora, RHEL, and Arch, so pick it first:
+
+   ```bash
+   if systemctl cat ssh.service >/dev/null 2>&1; then unit=ssh; else unit=sshd; fi
+   sudo systemctl reload "$unit"
+   ```
+
+   Keep the session you are in open until step 7 passes. A reload leaves open sessions running.
 
 7. **Verify on a fresh connection.** `ssh <user>@<address> true` prints the AGENTS line, and `ssh <user>@<address> echo ok 2>/dev/null` prints `ok` alone. If either fails, remove the drop-in (or the line you added), run `sudo sshd -t`, reload, and restore from the snapshot if needed.
 
@@ -124,7 +132,7 @@ The log lives in the home folder: `~/<host>.log`. The root volume of macOS is se
    fi
    ```
 
-   The hook writes to stderr. Stdout must stay clean so scp, rsync, and command output keep working. Append the hook to the file if it exists, and never replace the file.
+   The hook writes to stderr. Stdout must stay clean so scp, rsync, and command output keep working. The line prints once for every shell the session starts, including each one-shot `ssh <host> <command>`. That is intended: do not move the hook behind an interactive-only guard, or those calls stop seeing it. Append the hook to the file if it exists, and never replace the file.
 3. Verify with a fresh connection, as in step 7 of path A, and log the setup as the first line.
 
 ### Appliances
