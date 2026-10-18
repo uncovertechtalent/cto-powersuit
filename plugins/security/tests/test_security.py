@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for the security module: the two gate checks beyond their fixture runs, and the three scripts.
+"""Tests for the security module: the gate checks beyond their fixture runs, and the scripts.
 
 - provenance.py: every recorded case in cases/provenance/ gives its risk grade and exactly its red and amber signals;
   the recommendation follows the archive install path and the data scope; attested release assets are counted per asset.
@@ -1169,7 +1169,8 @@ def access_review_mfa_section_prints_or_says_it_could_not_read():
     run_case("org-2fa-off", 1, "mfa: organisation requires two-factor authentication: no; members with it off: 3",
              "insecure second factor: 1", "outside collaborators with it off: 1", "member-2fa-off: 1 admin(s)", "lead")
     run_case("org-2fa-required", 0, "mfa: organisation requires two-factor authentication: yes; members with it off: 0")
-    run_case("org-2fa-not-visible", 0, "mfa: not read (the caller must be an organisation owner)", "not visible: org_2fa")
+    run_case("org-2fa-not-visible", 0, "mfa: not read (the caller must be an organisation owner", "not visible: org_2fa",
+             "amber org-2fa-not-read")
     run_case("clean", 0, "mfa: not read in this observation file")
     run_case("clean", 0, "mfa: not applicable: the owner is a user account", mutate=lambda c: c["meta"].update(owner_type="User"))
     return bad
@@ -1229,6 +1230,9 @@ def access_review_mfa_flags_split_admins_from_members():
     r = access.assess(c, datetime.date(2026, 10, 11))
     by = {(x["level"], x["id"]): x["evidence"] for x in r["flags"]}
     red, amber = by.get(("red", "member-2fa-off"), ""), by.get(("amber", "member-2fa-off"), "")
+    not_required = [x["evidence"] for x in r["flags"] if x["id"] == "org-2fa-not-required"]
+    if not not_required or "Enterprise Managed Users" not in not_required[0]:
+        bad.append(f"the requirement flag must point managed-user organisations to their identity provider: {not_required}")
     if "lead" not in red or "dev" in red:
         bad.append(f"the admin flag must name lead only: {red}")
     if "dev" not in amber or "qa" not in amber or "lead" in amber:
@@ -1258,16 +1262,24 @@ def check_entrances(root, today=TODAY, **options):
     return run.run_one(admin, ctx)
 
 
-def entrances(rows, today=TODAY, text=None, **options):
+def who(hit):
+    """The entrance a hit names, or the kind of a kind-missing hit."""
+    if hit["rule"] == "kind-missing":
+        return re.match(r"no row of kind ([\w-]+)", hit["snippet"]).group(1)
+    return hit["snippet"].split(":")[0]
+
+
+def entrances(rows, today=TODAY, text=None, reviewed=None, **options):
     """Run the check on a page with these rows (or this text); returns (result, [(rule, entrance), ...]).
     required_kinds defaults to none, so a test sees only the rule it is about."""
     options.setdefault("required_kinds", [])
+    front = "---\nowner: x\n" + (f"reviewed: {reviewed}\n" if reviewed else "") + "---\n"
     with tempfile.TemporaryDirectory() as tmp:
         page = Path(tmp) / "docs/security/admin-entrances.md"
         page.parent.mkdir(parents=True)
-        page.write_text(text if text is not None else "---\nowner: x\n---\n" + ENTRANCE_HEAD + "\n".join(rows) + "\n")
+        page.write_text(text if text is not None else front + ENTRANCE_HEAD + "\n".join(rows) + "\n")
         res = check_entrances(Path(tmp), today, **options)
-    return res, sorted((h["rule"], h["snippet"].split(":")[0]) for h in res["hits"])
+    return res, sorted((h["rule"], who(h)) for h in res["hits"])
 
 
 @test
@@ -1278,15 +1290,15 @@ def admin_entrances_fixtures():
     if res["result"] != "pass" or res["hits"]:
         bad.append(f"pass fixture: {res['result']}, {res['hits']}")
     res = check_entrances(fx / "fail")
-    got = sorted((h["rule"], h["snippet"].split(":")[0]) for h in res["hits"])
+    got = sorted((h["rule"], who(h)) for h in res["hits"])
     want = sorted([("mfa-not-enforced", "Cloud console and root account"), ("weak-method", "Identity provider admin"),
                    ("exception-expired", "Domain controller"), ("row-incomplete", "VPN"),
                    ("row-incomplete", "Source control organisation"), ("row-incomplete", "Source control organisation"),
                    ("row-incomplete", "Domain registrar"), ("row-incomplete", "Domain registrar"),
-                   ("kind-missing", "no row of kind source-ci; add one, or a row with MFA enforced n/a and a reason"),
-                   ("kind-missing", "no row of kind password-manager; add one, or a row with MFA enforced n/a and a reason"),
-                   ("kind-missing", "no row of kind saas; add one, or a row with MFA enforced n/a and a reason"),
-                   ("kind-missing", "no row of kind on-prem; add one, or a row with MFA enforced n/a and a reason")])
+                   ("exception-too-long", "Payroll admin console"), ("row-incomplete", "Retired file server"),
+                   ("row-stale", "Device management console"),
+                   ("kind-missing", "source-ci"), ("kind-missing", "password-manager"), ("kind-missing", "backup-monitoring"),
+                   ("kind-missing", "vendor")])
     if res["result"] != "fail" or got != want:
         bad.append(f"fail fixture: {res['result']}, got {got}")
     for name, code in (("pass", 0), ("fail", 1)):
@@ -1319,6 +1331,18 @@ def admin_entrances_exceptions_need_a_reason_a_person_and_a_date():
     res, got = entrances([entrance_row("A", **{**full, "expires": "2026-10-17"})])
     if got != [("exception-expired", "A")] or "2026-10-17" not in res["hits"][0]["snippet"]:
         bad.append(f"an exception that expired yesterday: {got}")
+    # The span runs from Last checked (2026-10-01): 180 days is the last good day.
+    for end, want in (("2027-03-30", []), ("2027-03-31", [("exception-too-long", "A")])):
+        res, got = entrances([entrance_row("A", **{**full, "expires": end})])
+        if got != want:
+            bad.append(f"expires {end}: {got}, want {want}")
+    if entrances([entrance_row("A", **{**full, "expires": "2099-12-31"})], max_exception_days=0)[1]:
+        bad.append("max_exception_days 0 turns the span off")
+    if entrances([entrance_row("A", **full)], max_exception_days=30)[1] != [("exception-too-long", "A")]:
+        bad.append("max_exception_days 30 on a 61 day exception")
+    res, got = entrances([entrance_row("A", **{**full, "expires": "2099-12-31"})])
+    if got != [("exception-too-long", "A")] or "days after the last check" not in res["hits"][0]["snippet"]:
+        bad.append(f"a 2099 exception: {got}")
     res, got = entrances([entrance_row("A", **{**full, "enforced": "partial", "method": "security-key"})])
     if res["result"] != "pass":
         bad.append(f"partial with a complete exception: {got}")
@@ -1333,12 +1357,16 @@ def admin_entrances_method_bar():
     bad = []
     for method, want in (("security-key", []), ("passkey", []), ("certificate", []), ("totp", []), ("push", []),
                          ("sms", [("weak-method", "A")]), ("voice", [("weak-method", "A")]), ("email", [("weak-method", "A")]),
+                         ("push-no-match", [("weak-method", "A")]), ("Security Key", []), ("FIDO2", []), ("YubiKey", []),
+                         ("smart card", []), ("Authenticator app", []), ("text message", [("weak-method", "A")]),
+                         ("push notification", []),
                          ("none", [("row-incomplete", "A")]), ("magic", [("row-incomplete", "A")]), ("", [("row-incomplete", "A")]),
                          ("security-key, sms", [("weak-method", "A")]), ("passkey + totp", []), ("SMS", [("weak-method", "A")])):
         got = entrances([entrance_row("A", method=method)])[1]
         if got != want:
             bad.append(f"default bar, method {method!r}: {got}, want {want}")
     for method, want in (("security-key", []), ("totp", [("weak-method", "A")]), ("push", [("weak-method", "A")]),
+                         ("push-no-match", [("weak-method", "A")]), ("authenticator app", [("weak-method", "A")]),
                          ("passkey, totp", [("weak-method", "A")]), ("sms", [("weak-method", "A")])):
         got = entrances([entrance_row("A", method=method)], phishing_resistant_only=True)[1]
         if got != want:
@@ -1367,9 +1395,18 @@ def admin_entrances_rows_name_an_owner_a_kind_and_evidence():
     na = entrance_row("Domain controller", kind="directory", enforced="n/a", method="none", reason="No directory server", holders="", evidence="", checked="")
     if entrances([na])[1]:
         bad.append("a kind the organisation does not have needs an owner and a reason only")
-    got = entrances([entrance_row("Domain controller", kind="directory", enforced="n/a", method="none", reason="")])[1]
+    got = entrances([entrance_row("Domain controller", kind="directory", enforced="n/a", method="none", reason="", holders="none")])[1]
     if got != [("row-incomplete", "Domain controller")]:
         bad.append(f"n/a without a reason: {got}")
+    # A live entrance cannot be waved through as n/a: that route needs no person and no end date.
+    live = entrance_row("Legacy VPN appliance", kind="remote-access", enforced="n/a", method="none", reason="Appliance cannot do MFA",
+                        holders="1 group, 5 accounts")
+    res, got = entrances([live])
+    if got != [("row-incomplete", "Legacy VPN appliance")] or "admin holders lists accounts" not in res["hits"][0]["snippet"]:
+        bad.append(f"n/a with admin holders: {got}")
+    for holders in ("none", "0", "No accounts", "", "<roles>"):
+        if entrances([live.replace("1 group, 5 accounts", holders)])[1]:
+            bad.append(f"n/a with admin holders {holders!r} must pass")
     half = "| | cloud | 1 role | Dana | yes | passkey | | | | 2026-10-01 | policy |"
     if entrances([half])[1] != [("row-incomplete", "row has no entrance name")]:
         bad.append(f"a half-filled row without an entrance name: {entrances([half])[1]}")
@@ -1386,7 +1423,8 @@ def admin_entrances_rows_name_an_owner_a_kind_and_evidence():
 @test
 def admin_entrances_required_kinds_and_page_shape():
     bad = []
-    rows = [entrance_row("A", kind="cloud"), entrance_row("B", kind="saas", enforced="n/a", method="none", reason="No SaaS admin consoles")]
+    rows = [entrance_row("A", kind="cloud"), entrance_row("B", kind="saas", enforced="n/a", method="none", reason="No SaaS admin consoles",
+                                                          holders="none")]
     res, got = entrances(rows, required_kinds=["cloud", "saas", "on-prem"])
     if [r for r, _ in got] != ["kind-missing"] or "on-prem" not in res["hits"][0]["snippet"]:
         bad.append(f"required kinds: {got}")
@@ -1410,6 +1448,21 @@ def admin_entrances_required_kinds_and_page_shape():
     res, got = entrances([], text="---\nowner: x\n---\n" + ENTRANCE_HEAD)
     if res["result"] != "n/a":
         bad.append(f"a table with no rows and no required kinds: {res['result']}, {got}")
+    # Every inventory table counts, and a row without outer pipes is still a row, as GitHub shows it.
+    second = (ENTRANCE_HEAD + entrance_row("A") + "\n\n## Vendors\n\n" + ENTRANCE_HEAD
+              + entrance_row("MSP remote tool", kind="vendor", enforced="no", method="none"))
+    res, got = entrances([], text=second)
+    if got != [("mfa-not-enforced", "MSP remote tool")]:
+        bad.append(f"a second inventory table: {got}")
+    no_pipes = (ENTRANCE_HEAD + entrance_row("A") + "\n" + entrance_row("B", enforced="no", method="none").strip("|") + "\n"
+                + entrance_row("C") + "\n")
+    res, got = entrances([], text=no_pipes)
+    if got != [("mfa-not-enforced", "B")] or "3 rows" not in res["detail"]:
+        bad.append(f"a row without outer pipes: {got}, {res['detail']}")
+    escaped = entrance_row("A", enforced="no", method="none", reason="Vendor supports sms \\| totp only", who="Sam", expires="2026-12-01")
+    res, got = entrances([escaped])
+    if res["result"] != "pass":
+        bad.append(f"an escaped pipe inside a cell must not split it: {got}")
     shuffled = ("| MFA enforced | Entrance | Evidence | Kind | Admin holders | Owner | Method | Reason | Accepted by | Expires | Last checked |\n"
                 "|---|---|---|---|---|---|---|---|---|---|---|\n"
                 "| yes | A | policy | cloud | 1 role | Dana | security-key | | | | 2026-10-01 |\n")
@@ -1423,6 +1476,25 @@ def admin_entrances_required_kinds_and_page_shape():
         res = check_entrances(Path(tmp), page="ops/mfa.md", required_kinds=[])
     if res["result"] != "pass":
         bad.append(f"page option: {res['result']}")
+    return bad
+
+
+@test
+def admin_entrances_rows_are_read_again_when_the_page_is_reviewed():
+    bad = []
+    row = lambda checked: [entrance_row("A", checked=checked)]
+    # 2026-10-01 minus 120 days is 2026-06-03: the last good day.
+    for checked, want in (("2026-10-01", []), ("2026-06-03", []), ("2026-06-02", [("row-stale", "A")]), ("2025-01-01", [("row-stale", "A")])):
+        res, got = entrances(row(checked), reviewed="2026-10-01")
+        if got != want:
+            bad.append(f"checked {checked}, page reviewed 2026-10-01: {got}, want {want}")
+    if entrances(row("2025-01-01"), reviewed="2026-10-01", max_check_age_days=0)[1]:
+        bad.append("max_check_age_days 0 turns the age off")
+    if entrances(row("2025-01-01"), reviewed="2026-10-01", max_check_age_days=800)[1]:
+        bad.append("max_check_age_days 800 allows a row 638 days old")
+    if (entrances(row("2025-01-01"))[1] or entrances(row("2025-01-01"), reviewed="<YYYY-MM-DD>")[1]
+            or entrances(row("2025-01-01"), reviewed="no")[1]):
+        bad.append("a page without a reviewed date has no age to measure")
     return bad
 
 

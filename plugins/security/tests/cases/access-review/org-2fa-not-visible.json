@@ -40,7 +40,9 @@
  ],
  "expect": {
   "red": [],
-  "amber": []
+  "amber": [
+   "org-2fa-not-read"
+  ]
  },
  "repo": "example-org/mfa",
  "days": 30,

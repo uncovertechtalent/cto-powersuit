@@ -8,7 +8,7 @@ reviewed: 2026-10-01
 review_by: 2099-01-01
 type: reference
 ---
-Fixture: each row shows one problem. The page has no row of kind password-manager, saas, or on-prem.
+Fixture: each row shows one problem. The page has no row of kind source-ci, password-manager, backup-monitoring, or vendor.
 
 | Entrance | Kind | Admin holders | Owner | MFA enforced | Method | Reason | Accepted by | Expires | Last checked | Evidence |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -18,3 +18,6 @@ Fixture: each row shows one problem. The page has no row of kind password-manage
 | VPN | remote-access | 1 group, 2 accounts | Sam Example | yes | none | | | | 2026-10-01 | VPN policy |
 | Source control organisation | ci | 1 role, 2 accounts | | yes | security-key | | | | 2026-10-01 | Organisation setting |
 | Domain registrar | dns-registrar | 1 account | Dana Example | yes | totp | | | | 2026-13-45 | |
+| Payroll admin console | saas | 1 account | Sam Example | no | none | The vendor offers no second factor. | Sam Example, CTO | 2099-12-31 | 2026-10-01 | Ticket SEC-15 |
+| Retired file server | on-prem | 1 group, 2 accounts | Dana Example | n/a | none | Retired in 2025. | | | | Asset list |
+| Device management console | endpoint | 1 group, 2 accounts | Dana Example | yes | totp | | | | 2025-01-01 | Console sign-in policy |

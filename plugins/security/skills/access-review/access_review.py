@@ -113,12 +113,13 @@ def collect_two_factor(obs, owner):
     """obs["org_2fa"] from the organisation and the three 2FA filters, or an entry in obs["errors"]["org_2fa"].
     The filter 2fa_disabled works for organisation owners only, so its answer also tells whether the
     two_factor_requirement_enabled field of the organisation can be trusted: GitHub documents the field for the
-    full organisation record, which only owners get, and says nothing about its value for anyone else."""
+    full organisation record, which only owners get (a classic token also needs the admin:org scope), and says
+    nothing about its value for anyone else."""
     org, org_err = gh(f"orgs/{owner}")
     off, off_err = gh(f"orgs/{owner}/members?filter=2fa_disabled&per_page=100")
     required = (org or {}).get("two_factor_requirement_enabled") if isinstance(org, dict) else None
     if off_err or not isinstance(required, bool):
-        obs["errors"]["org_2fa"] = off_err or org_err or "the organisation record has no two_factor_requirement_enabled (organisation owners only)"
+        obs["errors"]["org_2fa"] = off_err or org_err or "the organisation record has no two_factor_requirement_enabled (organisation owners only; a classic token needs the admin:org scope)"
         return
     insecure, insecure_err = gh(f"orgs/{owner}/members?filter=2fa_insecure&per_page=100")
     outside, outside_err = gh(f"orgs/{owner}/outside_collaborators?filter=2fa_disabled&per_page=100")
@@ -184,7 +185,8 @@ def assess(obs, today):
     if tf:
         org_admins = set(obs.get("org_admins") or []) | set(admins)
         if not tf["required"]:
-            flag("red", "org-2fa-not-required", f"organisation {obs['repo'].split('/')[0]} does not require two-factor authentication")
+            flag("red", "org-2fa-not-required", f"organisation {obs['repo'].split('/')[0]} does not require two-factor authentication "
+                                                "(with Enterprise Managed Users the identity provider handles it: check its policy)")
         off = tf.get("members_off") or []
         admin_off, other_off = sorted(x for x in off if x in org_admins), sorted(x for x in off if x not in org_admins)
         if admin_off:
@@ -197,6 +199,9 @@ def assess(obs, today):
         if tf.get("outside_off"):
             flag("amber", "outside-2fa-off", f"{len(tf['outside_off'])} outside collaborator(s) without two-factor authentication: "
                                              f"{named(sorted(tf['outside_off']))}")
+    elif "org_2fa" in obs.get("errors", {}):
+        flag("amber", "org-2fa-not-read", "the organisation's two-factor setting could not be read, so this review does not cover it: "
+                                          "run it as an organisation owner (a classic token also needs the admin:org scope)")
     return {"repo": obs["repo"], "admins": admins, "required_approvals": required, "flags": f,
             "mfa": mfa_summary(obs), "not_visible": obs.get("errors", {})}
 
@@ -210,7 +215,7 @@ def mfa_summary(obs):
                 f"{count(tf.get('members_off'))}; insecure second factor: {count(tf.get('members_insecure'))}; "
                 f"outside collaborators with it off: {count(tf.get('outside_off'))}")
     if "org_2fa" in obs.get("errors", {}):
-        return "not read (the caller must be an organisation owner); see not visible below"
+        return "not read (the caller must be an organisation owner, with the admin:org scope on a classic token); see not visible below"
     if (obs.get("meta") or {}).get("owner_type") == "User":
         return "not applicable: the owner is a user account; two-factor authentication is a setting of each account and GitHub does not show it to others"
     return "not read in this observation file"
