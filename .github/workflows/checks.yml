@@ -29,6 +29,8 @@ jobs:
         run: python plugins/sdlc/skills/sdlc-audit/test_probe.py
       - name: Gate runner tests
         run: python plugins/gate/tests/test_run.py
+      - name: Gate test step tests
+        run: python plugins/gate/tests/test_run_tests.py
       - name: Security module tests
         run: python plugins/security/tests/test_security.py
       - name: Repo clinic lint cases

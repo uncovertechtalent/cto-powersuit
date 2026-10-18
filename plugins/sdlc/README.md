@@ -39,6 +39,8 @@ claude plugin install sdlc@cto-powersuit
 | Incident | `reliability` |
 | Docs, every stage | `docs` |
 
+The deploy waits for the Gate stage. With `gate` installed, the deploy job needs two jobs: the gate rules, and the repository's own test command (`tests.command` in `gate/gate.json`). A failing rule in the `block` tier stops the deploy, and so does a failing test run once the test tier is `block`; the test job ships on `warn`. `/sdlc:test-strategy` step 4 puts the same command in front of the merge, and the two placements can run together ([Tests before the deploy](../gate/README.md#tests-before-the-deploy)).
+
 ## Templates
 
 | Lands at | What it is |
