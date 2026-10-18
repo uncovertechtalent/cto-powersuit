@@ -580,7 +580,10 @@ def private_terms_pre_push_hook():
             bad.append(f"changed line not named by its new line number: {err.strip()[-200:]}")
         git("reset", "-q", "--hard", "origin/main")
         commit("legacy.md", "old line\nquillfeather\n", "Legacy file")
-        git(*NO_HOOKS, "push", "-q", "origin", "main")  # seeds a term that the remote already has; the hook under test never sees it
+        seeded = git(*NO_HOOKS, "push", "-q", "origin", "main")  # seeds a term that the remote already has; the hook under test never sees it
+        seen.append(seeded.stderr)
+        if seeded.returncode:
+            bad.append(f"seeding push failed: {seeded.stderr.strip()[-300:]}")
         commit("legacy.md", "old line\n", "Remove a name")
         push("main", want="ok")  # a deleted line sends nothing new
         commit("about.md", "I worked at Zanzibar Widgets.\n", "About page")
