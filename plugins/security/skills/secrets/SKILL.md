@@ -187,6 +187,7 @@ The template `runbook-key-rotation.md` turns these five moves into steps with co
 
 - Never print, paste, log, or commit a secret value, including in a commit message, a ticket, or a chat reply. Show the kind, the prefix and the hash prefix only.
 - A hit the hook reports is fixed or documented. Take the value out of the commits and rotate it, or add an entry with a reason to `.secrets-allow` for a documented example value. Never offer a way around the hook as the answer, and never put a live value on the allow list.
+- An allow entry is the user's decision. Offer the whole line, with the hash prefix from the hit and a reason in the user's own words ("Placeholder key in the setup guide, per the page author"), then wait. Never add the entry, commit it, and push on your own, and never write a reason that claims a check you did not make, such as "confirmed by the owner". The user's word that a value is a placeholder goes into the reason as their statement. It does not show that the value is one: say so, and ask where the vendor or the repository's docs publish it.
 - The hook is installed by the user's go. A change to the global git configuration (`init.templateDir`) is the user's action.
 - Rotation before any history rewrite. Both are the user's actions, and a history rewrite needs the repository owner's go.
 - Never change repository settings; name the setting and let the user change it.

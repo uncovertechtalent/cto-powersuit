@@ -343,7 +343,9 @@ def pre_push(remote, terms_option, refs, cwd):
     top = Path(git_out(["rev-parse", "--show-toplevel"], cwd).decode().strip() or cwd)
     terms, missing = load_list(terms_option, top)
     if missing:
-        return 2, [f"private-terms: {missing}; push stopped. Fix the path in .git/hooks/pre-push, or push with --no-verify after you checked the commits yourself."]
+        return 2, [f"private-terms: {missing}; push stopped.",
+                   "Point the hook at the list: fix the --terms path in .git/hooks/pre-push (in .git/hooks/pre-push.d/10-private-terms when the secrets dispatcher is installed), or create the list at that path.",
+                   "A list that holds only comments checks nothing and lets every push through with a note. Use one on purpose in a repository that has no private terms."]
     if not terms:
         return 0, ["private-terms: the term list has no terms yet; nothing checked."]
     found, commits = [], 0

@@ -580,7 +580,7 @@ def private_terms_pre_push_hook():
             bad.append(f"changed line not named by its new line number: {err.strip()[-200:]}")
         git("reset", "-q", "--hard", "origin/main")
         commit("legacy.md", "old line\nquillfeather\n", "Legacy file")
-        push("--no-verify", "main", want="ok")
+        git(*NO_HOOKS, "push", "-q", "origin", "main")  # seeds a term that the remote already has; the hook under test never sees it
         commit("legacy.md", "old line\n", "Remove a name")
         push("main", want="ok")  # a deleted line sends nothing new
         commit("about.md", "I worked at Zanzibar Widgets.\n", "About page")
@@ -607,6 +607,15 @@ def private_terms_pre_push_hook():
         err = push("main", want="stopped")
         if "no term list at" not in err:
             bad.append(f"missing list must stop the push: {err.strip()[-200:]}")
+        for part in ("--terms", ".git/hooks/pre-push", "pre-push.d/10-private-terms", "only comments"):
+            if part not in err:
+                bad.append(f"missing list: the exit does not say '{part}': {err.strip()[-300:]}")
+        if "no-verify" in err.lower() or "skip" in err.lower():
+            bad.append(f"missing list: the output names a way past the hook: {err.strip()[-300:]}")
+        (tmp / "missing.txt").write_text("# no terms on purpose\n")  # the exit the message names
+        err = push("main", want="ok")
+        if "no terms yet" not in err:
+            bad.append(f"a comment-only list at the named path must let the push through with a note: {err.strip()[-200:]}")
         h = subprocess.run([sys.executable, str(MODULE / "checks/private_terms.py"), "history", str(work), "--terms", str(PT_LIST)],
                            capture_output=True, text=True, env=env)
         seen.append(h.stdout + h.stderr)

@@ -268,12 +268,14 @@ Text in a pull request can try to steer the review, and here also try to pull pr
 
 ## Evals
 
-`claude plugin eval` runs behaviour cases for three skills: `/sdlc:sdlc-audit` and `/sdlc:pre-push` in `plugins/sdlc/evals/`, and `/fit:repo-clinic` in `plugins/fit/evals/`. Five of the six cases are failure paths, where the skill must refuse or stop. Every run is a model call on your account, so the cases run locally and not in CI.
+`claude plugin eval` runs behaviour cases for four skills: `/sdlc:sdlc-audit` and `/sdlc:pre-push` in `plugins/sdlc/evals/`, `/fit:repo-clinic` in `plugins/fit/evals/`, and `/security:secrets` in `plugins/security/evals/`. Six of the seven cases are failure paths, where the skill must refuse or stop. Every run is a model call on your account, so the cases run locally and not in CI.
 
 ```bash
 cd plugins/sdlc
 claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
 cd ../fit
+claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
+cd ../security
 claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
 ```
 

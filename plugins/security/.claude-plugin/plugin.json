@@ -1,6 +1,6 @@
 {
   "name": "security",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Security for a repository and its agents: pinned actions and an action-owner allowlist, a lock-file vulnerability scan and an SBOM, a provenance check before installing an agent skill or MCP server, a pre-push hook and a blocking gate check for secrets with an allow file and key-rotation runbooks, a pre-push hook that keeps private terms out of public repositories, a read-only access review that finds admin-bypass merges and organisation members without two-factor authentication, an inventory of every admin entrance with its owner, multi-factor method, and dated exceptions, threat models per RFC, vulnerability intake with fix-by dates, and a quarantine that keeps third-party text away from agents that hold tools: a store outside every indexed folder, a reader model with no tools, and a hook that denies every other read.",
   "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
   "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
