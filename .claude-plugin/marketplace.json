@@ -103,7 +103,7 @@
     {
       "name": "gate",
       "source": "./plugins/gate",
-      "description": "Deploy gate: rules with pass and fail fixtures, run records, findings that close only on a passing rerun, and a workflow that deploys after the gate.",
+      "description": "Deploy gate: rules with pass and fail fixtures, run records, findings that close only on a passing rerun, and a workflow that deploys after the gate and the tests.",
       "category": "development",
       "skills": [
         "./skills/add-rule",

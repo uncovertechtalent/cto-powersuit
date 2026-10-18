@@ -5,6 +5,7 @@
   "fixtures_dir": "gate/fixtures",
   "exclude": [".git/", "node_modules/", "/gate/"],
   "schedule": {"cron": "17 6 * * 1", "interval_days": 7},
+  "tests": {"tier": "warn", "command": ""},
   "rules": {
     "gate.placeholders": {"tier": "warn"},
     "gate.schedule": {"tier": "warn"},

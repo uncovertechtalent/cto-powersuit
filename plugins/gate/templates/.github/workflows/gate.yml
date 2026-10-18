@@ -1,8 +1,15 @@
 name: Gate
 
 # The gate runs on every push to main, on a weekly schedule and by hand.
-# The deploy job needs the gate job: a failing check blocks the deploy and
-# the previous build stays live.
+# The deploy job waits for two jobs. The gate job runs the rules in gate/gate.json.
+# The tests job runs the repository's own test command, named under "tests" in
+# gate/gate.json (no language is guessed). A failing rule in the block tier, or a
+# failing test run once "tests.tier" is block, stops the deploy and the previous
+# build stays live. Tests ship on the warn tier: a failing test run is reported
+# and the deploy still runs, until the repository records a false-positive test
+# and moves the tier to block (/gate:add-rule, path C). Pull request CI
+# (/sdlc:test-strategy, step 4) stops the merge; this job stops the deploy and
+# leaves a failing commit on main until a fix or a revert lands.
 
 on:
   push:
@@ -57,9 +64,31 @@ jobs:
             exit 1
           fi
 
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # a run that times out fails the job, and the deploy waits on any tier
+    permissions:
+      contents: read  # the test command is project code: it gets no write token
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up the toolchain
+        # Fill in what the test command needs: language runtime, dependencies, services.
+        # Pin each action by commit SHA (the gate.actions-pinned rule checks it).
+        run: echo "Replace this step with the setup your test command needs."
+
+      - name: Run the tests
+        # Reads tests.command and tests.tier from gate/gate.json. With no command it says so in the
+        # run summary and, on the block tier, fails.
+        run: python3 .github/actions/gate/run_tests.py --config gate/gate.json
+
   deploy:
     name: Deploy
-    needs: gate
+    needs: [gate, tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (after the bot commit)
