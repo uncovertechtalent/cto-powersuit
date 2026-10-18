@@ -4,12 +4,15 @@ description: >
   Read-only review of who can change a GitHub repository and how: admins,
   collaborators and outside collaborators, deploy keys, token lists where the
   caller can see them, rulesets and their bypass actors, classic branch
-  protection, and every merge or push that went past a rule, such as a pull
-  request merged with the admin bypass instead of the required review. Never
+  protection, every merge or push that went past a rule, such as a pull
+  request merged with the admin bypass instead of the required review, and, for
+  an organisation, whether it requires two-factor authentication and which
+  members have it off. Never
   changes a setting. Use for a quarterly access review, before an audit, when
   someone leaves, or when a team wants to know whether its review rule holds.
   Activates on "/access-review", "who has access", "access review", "who can
-  push to main", "were reviews bypassed", "admin merges", "list deploy keys".
+  push to main", "were reviews bypassed", "admin merges", "list deploy keys",
+  "does the org require 2FA", "members without 2FA".
 user-invocable: true
 ---
 
@@ -21,17 +24,17 @@ A review rule protects main only when nobody goes around it. This review lists w
 
 - **Repository**: `owner/repo`.
 - **Window**: default 30 days. The bypass history comes from the rule suites of the last day, week or month, whichever covers the window.
-- **Caller**: `gh` logged in as an account that can read the repository's settings. Admin rights give the full picture; with less, the review says what it could not see.
+- **Caller**: `gh` logged in as an account that can read the repository's settings. Admin rights give the full picture; with less, the review says what it could not see. The two-factor section needs an organisation owner, and a classic token also needs the `admin:org` scope, which allows writes: add it for the run and remove it afterwards.
 
 ## Steps
 
 1. **Run the review.**
 
    ```bash
-   python3 <this skill's folder>/access_review.py <owner/repo> --days 30 --observations-out access-<repo>-<YYYY-MM-DD>.json
+   python3 <this skill's folder>/access_review.py <owner/repo> --days 30 --observations-out "${TMPDIR:-/tmp}/access-<repo>-<YYYY-MM-DD>.json"
    ```
 
-   It reads, in this order: the repository; collaborators with their roles; outside collaborators and organisation admins (organisations only); fine-grained token and credential lists (organisations only, where visible); deploy keys; rulesets with their rules and bypass actors; classic branch protection of the default branch; and the rule suites with result `bypass` on the default branch, each mapped to the pull request that carried it. Without access to rule suites, it reads the merged pull requests of the window and their approving reviews instead.
+   It reads, in this order: the repository; collaborators with their roles; outside collaborators and organisation admins (organisations only); fine-grained token and credential lists (organisations only, where visible); deploy keys; rulesets with their rules and bypass actors; classic branch protection of the default branch; and the rule suites with result `bypass` on the default branch, each mapped to the pull request that carried it. Without access to rule suites, it reads the merged pull requests of the window and their approving reviews instead. For an organisation it also reads whether two-factor authentication is required, the members and outside collaborators who have it off, and the members whose second factor GitHub lists as insecure. Those lists are visible to organisation owners only; for anyone else the output says the caller could not read them and raises `org-2fa-not-read`, and a user-owned repository has no organisation setting to read. For an Enterprise Managed Users organisation, GitHub does not manage two-factor authentication: the identity provider does, so take the result from its policy and ignore these flags.
 2. **Read the flags.**
 
    | Flag | Level | Meaning |
@@ -40,6 +43,11 @@ A review rule protects main only when nobody goes around it. This review lists w
    | `bypass-push` | red | A push to the default branch past a rule, such as the rule that changes go through a pull request |
    | `merged-below-approvals` | red | Fallback without rule suite access: a pull request merged with fewer approvals than the rules require |
    | `no-branch-rules` | red | No active ruleset and no branch protection on the default branch |
+   | `org-2fa-not-required` | red | The organisation does not require two-factor authentication |
+   | `member-2fa-off` | red or amber | Members without two-factor authentication. Red when they are organisation or repository admins, amber for the other members. The flag names up to ten logins and counts the rest |
+   | `org-2fa-not-read` | amber | The caller could not read the organisation's two-factor setting, so the review does not cover it |
+   | `member-2fa-insecure` | amber | Members whose second factor GitHub lists as insecure |
+   | `outside-2fa-off` | amber | Outside collaborators without two-factor authentication |
    | `bypass-always` | amber | A ruleset lets an actor bypass on every push and merge. Bypass mode `pull_request` limits the bypass to pull requests, where it shows in the record |
    | `admins-not-enforced` | amber | Classic branch protection does not apply to admins |
    | `outside-collaborator` | amber | An outside collaborator holds write, maintain or admin rights |
@@ -47,10 +55,10 @@ A review rule protects main only when nobody goes around it. This review lists w
    | `deploy-key-stale` | amber | A deploy key unused for more than 90 days, or never used since it was added |
 
    The output also names the admins, the required number of approvals, and each list the caller could not see, with the API's answer. A fine-grained token list needs a GitHub App token, and the credential list exists only for organisations with SAML single sign-on. A 404 on either means the caller could not see the list; it says nothing about its content.
-3. **Check by hand where the script cannot see.** Personal access tokens and SSH keys of members, GitHub App and OAuth app installations with access to the repository (the organisation's settings list them), and the CI secrets (`gh api repos/<owner>/<repo>/actions/secrets` lists names and dates, never values).
+3. **Check by hand where the script cannot see.** The other places an admin signs in (cloud console, identity provider, VPN, registrar, password manager, SaaS consoles) are in [`/security:admin-entrances`](../admin-entrances/SKILL.md), which records the second factor of each. Personal access tokens and SSH keys of members, GitHub App and OAuth app installations with access to the repository (the organisation's settings list them), and the CI secrets (`gh api repos/<owner>/<repo>/actions/secrets` lists names and dates, never values).
 4. **Name the cause of each bypass.** For every red flag, ask the user why. A one-person repository with a required review has no reviewer, so every merge needs the bypass. Recording that as a known exception is honest; leaving a rule in place that every merge breaks is not a control. The user then picks one of: a second reviewer, a required status check in place of the review (a ruleset with `required_status_checks` and no approval count), or a written exception with an owner and an end date.
 5. **Propose changes; the user makes them.** Each proposal names the setting, the current value, the new value, and the reason. Typical ones: bypass mode `pull_request` instead of `always`; fewer admins; read-only deploy keys; remove stale keys and departed collaborators; expiry dates on tokens. Do not change any of them yourself.
-6. **Write the record** when the user asks: `docs/security/access-review-<YYYY-MM-DD>.md` with the window, the caller, the flags with their evidence, the lists that were not visible, and the decisions with their owners. Keep logins and key titles; leave out email addresses.
+6. **Write the record** when the user asks, and only in a private repository (`gh repo view --json visibility`; ask the user when it is public): `docs/security/access-review-<YYYY-MM-DD>.md` with the window, the caller, the flags with their evidence, the lists that were not visible, and the decisions with their owners. Keep logins and key titles; leave out email addresses.
 
 ## Output
 
@@ -61,14 +69,14 @@ A review rule protects main only when nobody goes around it. This review lists w
 
 ## Rules
 
-- Read only. GET requests only; no `gh api -X`, no `-f` fields, no settings pages changed, no rulesets edited.
+- Read only. GET requests only; no `gh api -X`, no `-f` fields, no settings pages changed, no rulesets edited, no two-factor requirement switched on. Proposing that setting is fine; the organisation owner makes the change.
 - Every finding cites its evidence: a rule suite id, a pull request number or the API answer.
 - Describe the access and the events. Do not judge the people who used a bypass; ask why.
-- Keep the observations file out of public repositories: it lists people and keys.
+- Keep the observations file out of every repository: it lists people, keys, and who has no second factor. Write it to a temporary folder, as in step 1.
 
 ## Check the script
 
-`python3 "${CLAUDE_PLUGIN_ROOT}/tests/test_security.py"` replays recorded cases: a clean repository, admin bypass merges and pushes, no branch rules, no rule suite access with the fallback, and stale or writable deploy keys with outside collaborators. Every line must read `ok`.
+`python3 "${CLAUDE_PLUGIN_ROOT}/tests/test_security.py"` replays recorded cases: a clean repository, admin bypass merges and pushes, no branch rules, no rule suite access with the fallback, stale or writable deploy keys with outside collaborators, and an organisation that does not require two-factor authentication, one that does, and one whose setting the caller cannot read. Every line must read `ok`.
 
 ## Overlay
 

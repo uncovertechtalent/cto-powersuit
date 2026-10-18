@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Tests for the security module: the two gate checks beyond their fixture runs, and the three scripts.
+"""Tests for the security module: the gate checks beyond their fixture runs, and the scripts.
 
 - provenance.py: every recorded case in cases/provenance/ gives its risk grade and exactly its red and amber signals;
   the recommendation follows the archive install path and the data scope; attested release assets are counted per asset.
-- access_review.py: every case in cases/access-review/ gives exactly its red and amber flags.
+- access_review.py: every case in cases/access-review/ gives exactly its red and amber flags; the MFA section reads the
+  organisation's two-factor requirement from recorded answers, or says the caller could not read it.
 - intake.py: fix-by dates from the default windows, the policy template and a custom policy; dedupe; tracked issues.
 - osv_query.py: purls from an SPDX and a CycloneDX SBOM, and the rows built from recorded OSV answers (no network).
 - security.secrets: each fail fixture gives one hit of its kind; allow, allow_hashes, the allow file and tracked_only behave.
@@ -14,6 +15,8 @@
   file names; the pushed gate config and allow file; git settings, attributes, binary files and replace refs that would hide a line;
   the dispatcher beside the private-terms hook in both install orders; a git template; foreign hooks are left alone; the repository's
   own files are clean with its .secrets-allow.
+- security.admin-entrances: each fail row gives its rule; exceptions need a reason, a person and a date and end after
+  their date; the options; the shipped template stays in step with the check; no output shows a cell value.
 - security.private-terms: each fail fixture gives one hit of its kind; no output shows a term; n/a without a list; list errors
   name a line only; the allow file; tracked files and built folders; the pre-push hook against a local remote; the scan CLI.
 - quarantine.py: save marks and stores an item without printing it, and refuses a store inside a vault, an overlay, a
@@ -51,6 +54,7 @@ secrets = load(MODULE / "checks/secrets.py", "rule_secrets")
 owners = load(MODULE / "checks/action_owners.py", "rule_action_owners")
 pinned = load(MODULE.parent / "gate/checks/actions_pinned.py", "rule_actions_pinned")
 private = load(MODULE / "checks/private_terms.py", "rule_private_terms")
+admin = load(MODULE / "checks/admin_entrances.py", "rule_admin_entrances")
 quarantine = load(MODULE / "skills/quarantine/quarantine.py", "quarantine")
 PT = MODULE / "checks/fixtures/security.private-terms"
 PT_LIST = PT / "overlay/security/private-terms.txt"
@@ -1896,6 +1900,432 @@ def quarantine_settings_snippet():
         quarantine.SCRIPT = orig
     if cmd != "python3 '/opt/a b/quarantine.py' guard":
         bad.append(f"a path with a space is not quoted: {cmd}")
+    return bad
+
+
+@test
+def access_review_mfa_section_prints_or_says_it_could_not_read():
+    bad = []
+    script = str(MODULE / "skills/access-review/access_review.py")
+
+    def run_case(name, code, *want, mutate=None):
+        c = json.loads((CASES / "access-review" / f"{name}.json").read_text())
+        if mutate:
+            mutate(c)
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "obs.json"
+            f.write_text(json.dumps(c))
+            p = subprocess.run([sys.executable, script, "--from-observations", str(f)], capture_output=True, text=True)
+        if p.returncode != code:
+            bad.append(f"{name}: exit {p.returncode}, want {code}")
+        for w in want:
+            if w not in p.stdout:
+                bad.append(f"{name}: no {w!r} in the output: {p.stdout.strip()}")
+
+    run_case("org-2fa-off", 1, "mfa: organisation requires two-factor authentication: no; members with it off: 3",
+             "insecure second factor: 1", "outside collaborators with it off: 1", "member-2fa-off: 1 admin(s)", "lead")
+    run_case("org-2fa-required", 0, "mfa: organisation requires two-factor authentication: yes; members with it off: 0")
+    run_case("org-2fa-not-visible", 0, "mfa: not read (the caller must be an organisation owner", "not visible: org_2fa",
+             "amber org-2fa-not-read")
+    run_case("clean", 0, "mfa: not read in this observation file")
+    run_case("clean", 0, "mfa: not applicable: the owner is a user account", mutate=lambda c: c["meta"].update(owner_type="User"))
+    return bad
+
+
+@test
+def access_review_reads_two_factor_from_a_fixture_organisation():
+    """collect_two_factor() with recorded gh answers: an owner sees the lists, a member does not, and a failed list is named."""
+    bad, calls = [], []
+    org = {"login": "o", "type": "Organization", "two_factor_requirement_enabled": False}
+    owner_answers = {
+        "orgs/o": org,
+        "orgs/o/members?filter=2fa_disabled&per_page=100": [{"login": "dev"}, {"login": "qa"}],
+        "orgs/o/members?filter=2fa_insecure&per_page=100": [{"login": "ops"}],
+        "orgs/o/outside_collaborators?filter=2fa_disabled&per_page=100": [{"login": "contractor"}],
+    }
+
+    def with_answers(answers, errors=None):
+        def fake(path):
+            calls.append(path)
+            if path in (errors or {}):
+                return None, errors[path]
+            return answers[path], None
+        real = access.gh
+        access.gh = fake
+        try:
+            obs = {"errors": {}}
+            access.collect_two_factor(obs, "o")
+        finally:
+            access.gh = real
+        return obs
+
+    obs = with_answers(owner_answers)
+    want = {"required": False, "members_off": ["dev", "qa"], "members_insecure": ["ops"], "outside_off": ["contractor"]}
+    if obs.get("org_2fa") != want or obs["errors"]:
+        bad.append(f"owner: {obs}")
+    err = "gh: Must be an owner of the organization (HTTP 403)"
+    obs = with_answers({"orgs/o": {"login": "o"}}, {"orgs/o/members?filter=2fa_disabled&per_page=100": err})
+    if "org_2fa" in obs or obs["errors"].get("org_2fa") != err:
+        bad.append(f"member: {obs}")
+    obs = with_answers({"orgs/o": {"login": "o"}, "orgs/o/members?filter=2fa_disabled&per_page=100": []})
+    if "org_2fa" in obs or "two_factor_requirement_enabled" not in obs["errors"].get("org_2fa", ""):
+        bad.append(f"organisation record without the field: {obs}")
+    insecure_path = "orgs/o/members?filter=2fa_insecure&per_page=100"
+    obs = with_answers(owner_answers, {insecure_path: "gh: Validation Failed (HTTP 422)"})
+    if obs.get("org_2fa", {}).get("members_insecure") is not None or "org_2fa_insecure" not in obs["errors"]:
+        bad.append(f"a failed insecure list must stay unread and be named: {obs}")
+    if any(not c.startswith("orgs/o") for c in calls):
+        bad.append(f"a request outside the organisation: {calls}")
+    return bad
+
+
+@test
+def access_review_mfa_flags_split_admins_from_members():
+    bad = []
+    c = json.loads((CASES / "access-review/org-2fa-off.json").read_text())
+    r = access.assess(c, datetime.date(2026, 10, 11))
+    by = {(x["level"], x["id"]): x["evidence"] for x in r["flags"]}
+    red, amber = by.get(("red", "member-2fa-off"), ""), by.get(("amber", "member-2fa-off"), "")
+    not_required = [x["evidence"] for x in r["flags"] if x["id"] == "org-2fa-not-required"]
+    if not not_required or "Enterprise Managed Users" not in not_required[0]:
+        bad.append(f"the requirement flag must point managed-user organisations to their identity provider: {not_required}")
+    if "lead" not in red or "dev" in red:
+        bad.append(f"the admin flag must name lead only: {red}")
+    if "dev" not in amber or "qa" not in amber or "lead" in amber:
+        bad.append(f"the member flag must name dev and qa only: {amber}")
+    c["org_2fa"]["members_off"] = [f"user{i:02}" for i in range(25)]
+    amber = [x["evidence"] for x in access.assess(c, datetime.date(2026, 10, 11))["flags"] if x["id"] == "member-2fa-off"][0]
+    if "and 15 more" not in amber or "user24" in amber:
+        bad.append(f"a long list must be capped at {access.LOGIN_LIST} logins: {amber}")
+    return bad
+
+
+def entrance_row(entrance="Cloud console", kind="cloud", holders="1 role", owner="Dana Example", enforced="yes", method="security-key",
+                 reason="", who="", expires="", checked="2026-10-01", evidence="Sign-in policy"):
+    return "| " + " | ".join([entrance, kind, holders, owner, enforced, method, reason, who, expires, checked, evidence]) + " |"
+
+
+ENTRANCE_HEAD = ("| Entrance | Kind | Admin holders | Owner | MFA enforced | Method | Reason | Accepted by | Expires | Last checked | Evidence |\n"
+                 "|---|---|---|---|---|---|---|---|---|---|---|\n")
+TODAY = datetime.date(2026, 10, 18)
+
+
+def check_entrances(root, today=TODAY, **options):
+    opts = json.loads(json.dumps(admin.DEFAULTS))
+    opts.update(options)
+    ctx = run.Ctx(root, opts, {}, [], "manual", None)
+    ctx.today = today
+    return run.run_one(admin, ctx)
+
+
+def who(hit):
+    """The entrance a hit names, or the kind of a kind-missing hit."""
+    if hit["rule"] == "kind-missing":
+        return re.match(r"no row of kind ([\w-]+)", hit["snippet"]).group(1)
+    return hit["snippet"].split(":")[0]
+
+
+def entrances(rows, today=TODAY, text=None, reviewed=None, **options):
+    """Run the check on a page with these rows (or this text); returns (result, [(rule, entrance), ...]).
+    required_kinds defaults to none, so a test sees only the rule it is about."""
+    options.setdefault("required_kinds", [])
+    front = "---\nowner: x\n" + (f"reviewed: {reviewed}\n" if reviewed else "") + "---\n"
+    with tempfile.TemporaryDirectory() as tmp:
+        page = Path(tmp) / "docs/security/admin-entrances.md"
+        page.parent.mkdir(parents=True)
+        page.write_text(text if text is not None else front + ENTRANCE_HEAD + "\n".join(rows) + "\n")
+        res = check_entrances(Path(tmp), today, **options)
+    return res, sorted((h["rule"], who(h)) for h in res["hits"])
+
+
+@test
+def admin_entrances_fixtures():
+    bad = []
+    fx = MODULE / "checks/fixtures/security.admin-entrances"
+    res = check_entrances(fx / "pass")
+    if res["result"] != "pass" or res["hits"]:
+        bad.append(f"pass fixture: {res['result']}, {res['hits']}")
+    res = check_entrances(fx / "fail")
+    got = sorted((h["rule"], who(h)) for h in res["hits"])
+    want = sorted([("mfa-not-enforced", "Cloud console and root account"), ("weak-method", "Identity provider admin"),
+                   ("exception-expired", "Domain controller"), ("row-incomplete", "VPN"),
+                   ("row-incomplete", "Source control organisation"), ("row-incomplete", "Source control organisation"),
+                   ("row-incomplete", "Domain registrar"), ("row-incomplete", "Domain registrar"),
+                   ("exception-too-long", "Payroll admin console"), ("row-incomplete", "Retired file server"),
+                   ("row-stale", "Device management console"),
+                   ("kind-missing", "source-ci"), ("kind-missing", "password-manager"), ("kind-missing", "backup-monitoring"),
+                   ("kind-missing", "vendor")])
+    if res["result"] != "fail" or got != want:
+        bad.append(f"fail fixture: {res['result']}, got {got}")
+    for name, code in (("pass", 0), ("fail", 1)):
+        p = subprocess.run([sys.executable, str(MODULE / "checks/admin_entrances.py"), str(fx / name)], capture_output=True, text=True)
+        if p.returncode != code:
+            bad.append(f"standalone run on {name}: exit {p.returncode}, want {code}: {p.stdout.strip()[:200]}")
+    return bad
+
+
+@test
+def admin_entrances_exceptions_need_a_reason_a_person_and_a_date():
+    bad = []
+    full = dict(enforced="no", method="none", reason="Vendor has no second factor; office range only", who="Sam Example, CTO", expires="2026-12-01")
+    res, got = entrances([entrance_row("A", **full)])
+    if res["result"] != "pass" or "1 on a dated exception" not in res["detail"]:
+        bad.append(f"a complete exception: {res['result']}, {got}, {res['detail']}")
+    for field, label in (("reason", "a reason"), ("who", "a person who accepted it"), ("expires", "an expiry date")):
+        res, got = entrances([entrance_row("A", **{**full, field: ""})])
+        if got != [("mfa-not-enforced", "A")] or label not in res["hits"][0]["snippet"]:
+            bad.append(f"no {field}: {got}, {[h['snippet'] for h in res['hits']]}")
+    res, got = entrances([entrance_row("A", **{**full, "expires": "2026-12-32"})])
+    if got != [("mfa-not-enforced", "A")] or "YYYY-MM-DD" not in res["hits"][0]["snippet"]:
+        bad.append(f"an impossible date: {got}")
+    res, got = entrances([entrance_row("A", **{**full, "reason": "<reason>"})])
+    if got != [("mfa-not-enforced", "A")]:
+        bad.append(f"a placeholder reason: {got}")
+    # The exception ends after its date: valid on the day, a hit the day after.
+    if entrances([entrance_row("A", **{**full, "expires": "2026-10-18"})])[1]:
+        bad.append("an exception that expires today must still hold")
+    res, got = entrances([entrance_row("A", **{**full, "expires": "2026-10-17"})])
+    if got != [("exception-expired", "A")] or "2026-10-17" not in res["hits"][0]["snippet"]:
+        bad.append(f"an exception that expired yesterday: {got}")
+    # The span runs from Last checked (2026-10-01): 180 days is the last good day.
+    for end, want in (("2027-03-30", []), ("2027-03-31", [("exception-too-long", "A")])):
+        res, got = entrances([entrance_row("A", **{**full, "expires": end})])
+        if got != want:
+            bad.append(f"expires {end}: {got}, want {want}")
+    if entrances([entrance_row("A", **{**full, "expires": "2099-12-31"})], max_exception_days=0)[1]:
+        bad.append("max_exception_days 0 turns the span off")
+    if entrances([entrance_row("A", **full)], max_exception_days=30)[1] != [("exception-too-long", "A")]:
+        bad.append("max_exception_days 30 on a 61 day exception")
+    res, got = entrances([entrance_row("A", **{**full, "expires": "2099-12-31"})])
+    if got != [("exception-too-long", "A")] or "days after the last check" not in res["hits"][0]["snippet"]:
+        bad.append(f"a 2099 exception: {got}")
+    res, got = entrances([entrance_row("A", **{**full, "enforced": "partial", "method": "security-key"})])
+    if res["result"] != "pass":
+        bad.append(f"partial with a complete exception: {got}")
+    res, got = entrances([entrance_row("A", **{**full, "enforced": "partial", "reason": "", "who": "", "expires": ""})])
+    if got != [("mfa-not-enforced", "A")] or "some admin accounts only" not in res["hits"][0]["snippet"]:
+        bad.append(f"partial without an exception: {got}")
+    return bad
+
+
+@test
+def admin_entrances_method_bar():
+    bad = []
+    for method, want in (("security-key", []), ("passkey", []), ("certificate", []), ("totp", []), ("push", []),
+                         ("sms", [("weak-method", "A")]), ("voice", [("weak-method", "A")]), ("email", [("weak-method", "A")]),
+                         ("push-no-match", [("weak-method", "A")]), ("Security Key", []), ("FIDO2", []), ("YubiKey", []),
+                         ("smart card", []), ("Authenticator app", []), ("text message", [("weak-method", "A")]),
+                         ("push notification", []),
+                         ("none", [("row-incomplete", "A")]), ("magic", [("row-incomplete", "A")]), ("", [("row-incomplete", "A")]),
+                         ("security-key, sms", [("weak-method", "A")]), ("passkey + totp", []), ("SMS", [("weak-method", "A")])):
+        got = entrances([entrance_row("A", method=method)])[1]
+        if got != want:
+            bad.append(f"default bar, method {method!r}: {got}, want {want}")
+    for method, want in (("security-key", []), ("totp", [("weak-method", "A")]), ("push", [("weak-method", "A")]),
+                         ("push-no-match", [("weak-method", "A")]), ("authenticator app", [("weak-method", "A")]),
+                         ("passkey, totp", [("weak-method", "A")]), ("sms", [("weak-method", "A")])):
+        got = entrances([entrance_row("A", method=method)], phishing_resistant_only=True)[1]
+        if got != want:
+            bad.append(f"phishing_resistant_only, method {method!r}: {got}, want {want}")
+    exempt = dict(method="sms", reason="Vendor supports SMS only; office range only", who="Sam Example", expires="2026-12-01")
+    res, got = entrances([entrance_row("A", **exempt)])
+    if res["result"] != "pass":
+        bad.append(f"a weak method with a complete exception: {got}")
+    return bad
+
+
+@test
+def admin_entrances_rows_name_an_owner_a_kind_and_evidence():
+    bad = []
+    cases = [
+        (entrance_row("A", owner=""), "no owner"), (entrance_row("A", owner="<name>"), "no owner"),
+        (entrance_row("A", kind="database"), "kind is not one of"), (entrance_row("A", holders=""), "no admin holders"),
+        (entrance_row("A", evidence=""), "no evidence"), (entrance_row("A", checked=""), "no last checked"),
+        (entrance_row("A", checked="01.10.2026"), "not a YYYY-MM-DD"), (entrance_row("A", checked="2026-10-19"), "in the future"),
+        (entrance_row("A", enforced="maybe"), "MFA enforced is not yes"), (entrance_row("A", enforced="")  , "MFA enforced is not yes"),
+    ]
+    for row, want in cases:
+        res, got = entrances([row])
+        if [r for r, _ in got] != ["row-incomplete"] or want not in res["hits"][0]["snippet"]:
+            bad.append(f"{want}: {got}, {[h['snippet'] for h in res['hits']]}")
+    na = entrance_row("Domain controller", kind="directory", enforced="n/a", method="none", reason="No directory server", holders="", evidence="", checked="")
+    if entrances([na])[1]:
+        bad.append("a kind the organisation does not have needs an owner and a reason only")
+    got = entrances([entrance_row("Domain controller", kind="directory", enforced="n/a", method="none", reason="", holders="none")])[1]
+    if got != [("row-incomplete", "Domain controller")]:
+        bad.append(f"n/a without a reason: {got}")
+    # A live entrance cannot be waved through as n/a: that route needs no person and no end date.
+    live = entrance_row("Legacy VPN appliance", kind="remote-access", enforced="n/a", method="none", reason="Appliance cannot do MFA",
+                        holders="1 group, 5 accounts")
+    res, got = entrances([live])
+    if got != [("row-incomplete", "Legacy VPN appliance")] or "admin holders lists accounts" not in res["hits"][0]["snippet"]:
+        bad.append(f"n/a with admin holders: {got}")
+    for holders in ("none", "0", "No accounts", "", "<roles>"):
+        if entrances([live.replace("1 group, 5 accounts", holders)])[1]:
+            bad.append(f"n/a with admin holders {holders!r} must pass")
+    half = "| | cloud | 1 role | Dana | yes | passkey | | | | 2026-10-01 | policy |"
+    if entrances([half])[1] != [("row-incomplete", "row has no entrance name")]:
+        bad.append(f"a half-filled row without an entrance name: {entrances([half])[1]}")
+    placeholder_row = "| `<cloud console>` | cloud | `<roles>` | `<name>` | `<yes>` | `<method>` | `<reason>` | `<name>` | `<date>` | `<date>` | `<where>` |"
+    res, got = entrances([placeholder_row], required_kinds=["cloud"])
+    if [r for r, _ in got] != ["kind-missing"]:
+        bad.append(f"an unfilled template row counts as no row: {got}")
+    res, got = entrances(["| Cloud console | cloud | 1 role |"])
+    if res["result"] != "fail" or not got:
+        bad.append(f"a row with fewer cells than the header must be reported: {got}")
+    return bad
+
+
+@test
+def admin_entrances_required_kinds_and_page_shape():
+    bad = []
+    rows = [entrance_row("A", kind="cloud"), entrance_row("B", kind="saas", enforced="n/a", method="none", reason="No SaaS admin consoles",
+                                                          holders="none")]
+    res, got = entrances(rows, required_kinds=["cloud", "saas", "on-prem"])
+    if [r for r, _ in got] != ["kind-missing"] or "on-prem" not in res["hits"][0]["snippet"]:
+        bad.append(f"required kinds: {got}")
+    if entrances(rows, required_kinds=["Cloud"])[1]:
+        bad.append("kind names compare without case")
+    res, _ = entrances([], text="")
+    with tempfile.TemporaryDirectory() as tmp:
+        res = check_entrances(Path(tmp))
+    if res["result"] != "n/a":
+        bad.append(f"no page: {res['result']}")
+    res, got = entrances([], text="---\nowner: x\n---\nNo table here.\n")
+    if res["result"] != "fail" or got != [("no-table", "no inventory table")]:
+        bad.append(f"no table: {res['result']}, {got}")
+    res, got = entrances([], text="| Entrance | Kind | MFA enforced |\n|---|---|---|\n| A | cloud | yes |\n")
+    if res["result"] != "fail" or not got or any(r != "no-table" for r, _ in got):
+        bad.append(f"a table without the other columns: {res['result']}, {got}")
+    fenced = "```\n" + ENTRANCE_HEAD + entrance_row("A", enforced="no", method="none") + "\n```\n"
+    res, got = entrances([], text=fenced)
+    if got != [("no-table", "no inventory table")]:
+        bad.append(f"a table inside a code fence must not count: {got}")
+    res, got = entrances([], text="---\nowner: x\n---\n" + ENTRANCE_HEAD)
+    if res["result"] != "n/a":
+        bad.append(f"a table with no rows and no required kinds: {res['result']}, {got}")
+    # Every inventory table counts, and a row without outer pipes is still a row, as GitHub shows it.
+    second = (ENTRANCE_HEAD + entrance_row("A") + "\n\n## Vendors\n\n" + ENTRANCE_HEAD
+              + entrance_row("MSP remote tool", kind="vendor", enforced="no", method="none"))
+    res, got = entrances([], text=second)
+    if got != [("mfa-not-enforced", "MSP remote tool")]:
+        bad.append(f"a second inventory table: {got}")
+    no_pipes = (ENTRANCE_HEAD + entrance_row("A") + "\n" + entrance_row("B", enforced="no", method="none").strip("|") + "\n"
+                + entrance_row("C") + "\n")
+    res, got = entrances([], text=no_pipes)
+    if got != [("mfa-not-enforced", "B")] or "3 rows" not in res["detail"]:
+        bad.append(f"a row without outer pipes: {got}, {res['detail']}")
+    escaped = entrance_row("A", enforced="no", method="none", reason="Vendor supports sms \\| totp only", who="Sam", expires="2026-12-01")
+    res, got = entrances([escaped])
+    if res["result"] != "pass":
+        bad.append(f"an escaped pipe inside a cell must not split it: {got}")
+    shuffled = ("| MFA enforced | Entrance | Evidence | Kind | Admin holders | Owner | Method | Reason | Accepted by | Expires | Last checked |\n"
+                "|---|---|---|---|---|---|---|---|---|---|---|\n"
+                "| yes | A | policy | cloud | 1 role | Dana | security-key | | | | 2026-10-01 |\n")
+    res, got = entrances([], text=shuffled)
+    if res["result"] != "pass":
+        bad.append(f"columns read by name, not by position: {got}")
+    with tempfile.TemporaryDirectory() as tmp:
+        other = Path(tmp) / "ops/mfa.md"
+        other.parent.mkdir()
+        other.write_text(ENTRANCE_HEAD + entrance_row("A") + "\n")
+        res = check_entrances(Path(tmp), page="ops/mfa.md", required_kinds=[])
+    if res["result"] != "pass":
+        bad.append(f"page option: {res['result']}")
+    return bad
+
+
+@test
+def admin_entrances_rows_are_read_again_when_the_page_is_reviewed():
+    bad = []
+    row = lambda checked: [entrance_row("A", checked=checked)]
+    # 2026-10-01 minus 120 days is 2026-06-03: the last good day.
+    for checked, want in (("2026-10-01", []), ("2026-06-03", []), ("2026-06-02", [("row-stale", "A")]), ("2025-01-01", [("row-stale", "A")])):
+        res, got = entrances(row(checked), reviewed="2026-10-01")
+        if got != want:
+            bad.append(f"checked {checked}, page reviewed 2026-10-01: {got}, want {want}")
+    if entrances(row("2025-01-01"), reviewed="2026-10-01", max_check_age_days=0)[1]:
+        bad.append("max_check_age_days 0 turns the age off")
+    if entrances(row("2025-01-01"), reviewed="2026-10-01", max_check_age_days=800)[1]:
+        bad.append("max_check_age_days 800 allows a row 638 days old")
+    if (entrances(row("2025-01-01"))[1] or entrances(row("2025-01-01"), reviewed="<YYYY-MM-DD>")[1]
+            or entrances(row("2025-01-01"), reviewed="no")[1]):
+        bad.append("a page without a reviewed date has no age to measure")
+    return bad
+
+
+@test
+def admin_entrances_template_stays_in_step_with_the_check():
+    bad = []
+    text = (MODULE / "templates/docs/security/admin-entrances.md").read_text()
+    tabs = admin.tables(text)
+    inventory = [t for t in tabs if "entrance" in [admin.plain(c).lower() for c in t[0][1]]]
+    if len(inventory) != 1:
+        return [f"want one inventory table in the template, found {len(inventory)}"]
+    head = [admin.plain(c).lower() for c in inventory[0][0][1]]
+    if tuple(head) != admin.COLUMNS:
+        bad.append(f"template columns {head} differ from the check's {list(admin.COLUMNS)}")
+    explained = [admin.plain(r[1][0]).lower() for t in tabs if t[0][1][0] == "Column" for r in t[1:]]
+    if tuple(explained) != admin.COLUMNS:
+        bad.append(f"the column table of the template lists {explained}")
+    for kind in admin.KINDS:
+        if f"`{kind}`" not in text:
+            bad.append(f"kind {kind} is not named in the template")
+    for method in admin.WEAKNESS:
+        if f"`{method}`" not in text:
+            bad.append(f"method {method} is not named in the template")
+    # As installed (every cell a placeholder), the page reports only the kinds that have no row yet.
+    with tempfile.TemporaryDirectory() as tmp:
+        page = Path(tmp) / "docs/security/admin-entrances.md"
+        page.parent.mkdir(parents=True)
+        page.write_text(text)
+        res = check_entrances(Path(tmp))
+    rules = sorted({h["rule"] for h in res["hits"]})
+    if res["result"] != "fail" or rules != ["kind-missing"]:
+        bad.append(f"the template as installed: {res['result']}, rules {rules}")
+    reported = sorted(re.match(r"no row of kind ([\w-]+)", h["snippet"]).group(1) for h in res["hits"])
+    if reported != sorted(admin.DEFAULTS["required_kinds"]):
+        bad.append(f"the template as installed reports kinds {reported}, want {sorted(admin.DEFAULTS['required_kinds'])}")
+    unknown = [k for k in admin.DEFAULTS["required_kinds"] if k not in admin.KINDS]
+    if unknown:
+        bad.append(f"required_kinds names kinds the check does not know: {unknown}")
+    return bad
+
+
+@test
+def admin_entrances_output_shows_no_cell_value():
+    """A hit names the entrance and the field. Reason, holders, evidence and owner text never reach the output."""
+    canary = "CANARY-7f3a"
+    rows = [entrance_row("A", enforced="no", method="none", reason=f"{canary}-reason", who=f"{canary}-who", expires="2020-01-01",
+                         holders=f"{canary}-holders", owner=f"{canary}-owner", evidence=f"{canary}-evidence"),
+            entrance_row("B", enforced="no", method="none", reason=f"{canary}-reason", who="", expires="", evidence=f"{canary}-evidence")]
+    res, _ = entrances(rows)
+    bad = [] if canary not in json.dumps(res) else ["the result carries a cell value"]
+    if len(res["hits"]) != 2:
+        bad.append(f"want two hits, got {len(res['hits'])}")
+    with tempfile.TemporaryDirectory() as tmp:
+        page = Path(tmp) / "docs/security/admin-entrances.md"
+        page.parent.mkdir(parents=True)
+        page.write_text(ENTRANCE_HEAD + "\n".join(rows) + "\n")
+        p = subprocess.run([sys.executable, str(MODULE / "checks/admin_entrances.py"), tmp], capture_output=True, text=True)
+    if canary in p.stdout + p.stderr:
+        bad.append("the standalone run prints a cell value")
+    if p.returncode != 1:
+        bad.append(f"standalone run: exit {p.returncode}, want 1")
+    return bad
+
+
+@test
+def admin_entrances_lists_every_kind_the_skill_walks():
+    """The skill walks the kinds in the check's order and the README names the module's check next to its siblings."""
+    bad = []
+    skill = (MODULE / "skills/admin-entrances/SKILL.md").read_text()
+    for kind in admin.KINDS:
+        if f"`{kind}`" not in skill:
+            bad.append(f"the skill does not walk kind {kind}")
+    readme = (MODULE / "README.md").read_text()
+    if "security.admin-entrances" not in readme or "### security.admin-entrances" not in readme:
+        bad.append("the README has no section for security.admin-entrances")
     return bad
 
 

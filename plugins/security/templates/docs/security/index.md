@@ -1,13 +1,13 @@
 ---
 title: Security
-summary: Where the code and its dependencies come from, who can change the repository, which secrets exist and how they rotate, and how known vulnerabilities reach a fix by a date.
+summary: Where the code and its dependencies come from, who can change the repository, where administrators sign in and how, which secrets exist and how they rotate, and how known vulnerabilities reach a fix by a date.
 labels: security, supply-chain, secrets, access, vulnerabilities
 owner: <person or team that keeps this space true>
 reviewed: <YYYY-MM-DD>
 review_by: <YYYY-MM-DD, 90 days after reviewed>
 type: reference
 ---
-This space holds the security pages of the repository: the provenance log of every third-party action, agent skill, MCP server, and tool, the key-rotation runbooks, the threat models of risky changes, the access reviews, and the vulnerability policy with its fix-by windows.
+This space holds the security pages of the repository: the provenance log of every third-party action, agent skill, MCP server, and tool, the key-rotation runbooks, the threat models of risky changes, the access reviews, the admin entrance inventory, and the vulnerability policy with its fix-by windows.
 
 ## Pages
 
@@ -18,9 +18,10 @@ This space holds the security pages of the repository: the provenance log of eve
 | `runbook-key-rotation-<secret>.md` | One rotation runbook per secret, from `_templates/` via `/security:secrets` |
 | `threat-model-<rfc or change>.md` | One threat model per RFC or risky change, from `_templates/threat-model.md` via `/security:threat-model` |
 | `access-review-<YYYY-MM-DD>.md` | The dated access reviews, from `/security:access-review` |
+| [Admin entrances](admin-entrances.md) | Every place an administrator signs in, with the owner, whether multi-factor authentication is enforced, the weakest method, and the dated exceptions, from `/security:admin-entrances` |
 
 ## Records
 
-- Gate checks: `security.secrets` and `security.action-owners` in `gate/gate.json`; `gate.actions-pinned` from the gate module.
+- Gate checks: `security.secrets`, `security.action-owners`, and `security.admin-entrances` in `gate/gate.json`; `gate.actions-pinned` from the gate module.
 - Update config: `.github/dependabot.yml`.
 - Vulnerability tickets: the issues labelled `security`, each with a fix-by date.
