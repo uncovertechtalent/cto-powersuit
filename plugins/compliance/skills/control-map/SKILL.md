@@ -63,6 +63,8 @@ Standards are licensed texts. Under the terms of the standards publishers, proce
 4. **Map.** For each control, propose the row numbers it covers and set `status: to-confirm`. Propose from the team's own description of the control. Where a row has no control, set `status: missing` and write the gap. Mark `not-applicable` only with a reason in `gap` that the owner confirms.
 5. **Confirm with the owners.** Group the `to-confirm` rows by owner. Each owner checks the mapping against their licensed copy and sets `implemented`, `partial` or `missing`. Change a status only on the owner's word.
 6. **Check the evidence.** Every `implemented` and `partial` row has an evidence link that resolves: a path that exists (`test -e <path>`) or a URL the user confirms. Evidence older than one year gets a note in `gap`.
+
+   Some evidence has a fixed home. For NIS2 `Art 21(2)(j)`, the evidence is `docs/security/admin-entrances.md`, written by `/security:admin-entrances` (a path that exists, in the repository that holds the team's docs). Propose ISO/IEC 27001:2022 `A.5.17`, `A.8.2`, and `A.8.5` with the same page, as `to-confirm`. Set `implemented` when the owner confirms and the gate check `security.admin-entrances` passes with no exception row. Set `partial` while exceptions remain, and put the earliest exception end date in `gap`. With no page, set `missing` and name `/security:admin-entrances` in `gap`.
 7. **Report.**
 
    ```bash

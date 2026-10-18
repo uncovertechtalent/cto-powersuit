@@ -5,7 +5,9 @@ Lists who can change the repository and how: admins, collaborators and outside c
 keys, rulesets with their bypass actors, classic branch protection, the token lists the caller can see,
 and every push or merge that went past a rule in the review window (rule suites with result "bypass",
 mapped to their pull requests). Without access to rule suites it falls back to merged pull requests
-with fewer approvals than the rules require.
+with fewer approvals than the rules require. For an organisation it also reads whether two-factor
+authentication is required and which members and outside collaborators have it off, when the caller is
+an organisation owner, and says what it could not read.
 
 Only GET requests through `gh api`. It changes no setting.
 
@@ -19,6 +21,7 @@ Standard library only, Python 3.9+.
 import argparse, datetime, json, subprocess, sys
 
 STALE_KEY_DAYS = 90
+LOGIN_LIST = 10   # logins named in one flag; the rest is a count
 PERIODS = ((1, "day"), (7, "week"), (31, "month"))
 
 
@@ -60,6 +63,7 @@ def collect(slug, days):
             lambda xs: [{"owner": x["owner"]["login"], "expires": x.get("token_expires_at"), "last_used": x.get("token_last_used_at")} for x in xs])
         get("credential_authorizations", f"orgs/{owner}/credential-authorizations?per_page=100",
             lambda xs: [{"login": x["login"], "type": x.get("credential_type"), "last_used": x.get("credential_accessed_at")} for x in xs])
+        collect_two_factor(obs, owner)
     get("deploy_keys", f"repos/{slug}/keys?per_page=100",
         lambda xs: [{"title": x["title"], "read_only": x["read_only"], "created_at": x["created_at"], "last_used": x.get("last_used")} for x in xs])
     rulesets = []
@@ -103,6 +107,31 @@ def collect(slug, days):
                                          "after_sha": s["after_sha"], "failed": failed,
                                          "pulls": [p["number"] for p in prs or [] if p.get("merged_at")]})
     return obs
+
+
+def collect_two_factor(obs, owner):
+    """obs["org_2fa"] from the organisation and the three 2FA filters, or an entry in obs["errors"]["org_2fa"].
+    The filter 2fa_disabled works for organisation owners only, so its answer also tells whether the
+    two_factor_requirement_enabled field of the organisation can be trusted: GitHub documents the field for the
+    full organisation record, which only owners get, and says nothing about its value for anyone else."""
+    org, org_err = gh(f"orgs/{owner}")
+    off, off_err = gh(f"orgs/{owner}/members?filter=2fa_disabled&per_page=100")
+    required = (org or {}).get("two_factor_requirement_enabled") if isinstance(org, dict) else None
+    if off_err or not isinstance(required, bool):
+        obs["errors"]["org_2fa"] = off_err or org_err or "the organisation record has no two_factor_requirement_enabled (organisation owners only)"
+        return
+    insecure, insecure_err = gh(f"orgs/{owner}/members?filter=2fa_insecure&per_page=100")
+    outside, outside_err = gh(f"orgs/{owner}/outside_collaborators?filter=2fa_disabled&per_page=100")
+    logins = lambda xs: None if xs is None else [x["login"] for x in xs]
+    obs["org_2fa"] = {"required": required, "members_off": logins(off), "members_insecure": logins(insecure),
+                      "outside_off": logins(outside)}
+    for key, err in (("org_2fa_insecure", insecure_err), ("org_2fa_outside", outside_err)):
+        if err:
+            obs["errors"][key] = err
+
+
+def named(logins):
+    return ", ".join(logins[:LOGIN_LIST]) + (f" and {len(logins) - LOGIN_LIST} more" if len(logins) > LOGIN_LIST else "")
 
 
 def assess(obs, today):
@@ -151,8 +180,40 @@ def assess(obs, today):
             flag("amber", "deploy-key-stale", f"deploy key {k['title']!r} {'last used' if used else 'never used, created'} "
                                               f"{(used or k['created_at'])[:10]}, {idle} days ago")
     admins = sorted({c["login"] for c in obs.get("collaborators") or [] if c["role"] == "admin"})
+    tf = obs.get("org_2fa")
+    if tf:
+        org_admins = set(obs.get("org_admins") or []) | set(admins)
+        if not tf["required"]:
+            flag("red", "org-2fa-not-required", f"organisation {obs['repo'].split('/')[0]} does not require two-factor authentication")
+        off = tf.get("members_off") or []
+        admin_off, other_off = sorted(x for x in off if x in org_admins), sorted(x for x in off if x not in org_admins)
+        if admin_off:
+            flag("red", "member-2fa-off", f"{len(admin_off)} admin(s) without two-factor authentication: {named(admin_off)}")
+        if other_off:
+            flag("amber", "member-2fa-off", f"{len(other_off)} member(s) without two-factor authentication: {named(other_off)}")
+        if tf.get("members_insecure"):
+            flag("amber", "member-2fa-insecure", f"{len(tf['members_insecure'])} member(s) whose second factor GitHub lists as insecure: "
+                                                 f"{named(sorted(tf['members_insecure']))}")
+        if tf.get("outside_off"):
+            flag("amber", "outside-2fa-off", f"{len(tf['outside_off'])} outside collaborator(s) without two-factor authentication: "
+                                             f"{named(sorted(tf['outside_off']))}")
     return {"repo": obs["repo"], "admins": admins, "required_approvals": required, "flags": f,
-            "not_visible": obs.get("errors", {})}
+            "mfa": mfa_summary(obs), "not_visible": obs.get("errors", {})}
+
+
+def mfa_summary(obs):
+    """One line for the MFA section: what was read, or why it was not."""
+    tf = obs.get("org_2fa")
+    if tf:
+        count = lambda xs: "not read" if xs is None else str(len(xs))
+        return (f"organisation requires two-factor authentication: {'yes' if tf['required'] else 'no'}; members with it off: "
+                f"{count(tf.get('members_off'))}; insecure second factor: {count(tf.get('members_insecure'))}; "
+                f"outside collaborators with it off: {count(tf.get('outside_off'))}")
+    if "org_2fa" in obs.get("errors", {}):
+        return "not read (the caller must be an organisation owner); see not visible below"
+    if (obs.get("meta") or {}).get("owner_type") == "User":
+        return "not applicable: the owner is a user account; two-factor authentication is a setting of each account and GitHub does not show it to others"
+    return "not read in this observation file"
 
 
 def main():
@@ -188,6 +249,7 @@ def main():
             counts[x["id"]] = counts.get(x["id"], 0) + 1
         print(f"{r['repo']}: admins: {', '.join(r['admins']) or 'none visible'}; required approvals: {r['required_approvals']}; "
               f"flags: {', '.join(f'{k} {v}' for k, v in counts.items()) or 'none'}")
+        print(f"  mfa: {r['mfa']}")
         for x in r["flags"]:
             print(f"  {x['level']:5} {x['id']}: {x['evidence']}")
         for k, v in r["not_visible"].items():

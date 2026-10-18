@@ -189,10 +189,11 @@
     {
       "name": "security",
       "source": "./plugins/security",
-      "description": "Supply chain, secrets and access for a repository and its agents: action-owner allowlist, vulnerability scan and SBOM, provenance checks for skills and MCP servers, key rotation, access review, threat models, and vulnerability intake, with gate checks for secrets and action owners, a pre-push hook for private terms, and a quarantine for third-party text.",
+      "description": "Supply chain, secrets and access for a repository and its agents: action-owner allowlist, vulnerability scan and SBOM, provenance checks for skills and MCP servers, key rotation, access review, an inventory of admin entrances with multi-factor authentication, threat models, and vulnerability intake, with gate checks for secrets, action owners, and admin entrances, a pre-push hook for private terms, and a quarantine for third-party text.",
       "category": "development",
       "skills": [
         "./skills/access-review",
+        "./skills/admin-entrances",
         "./skills/private-terms",
         "./skills/quarantine",
         "./skills/secrets",
