@@ -283,6 +283,8 @@ cd ../security
 claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
 ```
 
+Zwei Fälle laufen nur mit dem Plugin, weil ein Baseline-Arm nichts zu bewerten hätte (`clinic-keeps-findings-private`: ohne Skill gibt es keinen Clinic-Ordner) oder die eigene Datei des Plugins nutzen würde (`secrets-hook-stops-push`: das Fixture enthält eine Kopie von `secrets.py`). Führe jeden davon einzeln mit `--case <Name> --ablation none` aus; die Befehle für die ganze Suite oben fügen für sie einen Baseline-Arm hinzu, den EVALS.md weglässt.
+
 `--scaffold` führt das `scaffold.sh` jedes Falls aus, das im Arbeitsordner des Laufs ein kleines Fixture-Repository anlegt. Setze auf macOS `/Library/Developer/CommandLineTools/usr/bin` an den Anfang von `PATH`: Die Sandbox der Evals bricht den Shim `/usr/bin/git`, und die Skills lesen die Git-Historie. Ein voller Lauf kostet etwa 4 $. [EVALS.md](EVALS.md) enthält die Ergebnisse.
 
 ## Lizenz

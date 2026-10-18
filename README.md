@@ -279,6 +279,8 @@ cd ../security
 claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
 ```
 
+Two cases run with the plugin only, because a baseline arm has nothing to grade (`clinic-keeps-findings-private`: no skill, no clinic folder) or would use the plugin's own file (`secrets-hook-stops-push`: the fixture holds a copy of `secrets.py`). Run each of them alone with `--case <name> --ablation none`; the whole-suite commands above add a baseline arm for them that EVALS.md leaves out.
+
 `--scaffold` runs each case's `scaffold.sh`, which builds a small fixture repository in the run's workspace. On macOS, put `/Library/Developer/CommandLineTools/usr/bin` first on `PATH`: the eval sandbox breaks the `/usr/bin/git` shim, and the skills read git history. A full run costs about $4. [EVALS.md](EVALS.md) has the results.
 
 ## License
