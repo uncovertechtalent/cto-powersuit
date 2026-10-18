@@ -60,7 +60,7 @@ LINE
 
 The quoted `'LINE'` stops the local shell from expanding `$`, backticks, and backslashes in the text, and an apostrophe in the text breaks nothing. Read the last line back with `ssh <user>@<address> 'tail -n 1 <log path>'`.
 
-Never put the text of a log line inside a quoted remote command, as in `ssh host "echo '<text>' >> /host.log"`. One apostrophe in the text ends the quote, and the words after it run as commands on your machine. This has happened in practice.
+Never put the text of a log line inside a quoted remote command. In `ssh host 'echo "<text>" >> /host.log'`, one apostrophe in the text ends the quote, and the words after it run as commands on your machine. In `ssh host "echo '<text>' >> /host.log"`, the host's shell parses the text, so the same apostrophe makes the host run the words after it. The first form has happened in practice.
 
 ## Set up a host
 
