@@ -6,9 +6,14 @@
 - access_review.py: every case in cases/access-review/ gives exactly its red and amber flags.
 - intake.py: fix-by dates from the default windows, the policy template and a custom policy; dedupe; tracked issues.
 - osv_query.py: purls from an SPDX and a CycloneDX SBOM, and the rows built from recorded OSV answers (no network).
-- security.secrets: each fail fixture gives one hit of its kind; allow, allow_hashes and tracked_only behave.
+- security.secrets: each fail fixture gives one hit of its kind; allow, allow_hashes, the allow file and tracked_only behave.
 - security.action-owners: each fail fixture gives one hit of its kind; the owner list option and the listing behave;
   its LOCAL prefixes and USES pattern match gate.actions-pinned.
+- security.secrets hooks (pre-push, pre-commit, check, history) against a local bare remote: each hit kind is refused with the remote
+  unchanged and no value or way around the hook in any output; only added lines are read, also in merges; messages, tags, ref names and
+  file names; the pushed gate config and allow file; git settings, attributes, binary files and replace refs that would hide a line;
+  the dispatcher beside the private-terms hook in both install orders; a git template; foreign hooks are left alone; the repository's
+  own files are clean with its .secrets-allow.
 - security.private-terms: each fail fixture gives one hit of its kind; no output shows a term; n/a without a list; list errors
   name a line only; the allow file; tracked files and built folders; the pre-push hook against a local remote; the scan CLI.
 - quarantine.py: save marks and stores an item without printing it, and refuses a store inside a vault, an overlay, a
@@ -19,7 +24,7 @@
 
 Standard library only, Python 3.9+. Usage: python3 plugins/security/tests/test_security.py [-v]
 """
-import contextlib, datetime, importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile
+import contextlib, datetime, hashlib, importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -297,7 +302,7 @@ def secrets_each_fail_file_gives_one_hit_of_its_kind():
     want = {".env": "env-file", "config/anthropic.env.txt": "anthropic-key", "config/sk-key.txt": "sk-key",
             "config/aws-credentials.ini": "aws-access-key-id", "config/github.yml": "github-token",
             "config/github-fine-grained.yml": "github-fine-grained-token", "config/slack.txt": "slack-token",
-            "keys/id_example": "private-key"}
+            "keys/id_example": "private-key", ".secrets-allow": "allow-entry"}
     bad = [] if (kinds, len(res["hits"])) == (want, len(want)) else [f"hits: {[(h['file'], h.get('rule')) for h in res['hits']]}"]
     leaked = [h["snippet"] for h in res["hits"] if "EXAMPLE" in h["snippet"]]
     return bad + [f"value in a snippet: {s}" for s in leaked]
@@ -308,15 +313,15 @@ def secrets_allow_options():
     fail = MODULE / "checks/fixtures/security.secrets/fail"
     bad = []
     res = check_rule(secrets, fail, allow=["config/*", "keys/*"])
-    if [h["file"] for h in res["hits"]] != [".env"]:
+    if sorted(h["file"] for h in res["hits"]) != [".env", ".secrets-allow"]:
         bad.append(f"allow by path: {[h['file'] for h in res['hits']]}")
     aws = [h for h in check_rule(secrets, fail)["hits"] if h.get("rule") == "aws-access-key-id"][0]
     digest = aws["snippet"].rsplit("sha256:", 1)[1]
     res = check_rule(secrets, fail, allow_hashes=[digest])
-    if any(h.get("rule") == "aws-access-key-id" for h in res["hits"]) or len(res["hits"]) != 7:
+    if any(h.get("rule") == "aws-access-key-id" for h in res["hits"]) or len(res["hits"]) != 8:
         bad.append(f"allow by hash {digest}: {len(res['hits'])} hits")
     res = check_rule(secrets, fail, allow_hashes=[digest[:6]])
-    if len(res["hits"]) != 8:
+    if len(res["hits"]) != 9:
         bad.append("a hash prefix under 8 digits must not allow anything")
     return bad
 
@@ -329,12 +334,12 @@ def secrets_tracked_only_reads_tracked_files():
         git = lambda *a: subprocess.run(["git", "-C", tmp, *a], capture_output=True, text=True, check=True)
         git("init", "-q")
         (root / "README.md").write_text("no secrets here\n")
-        (root / "local.env.txt").write_text("key = AKIAIOSFODNN7EXAMPLE\n")
+        (root / "local.env.txt").write_text(f"key = {AWS_EXAMPLE}\n")
         git("add", "README.md")
         res = check_rule(secrets, root)
         if res["hits"] or "1 tracked" not in res["detail"]:
             bad.append(f"untracked file read: {res['detail']}, {res['hits']}")
-        (root / "logo.bin").write_bytes(b"\x89PNG\0\0 AKIAIOSFODNN7EXAMPLE")
+        (root / "logo.bin").write_bytes(b"\x89PNG\0\0 " + AWS_EXAMPLE.encode())
         res = check_rule(secrets, root, tracked_only=False)
         if len(res["hits"]) != 1:
             bad.append(f"tracked_only false: {len(res['hits'])} hits, want 1 (binary files are skipped, as git grep -I)")
@@ -622,6 +627,653 @@ def private_terms_scan_cli():
         p = run_cli(str(PT / "fail"))
     if p.returncode != 2:
         bad.append(f"scan without a list: exit {p.returncode}, want 2")
+    return bad
+
+
+# ---------------------------------------------------------------- secrets hooks
+# Made-up values, assembled at run time so that no source line matches a pattern and the repository's own scan stays clean.
+
+FAKE = {
+    "anthropic-key": "sk-ant-" + "api03-Zq8Xv2Lm9Rt4Wd7Yb1Nc",
+    "sk-key": "sk-" + "Zq8Xv2Lm9Rt4Wd7Yb1Nc5Hs3Jk6Pf0Ae",
+    "aws-access-key-id": "AKIA" + "IOSFODNN7EXAMPLE",
+    "github-token": "ghp_" + "Zq8Xv2Lm9Rt4Wd7Yb1Nc5Hs3Jk6Pf0Ae1Bn",
+    "github-fine-grained-token": "github_pat_" + "11ABCDEFG0Zq8Xv2Lm9Rt4Wd7Yb1Nc5Hs3Jk6Pf0Ae1Bn",
+    "slack-token": "xoxb-" + "1234567890-Zq8Xv2Lm9Rt4",
+    "private-key": "-----BEGIN RSA " + "PRIVATE KEY-----",
+}
+AWS_EXAMPLE = FAKE["aws-access-key-id"]
+NO_HOOKS = ["-c", "core.hooksPath=" + os.devnull]  # builds a commit the hook under test has not seen
+
+
+def sha12(value):
+    return hashlib.sha256(value.encode()).hexdigest()[:12]
+
+
+class HookRepo:
+    """A work tree on branch main with a local bare remote and the secrets hook installed."""
+
+    def __init__(self, tmp, tier="block", pre_commit=False, install=True, name="work"):
+        self.tmp = Path(tmp)
+        self.work, self.remote = self.tmp / name, self.tmp / (name + "-remote.git")
+        self.env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", GIT_AUTHOR_NAME="Fixture",
+                        GIT_AUTHOR_EMAIL="fixture@example.invalid", GIT_COMMITTER_NAME="Fixture", GIT_COMMITTER_EMAIL="fixture@example.invalid")
+        self.env.pop("POWERSUIT_OVERLAY", None)
+        self.bad, self.seen = [], []
+        self.git("init", "-q", "--bare", str(self.remote), cwd=self.tmp)
+        self.git("init", "-q", str(self.work), cwd=self.tmp)
+        self.git("checkout", "-q", "-b", "main")
+        self.git("remote", "add", "origin", str(self.remote))
+        if install:
+            self.install(tier, pre_commit)
+
+    def git(self, *a, cwd=None, inp=None):
+        return subprocess.run(["git", *a], cwd=cwd or self.work, env=self.env, capture_output=True, text=True, input=inp)
+
+    def install(self, tier="block", pre_commit=False):
+        code, lines = secrets.install_hook(self.work / ".git/hooks", tier, pre_commit)
+        if code:
+            self.bad.append(f"install_hook: {lines}")
+
+    def commit(self, path, text, message="Add a file", extra=()):
+        f = self.work / path
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(text if isinstance(text, bytes) else text.encode())
+        self.git("add", "-A")
+        p = self.git(*extra, "commit", "-q", "-m", message)
+        self.seen.append(p.stdout + p.stderr)
+        return p
+
+    def push(self, *args, want):
+        p = self.git("push", "-q", "origin", *args)
+        self.seen.append(p.stdout + p.stderr)
+        got = "ok" if p.returncode == 0 else "stopped"
+        if got != want:
+            self.bad.append(f"push {' '.join(args)}: {got}, want {want}: {p.stderr.strip()[-300:]}")
+        return p.stderr
+
+    def head(self):
+        return self.git("rev-parse", "HEAD").stdout.strip()
+
+    def remote_has(self, rev):
+        return self.git("cat-file", "-e", rev + "^{commit}", cwd=self.remote).returncode == 0
+
+    def expect(self, text, *needles):
+        for n in needles:
+            if n not in text:
+                self.bad.append(f"output lacks {n!r}: {text.strip()[-300:]}")
+
+    def finish(self):
+        """The failures so far, plus a check that no output held a value or a way around the hook."""
+        text = "\n".join(self.seen)
+        found = [f"value of {k} in the output" for k, v in FAKE.items() if v in text or v[-12:] in text]
+        if "no-verify" in text.lower():
+            found.append("the output names a way to skip the hook")
+        return self.bad + found
+
+
+@test
+def secrets_hook_refuses_each_kind_and_prints_no_value():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        for kind, value in FAKE.items():
+            r.commit(f"cfg/{kind}.txt", f"token = {value}\n", f"Add {kind}")
+            tip = r.head()
+            err = r.push("main", want="stopped")
+            r.expect(err, f"cfg/{kind}.txt:1 {kind} ", f"sha256:{sha12(value)}", ".secrets-allow")
+            if r.remote_has(tip):
+                r.bad.append(f"{kind}: the commit reached the remote")
+            r.git("reset", "-q", "--hard", "origin/main")
+        r.commit("config.yml", "region = eu-central-1\nname = Project\n", "Clean file")
+        r.push("main", want="ok")
+        r.commit(".env", "PORT=8080\n", "Add .env")
+        err = r.push("main", want="stopped")
+        r.expect(err, ".env env-file")
+        r.git("reset", "-q", "--hard", "origin/main")
+        r.commit("app/.env.local", "PORT=8080\n", "Add .env.local")
+        r.push("main", want="stopped")
+        r.git("reset", "-q", "--hard", "origin/main")
+        r.commit(".env.example", "PORT=\n", "Add the template")
+        r.push("main", want="ok")
+        return r.finish()
+
+
+@test
+def secrets_hook_reads_only_what_the_push_adds():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp, tier="warn")
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        r.commit("legacy.txt", f"first\nkey = {AWS_EXAMPLE}\n", "A key that is already public")
+        err = r.push("main", want="ok")  # tier warn: the hits are reported, the push goes on
+        r.expect(err, "tier warn", "legacy.txt:2 aws-access-key-id AKIA****")
+        r.install("block")
+        r.commit("legacy.txt", f"first\nkey = {AWS_EXAMPLE}\nlast line\n", "Add a line next to the key")
+        r.push("main", want="ok")  # the key line is not an added line
+        r.commit("legacy.txt", "first\nlast line\n", "Remove the key")
+        r.push("main", want="ok")  # a deleted line sends nothing
+        r.commit("notes.txt", f"one\ntwo\nkey = {FAKE['slack-token']}\n", "Add a key")
+        r.commit("notes.txt", "one\ntwo\n", "Remove it again")
+        err = r.push("main", want="stopped")  # the first commit still carries it
+        r.expect(err, "notes.txt:3 slack-token xox?-****")
+        r.git("reset", "-q", "--hard", "origin/main")
+        r.commit("notes.txt", "one\nkey = " + FAKE["github-token"] + "\n", "Add a key")
+        r.commit("notes.txt", "zero\none\nkey = " + FAKE["github-token"] + "\n", "Shift the line")
+        err = r.push("main", want="stopped")
+        r.expect(err, "notes.txt:2 github-token")
+        if "notes.txt:3" in err:
+            r.bad.append("a line that only moved counted as added")
+        r.git("reset", "-q", "--hard", "origin/main")
+        r.git("checkout", "-q", "-b", "feature")
+        r.commit("feature.txt", "A feature.\n", "Feature")
+        r.push("feature", want="ok")  # a new branch sends its own commits only
+        r.push("HEAD:refs/heads/copy", want="ok")
+        return r.finish()
+
+
+@test
+def secrets_hook_reads_messages_tags_ref_names_and_paths():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        r.commit("a.txt", "a\n", "Export TOKEN=" + FAKE["github-token"] + "\n\nsecond line")
+        err = r.push("main", want="stopped")
+        r.expect(err, "commit-message:1 github-token gh?_****")
+        r.git("reset", "-q", "--hard", "origin/main")
+        r.commit("b.txt", "b\n", "Add b")
+        r.git("tag", "-a", "v1", "-m", "Release\nkey " + FAKE["sk-key"])
+        err = r.push("v1", want="stopped")
+        r.expect(err, "tag-message:2 sk-key sk-****")
+        r.git("tag", "-d", "v1")
+        err = r.push("HEAD:refs/heads/" + FAKE["aws-access-key-id"], want="stopped")
+        r.expect(err, "ref-name:1 aws-access-key-id")
+        blob = r.git("hash-object", "-w", "--stdin", inp="plain text\n").stdout.strip()
+        r.git("tag", "blobtag", blob)
+        err = r.push("blobtag", want="stopped")
+        r.expect(err, "points to a blob", "nothing was checked")
+        return r.finish()
+
+
+@test
+def secrets_hook_masks_a_key_in_a_path():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        r.commit("keys/" + FAKE["aws-access-key-id"] + ".txt", f"x = {FAKE['aws-access-key-id']}\n", "A file named like its key")
+        err = r.push("main", want="stopped")
+        r.expect(err, "keys/AKIA****.txt:1 aws-access-key-id")
+        return r.finish()
+
+
+@test
+def secrets_hook_merges_count_only_what_the_merge_adds():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp, tier="warn")
+        r.commit("README.md", "# Project\n", "Start")
+        r.commit("shared.txt", "one\n", "Shared file")
+        r.push("main", want="ok")
+        r.git("checkout", "-q", "-b", "feature")
+        r.commit("legacy.txt", f"key = {AWS_EXAMPLE}\n", "A key on a branch")
+        r.commit(".env", "PORT=1\n", "An env file on a branch")
+        r.push("feature", want="ok")
+        r.install("block")
+        r.git("checkout", "-q", "main")
+        r.commit("main.txt", "main\n", "Work on main")
+        r.git("merge", "-q", "--no-ff", "-m", "Merge feature", "feature")
+        r.push("main", want="ok")  # the key comes in with a commit the remote has
+        r.git("checkout", "-q", "-b", "left")
+        r.commit("shared.txt", "left two\n", "Left")
+        r.git("checkout", "-q", "main")
+        r.git("checkout", "-q", "-b", "right")
+        r.commit("shared.txt", "right two\n", "Right")
+        merged = r.git("merge", "-q", "left")
+        (r.work / "shared.txt").write_text(f"key = {FAKE['github-token']}\n")
+        r.git("add", "shared.txt")
+        r.git("commit", "-q", "-m", "Merge left")
+        err = r.push("right", want="stopped")  # the resolution adds a line that neither parent has
+        r.expect(err, "shared.txt:1 github-token")
+        if "CONFLICT" not in merged.stdout + merged.stderr:
+            r.bad.append("the merge did not conflict")
+        return r.finish()
+
+
+@test
+def secrets_hook_allow_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        aws = AWS_EXAMPLE
+        entry = lambda glob, kind, digest, reason="Example value from the vendor documentation": f"{glob} {kind} {digest} {reason}\n"
+
+        def attempt(name, allow, want, *needles, text=None):
+            f = r.work / name
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(text or f"key = {aws}\n")
+            (r.work / ".secrets-allow").write_text(allow)
+            r.git("add", "-A")
+            r.git("commit", "-q", "-m", "Try " + name)
+            err = r.push("main", want=want)
+            r.expect(err, *needles)
+            if want == "stopped":
+                r.git("reset", "-q", "--hard", "origin/main")
+            return err
+
+        attempt("docs/a.md", entry("docs/a.md", "aws-access-key-id", "sha256:" + sha12(aws)), "ok")
+        attempt("docs/b.md", entry("docs/*", "*", sha12(aws).upper()), "ok")
+        attempt("docs/c.md", entry("docs/*", "aws-access-key-id", "*"), "ok")
+        attempt("docs/d.md", entry("docs/d.md", "aws-access-key-id", "sha256:" + sha12(aws)), "stopped", "docs/d.md:2 slack-token",
+                text=f"key = {aws}\nother = {FAKE['slack-token']}\n")  # allows the one value only
+        attempt("docs/e.md", entry("docs/e.md", "aws-access-key-id", "sha256:" + sha12(aws), ""), "stopped", ".secrets-allow:1 allow entry without a reason")
+        attempt("docs/f.md", "docs/f.md aws-access-key-id sha256:xyz reason\n", "stopped", ".secrets-allow:1 allow entry whose hash")
+        attempt("docs/g.md", entry("*", "*", "*"), "stopped", ".secrets-allow:1 allow entry that allows every secret")
+        attempt("docs/h.md", entry("**", "aws-access-key-id", "*"), "stopped", ".secrets-allow:1 allow entry that allows every secret")
+        attempt("docs/i.md", entry("docs/other.md", "aws-access-key-id", "sha256:" + sha12(aws)), "stopped", "docs/i.md:1 aws-access-key-id")
+        attempt("docs/j.md", entry("docs/j.md", "slack-token", "*"), "stopped", "docs/j.md:1 aws-access-key-id")
+        attempt("docs/k.md", entry("docs/k.md", "aws-access-key-id", "ffffffff"), "stopped", "docs/k.md:1 aws-access-key-id")
+        attempt("app/.env", entry("app/.env", "env-file", "*"), "ok", text="PORT=1\n")
+        attempt("app2/.env", entry("app2/.env", "env-file", "sha256:" + sha12(aws)), "stopped", "app2/.env env-file", text="PORT=1\n")
+        # the file counts as the pushed commit has it: an edit in the work tree allows nothing
+        r.commit("docs/l.md", f"key = {aws}\n", "Add a key", extra=())
+        (r.work / ".secrets-allow").write_text(entry("docs/l.md", "*", "*"))
+        r.push("main", want="stopped")
+        return r.finish()
+
+
+@test
+def secrets_hook_reads_the_gate_config_of_the_pushed_commit():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        aws = AWS_EXAMPLE
+        r.commit("gate/fixtures/security.secrets/fail/aws.txt", f"key = {aws}\n", "Gate fixtures")
+        r.push("main", want="ok")  # the gate's default exclude list covers /gate/, so the hook leaves it out too
+        gate = lambda body: json.dumps(body)
+        r.commit("gate/gate.json", gate({"exclude": [".git/"], "rules": {}}), "Gate config without /gate/")
+        r.commit("gate/fixtures/security.secrets/fail/slack.txt", f"key = {FAKE['slack-token']}\n", "More fixtures")
+        err = r.push("main", want="stopped")
+        r.expect(err, "gate/fixtures/security.secrets/fail/slack.txt:1 slack-token")
+        r.git("reset", "-q", "--hard", "origin/main")
+        team = {"rules": {"security.secrets": {"tier": "block", "options": {"patterns": {"acme-token": [r"\bacme_[0-9a-f]{20}\b", "acme_****"]}}}}}
+        r.commit("gate/gate.json", gate(team), "Add the team's token format")
+        r.commit("c.txt", "token = acme_" + "0123456789abcdef0123\n" + f"key = {aws}\n", "Use it")
+        err = r.push("main", want="stopped")
+        r.expect(err, "c.txt:1 acme-token acme_****")
+        if "aws-access-key-id" in err:
+            r.bad.append("the team's pattern list replaces the defaults, as in the gate check")
+        r.git("reset", "-q", "--hard", "origin/main")
+        r.commit("gate/gate.json", gate({"rules": {"security.secrets": {"options": {"allow": ["docs/*"], "allow_hashes": [sha12(FAKE["slack-token"])]}}}}), "Allow by the gate's options")
+        r.commit("docs/x.md", f"key = {aws}\nother = {FAKE['slack-token']}\n", "Documented values")
+        r.push("main", want="ok")
+        for bad_config, needle in (("{not json", "gate/gate.json is not valid JSON"),
+                                   (gate([1]), "gate/gate.json is not a JSON object"),
+                                   (gate({"rules": {"security.secrets": {"options": {"allow": "docs/*"}}}}), "option allow has the wrong type"),
+                                   (gate({"rules": {"security.secrets": {"options": {"patterns": {"x": ["(", "x****"]}}}}}), "pattern x is not a")):
+            r.commit("gate/gate.json", bad_config, "Broken config")
+            err = r.push("main", want="stopped")
+            r.expect(err, needle, "nothing was checked")
+            r.git("reset", "-q", "--hard", "origin/main")
+        return r.finish()
+
+
+@test
+def secrets_hook_ignores_git_config_that_would_hide_a_line():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        marker = Path(tmp) / "textconv-ran"
+        script = Path(tmp) / "textconv.sh"
+        script.write_text(f"#!/bin/sh\ntouch '{marker}'\ncat \"$1\"\n")
+        script.chmod(0o755)
+        r.git("config", "color.ui", "always")
+        r.git("config", "diff.evil.textconv", str(script))
+        r.git("config", "diff.context", "9")
+        r.commit(".gitattributes", "*.hidden -diff\n*.bin binary\n*.cfg diff=evil\n", "Attributes")
+        r.push("main", want="ok")
+        aws = AWS_EXAMPLE
+        for i, (name, body) in enumerate((("a.hidden", f"key = {aws}\n"), ("b.bin", f"key = {aws}\n"), ("c.cfg", f"key = {aws}\n"),
+                                          ("d.dat", b"\x00\x01\x02 binary then " + aws.encode() + b" \x00\x03"),
+                                          ('odd dir/ünï "q".txt', f"key = {aws}\n"), ("e.txt", f"a\r\nkey = {aws}\r\n"))):
+            # the diff prefix settings change the path in the diff header; the hit must still name the file
+            r.git("config", "--unset-all", "diff.noprefix")
+            r.git("config", "--unset-all", "diff.mnemonicPrefix")
+            r.git("config", "diff.noprefix" if i % 2 else "diff.mnemonicPrefix", "true")
+            r.commit(name, body, "Try " + name.split()[0])
+            err = r.push("main", want="stopped")
+            r.expect(err, f" {name}:{2 if name == 'e.txt' else 1} aws-access-key-id AKIA****" if name != "d.dat" else " d.dat:", "aws-access-key-id AKIA****")
+            r.git("reset", "-q", "--hard", "origin/main")
+        if marker.exists():
+            r.bad.append("a textconv program of the repository ran")
+        # a replace ref must not swap the commit under the scan
+        r.git("checkout", "-q", "-b", "swap")
+        r.commit("f.txt", f"key = {aws}\n", "The key")
+        keyed = r.head()
+        r.git("checkout", "-q", "main")
+        r.git("checkout", "-q", "-b", "clean")
+        r.commit("f.txt", "nothing\n", "Clean twin")
+        r.git("replace", keyed, r.head())
+        r.git("checkout", "-q", "swap")
+        err = r.push("swap", want="stopped")
+        r.expect(err, "f.txt:1 aws-access-key-id")
+        return r.finish()
+
+
+@test
+def secrets_hook_fails_closed_and_tier_warn_goes_on():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        shim = r.work / ".git/hooks/pre-push.d/20-secrets"
+        text = shim.read_text()
+        shim.write_text(text.replace("secrets.py", "missing.py"))
+        shim.chmod(0o755)
+        r.commit("a.txt", "a\n", "A")
+        r.push("main", want="stopped")  # a hook that cannot run stops the push
+        shim.write_text(text)
+        shim.chmod(0o755)
+        r.push("main", want="ok")
+        r.install("warn")
+        r.commit("gate/gate.json", "{not json", "Broken config")
+        err = r.push("main", want="ok")
+        r.expect(err, "nothing was checked and the push goes on")
+        return r.finish()
+
+
+@test
+def secrets_hook_runs_beside_the_private_terms_hook():
+    with tempfile.TemporaryDirectory() as tmp:
+        failures = []
+        for first in ("private", "secrets"):
+            (Path(tmp) / first).mkdir()
+            r = HookRepo(Path(tmp) / first, install=False)
+            hooks = r.work / ".git/hooks"
+            install_private = lambda: private.install_hook(hooks, str(PT_LIST))
+            install_secrets = lambda: secrets.install_hook(hooks, "block")
+            for step in ((install_private, install_secrets) if first == "private" else (install_secrets, install_private)):
+                code, lines = step()
+                if code:
+                    failures.append(f"{first} first: install {lines}")
+            if not (hooks / "pre-push.d/10-private-terms").is_file() or not (hooks / "pre-push.d/20-secrets").is_file():
+                failures.append(f"{first} first: hooks are not side by side: {sorted(p.name for p in (hooks / 'pre-push.d').iterdir())}")
+            if "powersuit hook dispatcher" not in (hooks / "pre-push").read_text():
+                failures.append(f"{first} first: pre-push is not the dispatcher")
+            r.commit("README.md", "# Project\n", "Start")
+            r.push("main", want="ok")
+            r.commit("a.md", "The runner sits on Kettlehost.lan.\n", "Private term")
+            err = r.push("main", want="stopped")
+            r.expect(err, "private term host-k")
+            r.git("reset", "-q", "--hard", "origin/main")
+            r.commit("b.md", f"key = {AWS_EXAMPLE}\n", "Key")
+            err = r.push("main", want="stopped")
+            r.expect(err, "b.md:1 aws-access-key-id")
+            r.git("reset", "-q", "--hard", "origin/main")
+            r.commit("c.md", f"key = {AWS_EXAMPLE}\nand Kettlehost.lan\n", "Both")
+            err = r.push("main", want="stopped")
+            r.expect(err, "private term host-k", "c.md:1 aws-access-key-id")  # one failing hook does not hide the other
+            r.git("reset", "-q", "--hard", "origin/main")
+            before = {p.name: p.read_text() for p in (hooks / "pre-push.d").iterdir()}
+            before["pre-push"] = (hooks / "pre-push").read_text()
+            install_secrets()
+            after = {p.name: p.read_text() for p in (hooks / "pre-push.d").iterdir()}
+            after["pre-push"] = (hooks / "pre-push").read_text()
+            if before != after:
+                failures.append(f"{first} first: a second install changed the hooks")
+            failures += [f"{first} first: {b}" for b in r.finish() if "Kettlehost" not in b]
+            if "kettlehost" in "\n".join(r.seen).lower():
+                failures.append(f"{first} first: the private term shows in the output")
+        return failures
+
+
+@test
+def secrets_hook_install_leaves_other_hooks_alone():
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        hooks = Path(tmp) / "hooks"
+        hooks.mkdir()
+        (hooks / "pre-push").write_text("#!/bin/sh\nexit 0\n")
+        code, lines = secrets.install_hook(hooks, "block", True)
+        if code != 2 or (hooks / "pre-push").read_text() != "#!/bin/sh\nexit 0\n" or (hooks / "pre-push.d").exists() or (hooks / "pre-commit").exists():
+            bad.append(f"another pre-push hook: {code}, {lines}")
+        if private.install_hook(hooks, str(PT_LIST))[0] != 2:
+            bad.append("private_terms replaced another hook")
+        (hooks / "pre-push").unlink()
+        target = Path(tmp) / "shared-hook"
+        target.write_text("#!/bin/sh\nexit 0\n")
+        (hooks / "pre-push").symlink_to(target)
+        code, lines = secrets.install_hook(hooks, "block")
+        if code != 2 or target.read_text() != "#!/bin/sh\nexit 0\n" or not (hooks / "pre-push").is_symlink():
+            bad.append(f"a linked pre-push hook: {code}, {lines}")
+        (hooks / "pre-push").unlink()
+        chain = hooks / "pre-push.d"
+        chain.mkdir()
+        (chain / "20-secrets").write_text("#!/bin/sh\necho other\n")
+        if secrets.install_hook(hooks, "block")[0] != 2 or (chain / "20-secrets").read_text() != "#!/bin/sh\necho other\n":
+            bad.append("another hook under the secrets name was replaced")
+        (chain / "20-secrets").unlink()
+        (hooks / "pre-commit").write_text("#!/bin/sh\nexit 0\n")
+        if secrets.install_hook(hooks, "block", True)[0] != 2 or (hooks / "pre-push").exists():
+            bad.append("a refused pre-commit hook must leave pre-push unwritten as well")
+        fresh = Path(tmp) / "fresh"
+        private.install_hook(fresh, str(PT_LIST))
+        if secrets.PRIVATE_TERMS_MARK not in (fresh / "pre-push").read_text():
+            bad.append("secrets.py would not recognise the shim that private_terms.py writes")
+    if secrets.DISPATCH_MARK != private.DISPATCH_MARK or secrets.DISPATCH_MARK not in secrets.dispatcher_text("pre-push"):
+        bad.append("the dispatcher markers of the two checks differ")
+    return bad
+
+
+@test
+def secrets_hook_comes_with_a_new_clone_through_the_git_template():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        template = tmp / "template"
+        for step in (lambda: private.install_hook(template / "hooks", str(PT_LIST)), lambda: secrets.install_hook(template / "hooks", "block")):
+            code, lines = step()
+            if code:
+                return [f"template install: {lines}"]
+        (tmp / "clone").mkdir()
+        r = HookRepo(tmp / "clone", install=False)
+        fresh = tmp / "fresh"
+        subprocess.run(["git", "init", "-q", "--template", str(template), str(fresh)], env=r.env, check=True, capture_output=True)
+        bad = []
+        for rel in ("pre-push", "pre-push.d/10-private-terms", "pre-push.d/20-secrets"):
+            if not os.access(fresh / ".git/hooks" / rel, os.X_OK):
+                bad.append(f"the template did not copy {rel}")
+        r.work = fresh
+        r.git("checkout", "-q", "-b", "main")
+        r.git("remote", "add", "origin", str(r.remote))
+        r.commit("a.md", f"key = {AWS_EXAMPLE}\n", "Key")
+        r.expect(r.push("main", want="stopped"), "a.md:1 aws-access-key-id")
+        return bad + r.finish()
+
+
+@test
+def secrets_pre_commit_hook():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp, pre_commit=True)
+        aws = AWS_EXAMPLE
+        r.git("config", "diff.mnemonicPrefix", "true")  # a staged diff then names its files c/ and i/
+        p = r.commit("a.txt", f"key = {aws}\n", "First commit with a key")  # no HEAD yet
+        r.expect(p.stderr, "secrets: commit stopped", "staged a.txt:1 aws-access-key-id AKIA****", f"sha256:{sha12(aws)}")
+        if p.returncode == 0 or r.git("rev-parse", "-q", "--verify", "HEAD").returncode == 0:
+            r.bad.append("the first commit with a key was made")
+        r.git("rm", "-q", "--cached", "a.txt")
+        (r.work / "a.txt").unlink()
+        r.commit("b.txt", "clean\n", "Clean commit")
+        if r.git("rev-parse", "-q", "--verify", "HEAD").returncode != 0:
+            r.bad.append("a clean commit was refused")
+        p = r.commit(".env", "PORT=1\n", "An env file")
+        r.expect(p.stderr, ".env env-file")
+        r.git("reset", "-q")
+        (r.work / ".env").unlink()
+        (r.work / ".secrets-allow").write_text(f"docs/*.md aws-access-key-id sha256:{sha12(aws)} Example value from the vendor documentation\n")
+        p = r.commit("docs/x.md", f"key = {aws}\n", "Allowed in the same commit")  # the index holds the allow file
+        if p.returncode:
+            r.bad.append(f"an allowed value was refused: {p.stderr.strip()[-200:]}")
+        p = r.commit("docs/y.md", f"key = {aws}\nother = {FAKE['github-token']}\n", "One allowed, one not")
+        r.expect(p.stderr, "docs/y.md:2 github-token")
+        r.git("reset", "-q", "--hard")
+        # a merge commit: lines taken from the other parent were scanned with it
+        r.git("checkout", "-q", "-b", "feature")
+        r.commit("shared.txt", f"key = {FAKE['slack-token']}\n", "Legacy key on feature", extra=NO_HOOKS)
+        r.git("checkout", "-q", "main")
+        r.commit("shared.txt", "main side\n", "Main side")
+        r.git("merge", "-q", "feature")
+        (r.work / "shared.txt").write_text(f"key = {FAKE['slack-token']}\nplus a clean line\n")
+        r.git("add", "shared.txt")
+        p = r.git("commit", "-q", "-m", "Merge feature")
+        if p.returncode:
+            r.bad.append(f"a merge that keeps a line of the other parent was refused: {p.stderr.strip()[-200:]}")
+        (r.work / "later.txt").write_text(f"key = {FAKE['slack-token']}\n")
+        r.git("add", "later.txt")
+        p = r.git("commit", "-q", "-m", "The same line in a new file")
+        r.expect(p.stderr, "later.txt:1 slack-token")
+        return r.finish()
+
+
+@test
+def secrets_check_and_history_commands():
+    bad = []
+    script = MODULE / "checks/secrets.py"
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp, install=False)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        cmd = lambda *a: subprocess.run([sys.executable, str(script), *a], cwd=r.work, env=r.env, capture_output=True, text=True)
+        p = cmd("check")
+        if p.returncode != 0 or "no hits" not in p.stderr:
+            bad.append(f"check on a clean branch: {p.returncode}, {p.stderr.strip()}")
+        r.commit("a.txt", f"key = {AWS_EXAMPLE}\n", "A key")
+        r.commit("a.txt", "removed\n", "Removed")
+        p = cmd("check")
+        r.expect(p.stderr, "secrets: push to origin (2 commits) stopped, 1 hits", "a.txt:1 aws-access-key-id AKIA****")
+        if p.returncode != 1 or r.remote_has(r.head()):
+            bad.append(f"check on a branch with a key: exit {p.returncode}, pushed {r.remote_has(r.head())}")
+        if cmd("check", "--tier", "warn").returncode != 0:
+            bad.append("check with tier warn must exit 0")
+        p = cmd("history")
+        r.expect(p.stdout, "a.txt:1 aws-access-key-id AKIA****", "secrets: 3 commits read, 1 hits")
+        if p.returncode != 1:
+            bad.append(f"history exit {p.returncode}")
+        r.seen += [p.stdout + p.stderr]
+        r.git("reset", "-q", "--hard", "origin/main")
+        p = cmd("history")
+        if "0 hits" not in p.stdout or p.returncode != 0:
+            bad.append(f"history of a clean repository: {p.returncode}, {p.stdout.strip()}")
+        bad += r.finish()
+    return bad
+
+
+@test
+def secrets_gate_check_allow_file():
+    bad = []
+    aws = AWS_EXAMPLE
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "docs").mkdir()
+        (root / "docs/a.md").write_text(f"key = {aws}\n")
+        (root / "docs/b.md").write_text(f"key = {aws}\nother = {FAKE['slack-token']}\n")
+        (root / "app").mkdir()
+        (root / "app/.env").write_text("PORT=1\n")
+        allow = root / ".secrets-allow"
+        allow.write_text("# documented values\n"
+                         f"docs/*.md aws-access-key-id sha256:{sha12(aws)} Example value from the vendor documentation\n"
+                         "app/.env env-file * Local development defaults, no secrets\n"
+                         f"gone/* * * An entry that matches nothing\n")
+        res = check_rule(secrets, root)
+        files = sorted((h["file"], h.get("rule")) for h in res["hits"])
+        if files != [("docs/b.md", "slack-token")]:
+            bad.append(f"hits with an allow file: {files}")
+        if "3 allowed by .secrets-allow" not in res["detail"] or "matched nothing: lines 4" not in res["detail"]:
+            bad.append(f"detail: {res['detail']}")
+        allow.write_text(f"docs/a.md aws-access-key-id sha256:{sha12(aws)}\n* * * Everything\n* aws-access-key-id sha256:zz Reason\n")
+        res = check_rule(secrets, root)
+        rules = sorted((h["file"], h.get("line"), h.get("rule")) for h in res["hits"] if h["file"] == ".secrets-allow")
+        if rules != [(".secrets-allow", 1, "allow-entry"), (".secrets-allow", 2, "allow-entry"), (".secrets-allow", 3, "allow-entry")]:
+            bad.append(f"allow entries without a reason, too broad, or with a bad hash: {rules}")
+        if any(aws in h["snippet"] for h in res["hits"]):
+            bad.append("a snippet shows a value")
+        res = check_rule(secrets, root, allow_file="nothing-here")
+        if not any(h["file"] == "docs/a.md" for h in res["hits"]):
+            bad.append("allow_file option ignored")
+    return bad
+
+
+@test
+def secrets_hook_is_clean_on_the_repositorys_own_files():
+    bad = []
+    listed = subprocess.run(["git", "-C", str(REPO), "ls-files", "-co", "--exclude-standard", "-z"], capture_output=True, text=True, check=True).stdout
+    names = [n for n in listed.split("\0") if n and (REPO / n).is_file()]
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        for n in names:
+            (work / n).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(REPO / n, work / n)
+        env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", GIT_AUTHOR_NAME="Fixture",
+                   GIT_AUTHOR_EMAIL="fixture@example.invalid", GIT_COMMITTER_NAME="Fixture", GIT_COMMITTER_EMAIL="fixture@example.invalid")
+        git = lambda *a: subprocess.run(["git", *a], cwd=work, env=env, capture_output=True, text=True, check=True)
+        git("init", "-q")
+        git("add", "-A")
+        git("commit", "-q", "-m", "The repository")
+        sha = git("rev-parse", "HEAD").stdout.strip()
+        read = lambda path: secrets.git_blob(sha, path, work)
+        found = secrets.Scan(work, read).commit(sha)
+        if found:
+            bad.append(f"hits with the repository's .secrets-allow: {[(f[1], f[2], f[3]) for f in found][:5]}")
+        if not (REPO / ".secrets-allow").is_file():
+            bad.append("the repository has no .secrets-allow for its fixtures")
+        bare = secrets.Scan(work, lambda path: None if path == ".secrets-allow" else read(path))
+        unallowed = bare.commit(sha)
+        prefixes = ("plugins/security/checks/fixtures/security.secrets/", "plugins/fit/skills/repo-clinic/cases/")
+        stray = sorted({f[1] for f in unallowed if not f[1].startswith(prefixes)})
+        if stray or len(unallowed) < 8:
+            bad.append(f"without the allow file: {len(unallowed)} hits, outside the known fixtures: {stray}")
+    return bad
+
+
+@test
+def secrets_hook_diff_parsing():
+    bad = []
+    if secrets.unquote('"a\\tb\\"c\\\\d"') != 'a\tb"c\\d' or secrets.unquote('"\\303\\251"') != "é" or secrets.unquote("plain b/x") != "plain b/x":
+        bad.append("unquote")
+    diff = "\n".join([
+        "diff --git a/old.txt b/new.txt", "similarity index 90%", "rename from old.txt", "rename to new.txt", "--- a/old.txt", "+++ b/new.txt\t",
+        "@@ -2,0 +3,2 @@", "+++ looks like a header", "+second", "@@ -9 +10 @@", "-gone", "+changed",
+        'diff --git "a/q\\"x.txt" "b/q\\"x.txt"', "--- /dev/null", '+++ "b/q\\"x.txt"', "@@ -0,0 +1 @@", "+quoted",
+        "diff --git a/del.txt b/del.txt", "--- a/del.txt", "+++ /dev/null", "@@ -1 +0,0 @@", "-bye",
+        "diff --git a/mode.sh b/mode.sh", "old mode 100644", "new mode 100755",
+        "diff --git a/n.txt b/n.txt", "--- a/n.txt", "+++ b/n.txt", "@@ -1 +1 @@", "-a", "\\ No newline at end of file", "+b", "\\ No newline at end of file",
+    ])
+    got = secrets.added_lines(diff)
+    want = [("new.txt", 3, "++ looks like a header"), ("new.txt", 4, "second"), ("new.txt", 10, "changed"), ('q"x.txt', 1, "quoted"), ("n.txt", 1, "b")]
+    if got != want:
+        bad.append(f"added_lines: {got}")
+    if secrets.new_paths("A\0one\0M\0two\0R090\0old\0three\0C100\0src\0four\0D\0five\0") != ["one", "three", "four"]:
+        bad.append("new_paths")
+    return bad
+
+
+@test
+def secrets_hook_scripts_pass_shellcheck():
+    exe = shutil.which("shellcheck")
+    if not exe:
+        return []
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, text in (("dispatcher-push.sh", secrets.dispatcher_text("pre-push")), ("dispatcher-commit.sh", secrets.dispatcher_text("pre-commit")),
+                           ("shim-push.sh", secrets.shim_text("pre-push", "block")), ("shim-commit.sh", secrets.shim_text("pre-commit", "warn"))):
+            f = Path(tmp) / name
+            f.write_text(text)
+            p = subprocess.run([exe, "-S", "warning", str(f)], capture_output=True, text=True)
+            if p.returncode:
+                bad.append(f"shellcheck {name}: {p.stdout.strip()[:300]}")
     return bad
 
 
