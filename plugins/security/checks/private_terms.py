@@ -8,7 +8,7 @@ on a public repository never needs it. A hit names the file, the line and the te
   python3 private_terms.py scan [root] [--terms FILE] [--allow FILE] [--built DIR]...
   python3 private_terms.py history [root] [--terms FILE]             (counts per label in all commits; prints no line)
   python3 private_terms.py pre-push <remote> <url> [--terms FILE]    (as .git/hooks/pre-push; git sends the refs on stdin)
-  python3 private_terms.py install-hook --into DIR --terms FILE      (writes DIR/pre-push, a two-line shim)
+  python3 private_terms.py install-hook --into DIR --terms FILE      (writes DIR/pre-push, a two-line shim; into DIR/pre-push.d when the secrets dispatcher is there)
 
 Exit codes: 0 clean, 1 hits, 2 no term list, a broken list or a hook that is already there.
 Standard library only, Python 3.9+.
@@ -41,6 +41,7 @@ TAG = re.compile(r"<[^>]*>")
 INVISIBLE = re.compile("[\u00ad\u200b-\u200d\u2060\ufeff]")  # soft hyphen and zero-width characters split no word for a reader
 MARKUP = (".html", ".htm", ".xhtml", ".xml", ".svg")
 MASK = "****"
+DISPATCH_MARK = "powersuit hook dispatcher"  # the pre-push file that secrets.py install-hook writes; it runs pre-push.d/*
 
 
 class ListError(Exception):
@@ -390,9 +391,16 @@ def install_hook(into, terms):
     target = into / "pre-push"
     me = Path(__file__).resolve()
     shim = f'#!/bin/sh\n# private-terms pre-push hook (CTO powersuit, security module)\nexec python3 "{me}" pre-push "$@" --terms "{Path(os.path.expanduser(terms)).resolve()}"\n'
-    if target.exists() and "private-terms pre-push hook" not in target.read_text(errors="replace"):
-        return 2, [f"{target} exists and is another hook; chain it by hand"]
-    into.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        text = target.read_text(errors="replace")
+        if DISPATCH_MARK in text:
+            # the dispatcher that secrets.py install-hook wrote runs everything in pre-push.d: the shim goes there
+            target = into / "pre-push.d" / "10-private-terms"
+            if target.exists() and "private-terms pre-push hook" not in target.read_text(errors="replace"):
+                return 2, [f"{target} exists and is another hook; chain it by hand"]
+        elif "private-terms pre-push hook" not in text:
+            return 2, [f"{target} exists and is another hook; chain it by hand"]
+    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(shim)
     target.chmod(0o755)
     return 0, [f"wrote {target}"]

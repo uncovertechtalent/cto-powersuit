@@ -72,7 +72,7 @@ The allow file is public. Write the glob so it does not spell the term (`drafts/
    git config --global init.templateDir ~/.config/private-terms/template
    ```
 
-   `git init` in an existing repository then adds the hook there too, and never replaces a hook that is already in place. `install-hook` refuses to replace another pre-push hook; chain the two by hand.
+   `git init` in an existing repository then adds the hook there too, and never replaces a hook that is already in place. `init.templateDir` holds one folder, so `/security:secrets` installs into the same template. `install-hook` refuses to replace another pre-push hook, with one exception: when `secrets.py install-hook` has put its dispatcher there, the shim goes into `pre-push.d/10-private-terms` and both hooks run. For any other hook, chain the two by hand.
 3. **Know what the hook reads.** For each pushed ref it reads the commits the remote does not have yet: messages, author and committer, the names of new files, and every added line, joined across line breaks. It also reads the branch or tag name and the message of an annotated tag. A missing list stops the push; an empty list lets it through with a note.
 4. **Scan the tree.** Commits that are already public are outside the hook. Scan the whole tree once, with the build output of a site:
 

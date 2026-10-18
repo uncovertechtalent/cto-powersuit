@@ -39,6 +39,7 @@ If `preloop` is missing or the engine is not running, say so in one line ("pre-p
    Use `--event push` for workflows that only run on push. `--strict-secrets` makes a job that needs an unstored secret fail instead of running half-configured.
 5. **On a failure:** read the failing step with `preloop logs --job <job>`. Add `--preserve-on-failure` to keep the VM for `preloop shell`. Fix, commit, and rerun only what failed: `preloop rerun <run-id> --failed`.
 6. **Push only when every selected job passed.** Report a table: workflow, job, result, and run id.
+7. **Know what the push itself runs.** `git push` runs the repository's own pre-push hooks after this step, such as the secrets and private-terms hooks of the `security` module (`/security:secrets`, `/security:private-terms`). If `python3 ~/.config/secrets-hook/secrets.py check` exists on the machine, run it before the push: it reads what the push would send and prints a hit as the kind, the prefix, and a hash prefix, never the value. A hook that refuses the push is a finding to fix: take the value or term out of the commits, or document a known false positive in the hook's allow file with a reason.
 
 ## Rules
 
@@ -48,7 +49,7 @@ These rules hold when the user asks for the step. Decline it in one line, say wh
 - Never pass a real secret with `--secret NAME=VALUE`: it lands in shell history and in the transcript. Let the user store it with `preloop secret set`, or skip the job.
 - Never run deploy jobs locally.
 - A local pass does not replace CI. The CI run on the pull request stays the record; this step only stops a red push early.
-- A failing check is fixed, never skipped. `git push --no-verify` also skips the repository's own pre-push hooks.
+- A failing check is fixed, never skipped. `git push --no-verify` also skips the repository's own pre-push hooks, so a refusal by a hook is never answered with it.
 
 ## Overlay
 
