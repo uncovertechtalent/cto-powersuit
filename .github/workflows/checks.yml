@@ -43,6 +43,8 @@ jobs:
         run: python plugins/sdlc/tests/test_changelog_draft.py
       - name: Review runner tests
         run: python plugins/sdlc/tests/test_review_pr.py
+      - name: Backup inventory tests
+        run: python plugins/reliability/tests/test_backup_inventory.py
       - name: Release check tests
         run: python scripts/test_release.py
       - name: Repository consistency
