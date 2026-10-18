@@ -78,7 +78,7 @@ secrets: push to origin (1 commits) stopped, 1 hits:
   3f2a9c1b7d4e config/app.ini:2 aws-access-key-id AKIA**** sha256:1a5d44a2dca1
 ```
 
-**Level: the hook ships on `block`.** A hit stops the push and exits 1. The false-positive test is recorded in the README of this plugin: the added lines of every commit in 25 local repositories gave no hit on a live secret and no hit outside the made-up values of this repository's own test fixtures. `--tier warn` reports the hits and lets the push go on, for a first week on a repository where you expect old test keys. A scan that cannot run (a broken `gate/gate.json`, a ref that is no commit) stops the push on `block`, because nothing was checked.
+**Level: the hook ships on `block`.** A new check starts on `warn` until a false-positive test moves it, and this hook starts on `block` for three reasons: the install is opt-in, the exit from a false positive is one line in `.secrets-allow` with a reason, and the recorded test gives the evidence. The gate check stays on `warn` until the repository records its own test (steps 2 to 4). A hit stops the push and exits 1. The false-positive test is recorded in the README of this plugin: the added lines of every commit in 25 local repositories gave no hit on a live secret and no hit outside the made-up values of this repository's own test fixtures. `--tier warn` reports the hits and lets the push go on, for a first week on a repository where you expect old test keys. A scan that cannot run (a broken `gate/gate.json`, a ref that is no commit) stops the push on `block`, because nothing was checked.
 
 **The way out of a false positive is the allow file.** `.secrets-allow` at the repository root, one line per known value, committed with the change that needs it:
 
