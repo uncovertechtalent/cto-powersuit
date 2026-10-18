@@ -5,14 +5,15 @@ description: >
   write a new one. Use when the team wants a new mechanical check in the gate,
   or wants to enable a check that another module ships. Every rule starts in the
   warn tier, gets a pass fixture and a fail fixture, and moves to the block tier
-  only after a recorded false-positive test. Activates on "/add-rule", "add a
-  gate rule", "gate this", "make the gate check", "install the docs check".
+  only after a recorded false-positive test. Also moves the gate's test job from
+  warn to block. Activates on "/add-rule", "add a gate rule", "gate this", "make
+  the gate check", "install the docs check", "block the deploy on failing tests".
 user-invocable: true
 ---
 
 # Add rule
 
-Adds one rule to the gate in the current repository. Run `/gate:gate-init` first if `gate/gate.json` does not exist.
+Adds one rule to the gate in the current repository, or moves the gate's test job to the `block` tier (path C). Run `/gate:gate-init` first if `gate/gate.json` does not exist.
 
 A gate rule is mechanical: it reads files in the repository and returns pass or fail with no network, no model call and no judgment. A check that needs judgment belongs in a review skill, outside the gate.
 
@@ -66,10 +67,45 @@ Modules ship their checks in `checks/<rule>.py`, with fixtures in `checks/fixtur
    Exit code 0 means the rule passes its pass fixture, fails its fail fixture and has a recorded test.
 9. **Report** the rule id, tier, fixture paths, the false-positive record and the commands above. Commit when the user says so.
 
+## Path C: move the test job to block
+
+The test job (`tests` in `gate/gate.json`, run by `.github/actions/gate/run_tests.py`) ships on `warn`: a failing test run is reported and the deploy still runs. Its false positive is a failed run on code that was fine: a flaky test, a missing service, a test that depends on order or on the clock. This path measures it in the environment that deploys.
+
+1. **Check the start.** `tests.command` is set, `tests.tier` is `warn`, and the tests job has run on main. If `command` is empty, go to step 4 of `/gate:gate-init`.
+2. **Collect the runs.** At least five runs of the tests job on main with the command set. Read the `tests:` line in the log of each one (`result=pass`, `result=warn` for a failed run on `warn`):
+
+   ```bash
+   gh run list --workflow gate.yml --branch main --limit 20
+   gh run view <run id> --log
+   ```
+
+   Do not start the workflow by hand to get more runs: its deploy job runs too. With fewer than five runs, wait, or run the command five times in a fresh clone of main on the machine that is closest to CI, and say in `corpus` that the runs were local.
+3. **Sort every failed run with the user.** A real regression that the tests caught counts in `hits` only. A flaky test, an environment fault, or an ordering problem counts in `hits` and in `legitimate`.
+4. **Stop if `legitimate` is above zero.** Fix the test or its setup, or quarantine the flaky test under the repository's flaky-test rule (`/sdlc:test-strategy`, step 5), and collect new runs. `run_tests.py` refuses `block` with a record that has `legitimate` above zero.
+5. **Record and promote.** In `gate/gate.json`:
+
+   ```json
+   "tests": {
+     "tier": "block",
+     "command": "<the command already there>",
+     "false_positive_test": {"date": "YYYY-MM-DD", "corpus": "6 runs of the tests job on main", "hits": 2, "legitimate": 0, "decision": "block: both failed runs were real regressions"}
+   }
+   ```
+
+6. **Verify.**
+
+   ```bash
+   python3 .github/actions/gate/run_tests.py
+   ```
+
+   Exit 0: the tests pass on this commit. Exit 1: they fail now, so the next push to main does not deploy; fix main first. Exit 2: the record is missing or has `legitimate` above zero.
+7. **Report** the tier, the record, the exit code, and what the tier now does: a failing test run, or an empty command, stops the deploy. Commit when the user says so.
+
 ## Rules
 
 - Never overwrite an existing rule file or fixture. Never push.
 - A new rule never starts on `block`.
+- The test job moves to `block` only with a recorded false-positive test that has `legitimate` at zero. Never record a test that was not run, and never edit the record to make the check pass.
 - A rule reads only files under `ctx.root`. No network, no clock-dependent hits except dates the files themselves carry.
 - Keep fixture content generic. Fixtures must not contain secrets, customer data or real names.
 
