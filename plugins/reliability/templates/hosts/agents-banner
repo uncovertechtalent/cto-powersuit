@@ -1,0 +1,1 @@
+AGENTS: read <log path> before changing this host. Append one line per change: date | who | what | why.

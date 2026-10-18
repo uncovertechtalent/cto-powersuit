@@ -1,9 +1,9 @@
 {
   "name": "reliability",
-  "version": "0.2.0",
-  "description": "Reliability for a repository: availability targets per service checked against their dependencies, SLOs with burn-rate alerts and an error-budget policy, incident runs, blameless postmortems, a static status page from published records, on-call rules, a backup inventory with restore tests and a restore-test runbook, and gate checks on the service catalogue and the backup inventory.",
+  "version": "0.3.0",
+  "description": "Reliability for a repository: availability targets per service checked against their dependencies, SLOs with burn-rate alerts and an error-budget policy, incident runs, blameless postmortems, a static status page from published records, on-call rules, a backup inventory with restore tests and a restore-test runbook, a change record on each server with an AGENTS banner on every ssh connection, and gate checks on the service catalogue and the backup inventory.",
   "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
   "homepage": "https://github.com/uncovertechtalent/cto-powersuit",
   "license": "MIT",
-  "keywords": ["reliability", "sre", "slo", "error-budget", "incident", "postmortem", "status-page", "on-call", "service-catalog", "backup", "restore", "disaster-recovery"]
+  "keywords": ["reliability", "sre", "slo", "error-budget", "incident", "postmortem", "status-page", "on-call", "service-catalog", "backup", "restore", "disaster-recovery", "host-log", "change-record", "ssh"]
 }

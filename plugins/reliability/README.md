@@ -1,8 +1,8 @@
 # reliability
 
-Reliability work for a repository, built on one service catalogue: one `services/<id>.yml` per service with its owner, tier, SLO, runbooks and dependencies. The skills set an availability target per service and check it against the dependencies, define SLOs with burn-rate alerts, run incidents, write blameless postmortems, publish a status page from the incident records, set the on-call rules, and record where each data store's backups live, who can delete them, and whether a restore works. A gate check reports catalogue entries without an owner, an SLO target or a runbook. A second gate check reports a data store without a backup copy outside the reach of production administrators, without a restore test, with a stale or failed one, or with a restore time above its target.
+Reliability work for a repository, built on one service catalogue: one `services/<id>.yml` per service with its owner, tier, SLO, runbooks and dependencies. The skills set an availability target per service and check it against the dependencies, define SLOs with burn-rate alerts, run incidents, write blameless postmortems, publish a status page from the incident records, set the on-call rules, record where each data store's backups live, who can delete them, and whether a restore works, and keep a change record on each server that every ssh connection points to. A gate check reports catalogue entries without an owner, an SLO target or a runbook. A second gate check reports a data store without a backup copy outside the reach of production administrators, without a restore test, with a stale or failed one, or with a restore time above its target.
 
-The skills prepare files, rules and commands. They never push, deploy, page, or change production, and the user publishes every change.
+The skills prepare files, rules and commands. They never push, deploy, page, or change production, and the user publishes every change. The one exception is `host-log`: for a host the user names and agrees to, it creates the host's change record and banner, and it appends a line to that record after each change the user asks for on the host.
 
 Install:
 
@@ -21,6 +21,7 @@ claude plugin install reliability@cto-powersuit
 | `/reliability:status-page` | Sets up a static status page built by `scripts/build_status.py` from the catalogue and the incident records, and adds the build to the deploy job. |
 | `/reliability:backup-inventory` | Walks through each data store: where its backup lives, the schedule and retention, which identities can delete or overwrite it, whether a copy sits outside the reach of production administrators, the last restore test, and the measured restore time against its target. Writes `docs/sre/backups.md` and a restore-test runbook per store. It records what the team says and tests nothing in the cloud account. |
 | `/reliability:on-call` | Writes the rotation, the escalation policy, the handover checklist and the paging rules (page only on user-facing symptoms, every alert links a runbook), with an audit of the existing alert rules. |
+| `/reliability:host-log` | Keeps a change record on every server touched over ssh: `/<hostname>.log`, one line per change with date, who, what, and why, read before a change and appended after it, never edited. Every ssh connection prints an `AGENTS:` line that points at the log. Appends the line from stdin, so no quoting trap in a remote command can run text on your machine. Sets up a Linux host with sudo (log in `/`, sshd `Banner` through a drop-in file, snapshot, `sshd -t`, fresh-connection check) and a macOS or no-sudo host (log in the home folder, a shell hook for ssh logins). Covers appliances whose vendor updates can reset the banner, and the DNS and routing hosts to leave out. The fleet table stays in the private overlay. |
 
 Every skill checks the overlay first: `$POWERSUIT_OVERLAY/reliability/` (see the root README). Use it for your tiers, severity levels, starting targets, policy thresholds, rotation and incident history.
 
@@ -40,6 +41,8 @@ The skills copy these files into the client repository on first use. An existing
 | `templates/docs/sre/on-call.md` | `docs/sre/on-call.md` | On-call policy: rotation, load limits, escalation, paging rules, handover checklist, review |
 | `templates/docs/sre/backups.md` | `docs/sre/backups.md` | Backup inventory: production administrators, one table per data store (backup location, schedule, retention, data loss target, who can delete it, the out-of-reach copy, the last restore test, result, measured time, and target), the stores that are not backed up on purpose, and the restore test log |
 | `templates/docs/sre/_templates/restore-test.md` | `docs/sre/_templates/restore-test.md` | Restore-test runbook: what to have ready, the steps, the verification that stops the clock, how to record the minutes, and clean up. The skill writes one page per store from it |
+| `templates/hosts/host.log` | not copied into the repository | Header of a host's change record: the rules for agents and the line format. The skill fills the placeholders and sends the header to the host on stdin |
+| `templates/hosts/agents-banner` | not copied into the repository | The `AGENTS:` line that ssh shows on every connection, with the path of the log. The skill installs it as the sshd banner or prints it from a shell hook |
 
 The doc pages carry the front matter of the `docs` module (`owner`, `reviewed`, `review_by`, `type`), so a filled page passes `docs.review`. If `docs/docs.json` exists, the skills offer to add the `sre` space to it.
 
