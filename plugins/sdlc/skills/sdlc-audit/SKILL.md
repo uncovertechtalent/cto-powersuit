@@ -78,7 +78,7 @@ It needs no other module. It reads files and runs read-only commands; it changes
    | Incident | `reliability` module: `/reliability:incident`, `/reliability:postmortem`, `/reliability:on-call` |
    | Docs | `docs` module |
    | Dependencies | Add a lock file with the package manager (`npm install --package-lock-only`, `uv lock`, `poetry lock`, `go mod tidy`), or pin with `==`; declare the dependencies of tool scripts in a manifest. Then `/security:supply-chain`: vulnerability scan of the lock files, SBOM, Dependabot, and pinned actions from listed owners |
-   | Secrets | `/security:secrets`: rotate the secret first with its rotation runbook, then remove it from history with the user; add the blocking check `security.secrets` with `/gate:add-rule` |
+   | Secrets | `/security:secrets`: rotate the secret first with its rotation runbook, then remove it from history with the user; install the pre-push hook so the next key is refused before the push, and add the check `security.secrets` with `/gate:add-rule` |
    | Hygiene | Remove the files from git (`git rm --cached`) and add them to `.gitignore`, with the user's go |
    | Lifecycle as a whole | `/sdlc:sdlc-init` |
 
