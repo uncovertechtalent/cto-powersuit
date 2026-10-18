@@ -11,9 +11,10 @@ Config (gate/gate.json):
            warn   a failing test run is reported and the step passes; the deploy runs (default)
            off    the command does not run; said in the output
   command  one shell command, run from the repository root with `bash -e -o pipefail` (a multi-line
-           command stops at its first failing line)
-  false_positive_test  required on block: {"date", "corpus", "hits", "legitimate", "decision"};
-           "legitimate" must be 0 (the failed runs on warn that were not real regressions)
+           command stops at its first failing line). Without bash on PATH the step exits 2 and runs nothing:
+           sh would run the same command without -e and pipefail and could report a failed test run as a pass.
+  false_positive_test  required on block: "date", "hits", and "legitimate" (also record "corpus" and
+           "decision"); "legitimate" must be 0 (the failed runs on warn that were not real regressions)
 No "tests" key counts as warn with no command.
 
 Usage: run_tests.py [--config gate/gate.json] [--root .]
@@ -79,9 +80,10 @@ def load(cfg_path):
 
 def run_command(command, root):
     bash = shutil.which("bash")
-    argv = [bash, "-e", "-o", "pipefail", "-c", command] if bash else None
+    if not bash:
+        raise ConfigError("bash is not on PATH; the test command runs with bash -e -o pipefail, and sh would hide a failing line")
     sys.stdout.flush()
-    return subprocess.run(argv or command, shell=argv is None, cwd=str(root), stdin=subprocess.DEVNULL).returncode
+    return subprocess.run([bash, "-e", "-o", "pipefail", "-c", command], cwd=str(root), stdin=subprocess.DEVNULL).returncode
 
 
 def write_summary(rows):

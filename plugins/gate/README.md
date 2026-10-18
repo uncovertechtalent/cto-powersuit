@@ -74,7 +74,7 @@ The template ships `{"tier": "warn", "command": ""}`, so the tests job ships on 
 ```
 
 - The command can be the pre-PR command from the "Test strategy" section of `docs/sdlc.md` (`/sdlc:test-strategy`), or the part of it that runs the tests. Its gate dry run is redundant here, because the `gate` job runs the rules.
-- The command runs with `bash -e -o pipefail`, so a multi-line command stops at its first failing line and a failing stage of a pipe fails the run.
+- The command runs with `bash -e -o pipefail`, so a multi-line command stops at its first failing line and a failing stage of a pipe fails the run. Without bash on `PATH` the step exits 2 and runs nothing, because `sh` would hide a failing line.
 - The `tests` job has a placeholder step, "Set up the toolchain", for the runtime, the dependencies, and the services the command needs. Pin each action in it by commit SHA, as `gate.actions-pinned` requires.
 - The job gets a read-only token and does not keep the checkout credentials, because project test code runs in it.
 - A job that does not finish (a runner failure, or the 30-minute `timeout-minutes`) fails on any tier, and the deploy waits, because nothing says the tests passed.

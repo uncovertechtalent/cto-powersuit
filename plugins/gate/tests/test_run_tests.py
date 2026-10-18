@@ -93,6 +93,17 @@ def failing_command_fails_on_block_and_is_reported_on_warn(tmp):
 
 
 @case
+def without_bash_the_step_exits_2_and_runs_nothing(tmp):
+    root = repo(tmp, {"tier": "warn", "command": "echo ran > ./marker"})
+    p = step(root, env={"PATH": str(Path(tmp) / "empty")})
+    assert p.returncode == 2 and not (root / "marker").exists(), p.stdout + p.stderr
+    assert "bash" in p.stderr and "::error" in p.stdout, p.stdout + p.stderr
+    # tiers that run no command do not need bash
+    assert step(repo(tmp, {"tier": "off", "command": "true"}), env={"PATH": str(Path(tmp) / "empty")}).returncode == 0
+    assert step(repo(tmp, {"tier": "warn", "command": ""}), env={"PATH": str(Path(tmp) / "empty")}).returncode == 0
+
+
+@case
 def off_runs_nothing_and_says_so(tmp):
     root = repo(tmp, {"tier": "off", "command": "echo ran > ./marker; exit 1"})
     p = step(root)
