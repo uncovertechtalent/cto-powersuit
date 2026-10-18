@@ -1,11 +1,12 @@
-"""The backup inventory records, per data store, a copy outside production admin reach and a restore test that is recent, passed and within its time target."""
+"""The backup inventory records, per data store, a copy outside production admin reach and a restore test that is recent, passed, and within its time target."""
 import datetime
 import re
 
 ID = "reliability.backup-inventory"
-DESCRIPTION = ("Every data store in docs/sre/backups.md has a copy outside production admin reach that no production "
-               "administrator can delete, and a restore test with a date, a pass result and a measured restore time "
-               "within the target; a restore test older than max_age_days is a warning.")
+DESCRIPTION = ("Every data store in docs/sre/backups.md records a copy outside production admin reach that no production "
+               "administrator can delete, and a restore test with a date, a pass result, and a measured restore time "
+               "within the target; a restore test older than max_age_days is a warning. The rule reads the page, not the "
+               "cloud account.")
 DEFAULTS = {
     "globs": ["docs/sre/backups.md"],
     "max_age_days": 90,
