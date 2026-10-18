@@ -1346,6 +1346,30 @@ def secrets_hook_reads_a_push_by_url_like_a_push_by_name():
 
 
 @test
+def secrets_hook_masks_each_finding_with_the_patterns_of_every_ref():
+    token = "acme_" + "0123456789abcdef0123"
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        r.git("checkout", "-q", "-b", "a-default")
+        r.commit("a.txt", "a\n", "A")
+        first = r.head()
+        r.git("checkout", "-q", "main")
+        r.git("checkout", "-q", "-b", "b-acme")
+        config = {"rules": {"security.secrets": {"options": {"patterns": {"acme-token": [r"\bacme_[0-9a-f]{20}\b", "acme_****"]}}}}}
+        r.commit("gate/gate.json", json.dumps(config), "The team's token format")
+        r.commit("keys/" + token, "x\n", "A file named like a token")
+        zero = "0" * 40
+        refs = [f"refs/heads/a-default {first} refs/heads/a-default {zero}", f"refs/heads/b-acme {r.head()} refs/heads/b-acme {zero}"]
+        code, lines = secrets.pre_push("origin", refs, r.work, "block")
+        shown = "\n".join(lines)
+        if code != 1 or token in shown or "keys/acme_**** acme-token" not in shown:
+            r.bad.append(f"a path matched by the second ref's pattern: exit {code}, {shown[:300]}")
+        return r.bad
+
+
+@test
 def secrets_hook_masks_an_error_with_the_patterns_of_the_scan():
     token = "acme_" + "0123456789abcdef0123"
     config = json.dumps({"rules": {"security.secrets": {"options": {"patterns": {"acme-token": [r"\bacme_[0-9a-f]{20}\b", "acme_****"]}}}}})

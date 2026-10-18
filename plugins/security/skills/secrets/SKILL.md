@@ -69,9 +69,9 @@ Options in `gate/gate.json`:
 - the names of the files the commits add, since a file can be named like a key;
 - every new `.env` file other than `.env.example`, `.env.sample`, `.env.template` and `.env.dist`.
 
-For a merge commit it reads what is new against every parent, so lines that come in with commits the remote already has are not read twice. It uses the patterns, the `exclude` list, `allow` and `allow_hashes` of `gate/gate.json` in the pushed commit when the file is there, so the hook and the gate check agree; the defaults of the table above apply otherwise. It ignores diff settings, text conversion programs and replace refs of the clone, which could otherwise hide a line. A push to a URL reads like a push by remote name when a configured remote has that URL; to any other URL, a new ref is read from the start of its history. A scan step that runs longer than 60 seconds (`SECRETS_HOOK_SECONDS`, `0` turns the limit off, Unix only) stops the push, so a pattern that backtracks without end cannot hang it.
+For a merge commit it reads what is new against every parent, so lines that come in with commits the remote already has are not read twice. It uses the patterns, the `exclude` list, `allow`, and `allow_hashes` of `gate/gate.json` in the pushed commit when the file is there, so the hook and the gate check agree; the defaults of the table above apply otherwise. It ignores diff settings, text conversion programs, and replace refs of the clone, which could otherwise hide a line. A push to a URL reads like a push by remote name when a configured remote has that URL; to any other URL, a new ref is read from the start of its history. A scan step that runs longer than 60 seconds (`SECRETS_HOOK_SECONDS`, `0` turns the limit off, Unix only) stops the push, so a pattern that backtracks without end cannot hang it.
 
-A hit shows the commit, the place, the kind, the fixed prefix and the first 12 hex digits of the sha256, never the value, also not inside a file name or a branch name:
+A hit shows the commit, the place, the kind, the fixed prefix, and the first 12 hex digits of the sha256, never the value, also not inside a file name or a branch name:
 
 ```text
 secrets: push to origin (1 commits) stopped, 1 hits:
@@ -86,7 +86,7 @@ secrets: push to origin (1 commits) stopped, 1 hits:
 docs/aws-example.md aws-access-key-id sha256:1a5d44a2dca1 Example key id from the vendor documentation
 ```
 
-The fields are a path glob, a kind or `*`, the sha256 prefix from the hit (8 hex digits or more) or `*`, and the reason. An entry without a reason, with a bad hash, or with `*` for the hash on a glob that matches every path counts for nothing and is a hit itself. A message, a tag message and a ref name are matched as `commit-message`, `tag-message` and `ref-name`. The hook reads the file as the pushed commit has it, so an edit in the work tree allows nothing, and the entry shows in the diff that a reviewer reads. The gate check reads the same file (`allow_file` option). A live value is never allowed: take it out of the commits that carry it and rotate it (step 5).
+The fields are a path glob, a kind or `*`, the sha256 prefix from the hit (8 hex digits or more) or `*`, and the reason. An entry without a reason, with a bad hash, or with `*` for the hash on a glob that matches every path counts for nothing and is a hit itself. A message, a tag message, and a ref name are matched as `commit-message`, `tag-message`, and `ref-name`. The hook reads the file as the pushed commit has it, so an edit in the work tree allows nothing, and the entry shows in the diff that a reviewer reads. The gate check reads the same file (`allow_file` option). A live value is never allowed: take it out of the commits that carry it and rotate it (step 5).
 
 A glob follows `fnmatch`: `*` matches any characters, `/` included, so `docs/*` covers everything under `docs/`. An entry with `*` for the hash stays in force for every later value in those paths, so prefer the hash of the one value.
 
@@ -103,7 +103,16 @@ Hook and check cover patterns, not meaning. A secret without a fixed prefix, an 
    python3 ~/.config/secrets-hook/secrets.py install-hook --into .git/hooks
    ```
 
-   Add `--pre-commit` to refuse a commit that stages a secret as well, and `--tier warn` for a trial. With `core.hooksPath` set, pass that folder to `--into` instead of `.git/hooks`. The hook needs `python3` on the PATH of the process that runs `git push`; without it the push stops, since nothing was checked. For every clone made from now on, write the hook into a git template folder. The user sets the template, since it changes the global git configuration:
+   Add `--pre-commit` to refuse a commit that stages a secret as well, and `--tier warn` for a trial. With `core.hooksPath` set, pass that folder to `--into` instead of `.git/hooks`. The hook needs `python3` on the PATH of the process that runs `git push`; without it the push stops, since nothing was checked.
+
+   For every clone made from now on, write the hook into a git template folder. `init.templateDir` holds one folder, and `/security:private-terms` may have set it already, so look first. If a folder is set, install into its `hooks`, and both hooks reach new clones from that one template:
+
+   ```bash
+   git config --global --type=path --get init.templateDir
+   python3 ~/.config/secrets-hook/secrets.py install-hook --into "$(git config --global --type=path --get init.templateDir)/hooks" --pre-commit
+   ```
+
+   If none is set, the user creates one, since it changes the global git configuration:
 
    ```bash
    python3 ~/.config/secrets-hook/secrets.py install-hook --into ~/.config/secrets-hook/template/hooks --pre-commit

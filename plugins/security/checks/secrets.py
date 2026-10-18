@@ -8,9 +8,9 @@ optional pre-commit hook over what a commit adds.
   python3 secrets.py history [root]                                   (secret hits in the added lines of every commit; counts and masked hits)
   python3 secrets.py install-hook --into DIR [--tier warn|block] [--pre-commit]
 
-A hit shows the kind, the fixed prefix and the first 12 hex digits of the value's sha256, never the value.
+A hit shows the kind, the fixed prefix, and the first 12 hex digits of the value's sha256, never the value.
 Known false positives go into .secrets-allow at the repository root: "<path glob> <kind or *> <sha256 prefix or *> <reason>".
-Exit codes: 0 clean (or tier warn), 1 hits, 2 a scan that could not run, a broken config or a hook that is already there.
+Exit codes: 0 clean (or tier warn), 1 hits, 2 a scan that could not run, a broken config, or a hook that is already there.
 Standard library only, Python 3.9+.
 """
 import argparse
@@ -431,19 +431,22 @@ class Scan:
         return out
 
 
-def describe(scan, f):
+def describe(scans, f):
+    """One report line. The place is masked with the patterns of every scan in the push, since refs can carry different gate configs."""
     commit, where, line, kind, shown, digest = f
-    place = scan.mask(where) + (f":{line}" if line else "")
+    for scan in scans:
+        where = scan.mask(where)
+    place = where + (f":{line}" if line else "")
     tail = f"{kind} {shown}" + (f" sha256:{digest[:12]}" if digest else "")
     return f"  {commit} {place} {tail}" if commit != "config" else f"  {place} {shown}"
 
 
-def report(scan, found, what, tier):
+def report(scans, found, what, tier):
     """Report lines for the findings, most useful first. Never a value, never a way to skip the hook."""
     found = sorted(set(found), key=lambda f: (f[0], f[1], f[2] or 0, f[3], f[5] or ""))
     head = (f"secrets: {what} stopped, {len(found)} hits:" if tier == "block"
             else f"secrets: tier warn, {what} goes on, {len(found)} hits:")
-    lines = [head] + [describe(scan, f) for f in found[:MAX_SHOWN]]
+    lines = [head] + [describe(scans, f) for f in found[:MAX_SHOWN]]
     if len(found) > MAX_SHOWN:
         lines.append(f"  and {len(found) - MAX_SHOWN} more")
     live = ("A live value: unstage the file or the lines, keep the value in a secret store, and rotate it if it left this machine (/security:secrets)."
@@ -527,7 +530,7 @@ def pre_push(remote, refs, cwd, tier):
     notes = [n for scan in scans for n in scan.notes()]
     if not found:
         return 0, notes
-    lines = report(scans[0], found, f"push to {clean_url(remote)} ({commits} commits)", tier)
+    lines = report(scans, found, f"push to {clean_url(remote)} ({commits} commits)", tier)
     return (1 if tier == "block" else 0), lines + notes
 
 
@@ -549,7 +552,7 @@ def pre_commit(cwd, tier):
         found = scan.problem_findings() + scan.change("staged", bases, None)
     if not found:
         return 0, scan.notes()
-    return (1 if tier == "block" else 0), report(scan, found, "commit", tier) + scan.notes()
+    return (1 if tier == "block" else 0), report([scan], found, "commit", tier) + scan.notes()
 
 
 # ---------- history ----------
@@ -670,7 +673,7 @@ def main(argv):
         elif a.cmd == "history":
             root = Path(a.root).resolve()
             scan, found, n = history(root)
-            lines = [describe(scan, f) for f in found[:MAX_SHOWN]]
+            lines = [describe([scan], f) for f in found[:MAX_SHOWN]]
             if len(found) > MAX_SHOWN:
                 lines.append(f"  and {len(found) - MAX_SHOWN} more")
             lines.append(f"secrets: {n} commits read, {len(found)} hits")
