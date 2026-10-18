@@ -52,7 +52,7 @@ Written by `/handover:runs-without-me`. The new owner runs each scenario from th
 
 | Date | Scenario | Run by | Help needed | Time taken | Docs used | Gaps found | Tickets |
 |---|---|---|---|---|---|---|---|
-| <YYYY-MM-DD> | <deploy, blocked gate, incident, cost spike, docs review or new decision> | <owner> | <none, or the question asked> | <minutes> | <pages used> | <what was missing or wrong> | <ticket ids> |
+| <YYYY-MM-DD> | <deploy, blocked gate, incident, restore, cost spike, docs review, or new decision> | <owner> | <none, or the question asked> | <minutes> | <pages used> | <what was missing or wrong> | <ticket ids> |
 
 ## Module signals
 

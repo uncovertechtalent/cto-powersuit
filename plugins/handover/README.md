@@ -16,7 +16,7 @@ claude plugin install handover@cto-powersuit
 |---|---|
 | `/handover:owner-training` | Finds the installed modules by their signal files and writes one checklist per module for its new owner: what to read, what to run, one change made under supervision and how to know it works. Records progress and the owners table in `docs/handover.md` |
 | `/handover:exit-criteria` | Sets the conditions for the exit of the person handing over (owner and backup per module, every runbook run by its new owner, gate and status page operated without help for a set period, open decisions recorded, access moved, scenarios passed), checks each against evidence and sets the exit date |
-| `/handover:runs-without-me` | Plans and logs scenarios the new owner runs with no help (a deploy, a blocked gate, an incident, a cost spike, a docs review, a new decision), with time taken, docs used and gaps found; every gap becomes a ticket |
+| `/handover:runs-without-me` | Plans and logs scenarios the new owner runs with no help (a deploy, a blocked gate, an incident, a restore, a cost spike, a docs review, a new decision), with time taken, docs used, and gaps found; every gap becomes a ticket |
 
 ## Templates
 
