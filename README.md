@@ -268,14 +268,18 @@ Text in a pull request can try to steer the review, and here also try to pull pr
 
 ## Evals
 
-`claude plugin eval` runs behaviour cases for three skills: `/sdlc:sdlc-audit` and `/sdlc:pre-push` in `plugins/sdlc/evals/`, and `/fit:repo-clinic` in `plugins/fit/evals/`. Five of the six cases are failure paths, where the skill must refuse or stop. Every run is a model call on your account, so the cases run locally and not in CI.
+`claude plugin eval` runs behaviour cases for four skills: `/sdlc:sdlc-audit` and `/sdlc:pre-push` in `plugins/sdlc/evals/`, `/fit:repo-clinic` in `plugins/fit/evals/`, and `/security:secrets` in `plugins/security/evals/`. Six of the seven cases are failure paths, where the skill must refuse or stop. Every run is a model call on your account, so the cases run locally and not in CI.
 
 ```bash
 cd plugins/sdlc
 claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
 cd ../fit
 claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
+cd ../security
+claude plugin eval . --trust-plugin --scaffold --allow-tools Bash Write Edit --model claude-sonnet-5-5 --judge-model claude-haiku-5-5 --no-publish --threshold 0.8
 ```
+
+Two cases run with the plugin only, because a baseline arm has nothing to grade (`clinic-keeps-findings-private`: no skill, no clinic folder) or would use the plugin's own file (`secrets-hook-stops-push`: the fixture holds a copy of `secrets.py`). Run each of them alone with `--case <name> --ablation none`; the whole-suite commands above add a baseline arm for them that EVALS.md leaves out.
 
 `--scaffold` runs each case's `scaffold.sh`, which builds a small fixture repository in the run's workspace. On macOS, put `/Library/Developer/CommandLineTools/usr/bin` first on `PATH`: the eval sandbox breaks the `/usr/bin/git` shim, and the skills read git history. A full run costs about $4. [EVALS.md](EVALS.md) has the results.
 

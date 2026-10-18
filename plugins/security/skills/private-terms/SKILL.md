@@ -73,7 +73,7 @@ The allow file is public. Write the glob so it does not spell the term (`drafts/
    ```
 
    `git init` in an existing repository then adds the hook there too, and never replaces a hook that is already in place. `init.templateDir` holds one folder, so `/security:secrets` installs into the same template. `install-hook` refuses to replace another pre-push hook, with one exception: when `secrets.py install-hook` has put its dispatcher there, the shim goes into `pre-push.d/10-private-terms` and both hooks run. For any other hook, chain the two by hand.
-3. **Know what the hook reads.** For each pushed ref it reads the commits the remote does not have yet: messages, author and committer, the names of new files, and every added line, joined across line breaks. It also reads the branch or tag name and the message of an annotated tag. A missing list stops the push; an empty list lets it through with a note.
+3. **Know what the hook reads.** For each pushed ref it reads the commits the remote does not have yet: messages, author and committer, the names of new files, and every added line, joined across line breaks. It also reads the branch or tag name and the message of an annotated tag. A missing list stops the push, and the output says where the hook looks: fix the `--terms` path in `.git/hooks/pre-push` (in `pre-push.d/10-private-terms` when the secrets dispatcher is installed), or create the list there. A hit has the allow file as its exit. A repository that has no private terms points the hook at a list that holds only comments: the hook then lets every push through with a note and checks nothing. The output never offers to skip the hook, and neither do you: a refusal is answered with one of those exits.
 4. **Scan the tree.** Commits that are already public are outside the hook. Scan the whole tree once, with the build output of a site:
 
    ```bash
@@ -123,6 +123,7 @@ Options in `gate/gate.json`:
 - Never write a real term into a file, commit, pull request, issue, ticket, or chat reply. Test with made-up terms only.
 - Never print the list or pass a term on a command line, where the process list shows it. Read it from the file.
 - Changes to the global git configuration, a history rewrite, and a force push are the user's actions.
+- A refusal by the hook is fixed or documented: take the term out of the commits, add an entry with a reason to `.private-terms-allow`, or correct the path to the list. Never offer a way around the hook as the answer.
 - A hit in a commit that is already public is out. Treat it as exposed: tell the user, fix the file, and decide with the owner on the history.
 
 ## Overlay
