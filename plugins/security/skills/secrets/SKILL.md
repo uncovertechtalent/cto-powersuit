@@ -65,10 +65,11 @@ Options in `gate/gate.json`:
 `checks/secrets.py` is the gate check and also the hook. At `git push`, for each ref, it reads what the remote does not have yet:
 
 - every line the new commits add (a line that only moved is not an added line), also in files git treats as binary;
-- the commit messages, the message of an annotated tag, and the branch or tag name;
+- the commit messages, the message of every tag object on the way from the pushed tag to its commit (a tag can point to a tag), and the branch or tag name;
+- the names of the files the commits add, since a file can be named like a key;
 - every new `.env` file other than `.env.example`, `.env.sample`, `.env.template` and `.env.dist`.
 
-For a merge commit it reads what is new against every parent, so lines that come in with commits the remote already has are not read twice. It uses the patterns, the `exclude` list, `allow` and `allow_hashes` of `gate/gate.json` in the pushed commit when the file is there, so the hook and the gate check agree; the defaults of the table above apply otherwise. It ignores diff settings, text conversion programs and replace refs of the clone, which could otherwise hide a line.
+For a merge commit it reads what is new against every parent, so lines that come in with commits the remote already has are not read twice. It uses the patterns, the `exclude` list, `allow` and `allow_hashes` of `gate/gate.json` in the pushed commit when the file is there, so the hook and the gate check agree; the defaults of the table above apply otherwise. It ignores diff settings, text conversion programs and replace refs of the clone, which could otherwise hide a line. A push to a URL reads like a push by remote name when a configured remote has that URL; to any other URL, a new ref is read from the start of its history. A scan step that runs longer than 60 seconds (`SECRETS_HOOK_SECONDS`, `0` turns the limit off, Unix only) stops the push, so a pattern that backtracks without end cannot hang it.
 
 A hit shows the commit, the place, the kind, the fixed prefix and the first 12 hex digits of the sha256, never the value, also not inside a file name or a branch name:
 
@@ -87,7 +88,11 @@ docs/aws-example.md aws-access-key-id sha256:1a5d44a2dca1 Example key id from th
 
 The fields are a path glob, a kind or `*`, the sha256 prefix from the hit (8 hex digits or more) or `*`, and the reason. An entry without a reason, with a bad hash, or with `*` for the hash on a glob that matches every path counts for nothing and is a hit itself. A message, a tag message and a ref name are matched as `commit-message`, `tag-message` and `ref-name`. The hook reads the file as the pushed commit has it, so an edit in the work tree allows nothing, and the entry shows in the diff that a reviewer reads. The gate check reads the same file (`allow_file` option). A live value is never allowed: take it out of the commits that carry it and rotate it (step 5).
 
-Hook and check cover patterns, not meaning. A secret without a fixed prefix, an encoded or split value, and a file git does not track pass both.
+A glob follows `fnmatch`: `*` matches any characters, `/` included, so `docs/*` covers everything under `docs/`. An entry with `*` for the hash stays in force for every later value in those paths, so prefer the hash of the one value.
+
+**What the pusher controls.** `gate/gate.json` and `.secrets-allow` are read from the pushed commit, so one push can change what the hook reads, and the gate check reads the same files. The hook prints a note when a push changes either file and how many hits entries allowed, and an empty `patterns` map is a config error. Put both files under CODEOWNERS, so that a reviewer reads every change to them.
+
+Hook and check cover patterns, not meaning. A secret without a fixed prefix, an encoded or split value, and a file git does not track pass both. The hook reads every added line, whatever the size of the file, where the gate check skips files over `max_bytes`.
 
 ## Steps
 

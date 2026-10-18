@@ -788,6 +788,12 @@ def secrets_hook_reads_messages_tags_ref_names_and_paths():
         err = r.push("v1", want="stopped")
         r.expect(err, "tag-message:2 sk-key sk-****")
         r.git("tag", "-d", "v1")
+        r.git("tag", "-a", "inner", "-m", "Inner\nkey " + FAKE["slack-token"])
+        inner = r.git("rev-parse", "inner").stdout.strip()
+        r.git("tag", "-a", "outer", "-m", "Outer tag", inner)  # a tag that points to a tag
+        err = r.push("outer", want="stopped")
+        r.expect(err, "tag-message:2 slack-token xox?-****")
+        r.git("tag", "-d", "outer", "inner")
         err = r.push("HEAD:refs/heads/" + FAKE["aws-access-key-id"], want="stopped")
         r.expect(err, "ref-name:1 aws-access-key-id")
         blob = r.git("hash-object", "-w", "--stdin", inp="plain text\n").stdout.strip()
@@ -805,7 +811,11 @@ def secrets_hook_masks_a_key_in_a_path():
         r.push("main", want="ok")
         r.commit("keys/" + FAKE["aws-access-key-id"] + ".txt", f"x = {FAKE['aws-access-key-id']}\n", "A file named like its key")
         err = r.push("main", want="stopped")
-        r.expect(err, "keys/AKIA****.txt:1 aws-access-key-id")
+        r.expect(err, "keys/AKIA****.txt:1 aws-access-key-id", "keys/AKIA****.txt aws-access-key-id AKIA****")
+        r.git("reset", "-q", "--hard", "origin/main")
+        r.commit("notes/" + FAKE["github-token"], "plain text\n", "A file named like a token, with nothing inside")
+        err = r.push("main", want="stopped")
+        r.expect(err, "notes/gh?_**** github-token gh?_****")
         return r.finish()
 
 
@@ -863,7 +873,8 @@ def secrets_hook_allow_file():
                 r.git("reset", "-q", "--hard", "origin/main")
             return err
 
-        attempt("docs/a.md", entry("docs/a.md", "aws-access-key-id", "sha256:" + sha12(aws)), "ok")
+        attempt("docs/a.md", entry("docs/a.md", "aws-access-key-id", "sha256:" + sha12(aws)), "ok",
+                "this push changes .secrets-allow or gate/gate.json", "1 hits in this scan are allowed by .secrets-allow")
         attempt("docs/b.md", entry("docs/*", "*", sha12(aws).upper()), "ok")
         attempt("docs/c.md", entry("docs/*", "aws-access-key-id", "*"), "ok")
         attempt("docs/d.md", entry("docs/d.md", "aws-access-key-id", "sha256:" + sha12(aws)), "stopped", "docs/d.md:2 slack-token",
@@ -913,6 +924,7 @@ def secrets_hook_reads_the_gate_config_of_the_pushed_commit():
         for bad_config, needle in (("{not json", "gate/gate.json is not valid JSON"),
                                    (gate([1]), "gate/gate.json is not a JSON object"),
                                    (gate({"rules": {"security.secrets": {"options": {"allow": "docs/*"}}}}), "option allow has the wrong type"),
+                                   (gate({"rules": {"security.secrets": {"options": {"patterns": {}}}}}), "option patterns is empty"),
                                    (gate({"rules": {"security.secrets": {"options": {"patterns": {"x": ["(", "x****"]}}}}}), "pattern x is not a")):
             r.commit("gate/gate.json", bad_config, "Broken config")
             err = r.push("main", want="stopped")
@@ -1275,6 +1287,74 @@ def secrets_hook_scripts_pass_shellcheck():
             if p.returncode:
                 bad.append(f"shellcheck {name}: {p.stdout.strip()[:300]}")
     return bad
+
+
+@test
+def secrets_hook_stops_a_pattern_that_backtracks_without_end():
+    if not hasattr(__import__("signal"), "SIGALRM"):
+        return []
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp)
+        r.env["SECRETS_HOOK_SECONDS"] = "2"
+        r.commit("README.md", "# Project\n", "Start")
+        r.push("main", want="ok")
+        evil = {"rules": {"security.secrets": {"options": {"patterns": {"evil": ["(a+)+$", "evil-****"]}}}}}
+        r.commit("gate/gate.json", json.dumps(evil), "A pattern that backtracks")
+        r.commit("a.txt", "a" * 60 + "!\n", "A line that makes it backtrack")
+        # run the push in its own process group, so that a hook that never ends cannot hang the suite
+        p = subprocess.Popen(["git", "push", "-q", "origin", "main"], cwd=r.work, env=r.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             text=True, start_new_session=True)
+        try:
+            out, err = p.communicate(timeout=90)
+        except subprocess.TimeoutExpired:
+            os.killpg(p.pid, 9)
+            p.communicate()
+            return ["the budget did not stop the scan: the hook ran for 90 seconds"]
+        r.seen.append(out + err)
+        if p.returncode == 0:
+            r.bad.append("a scan that hit the budget let the push through")
+        r.expect(err, "took longer than 2 seconds", "nothing was checked")
+        return r.finish()
+
+
+@test
+def secrets_hook_reads_a_push_by_url_like_a_push_by_name():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = HookRepo(tmp, tier="warn")
+        r.commit("README.md", "# Project\n", "Start")
+        r.commit("legacy.txt", f"key = {AWS_EXAMPLE}\n", "A key that is already public")
+        r.push("main", want="ok")
+        r.install("block")
+        r.commit("clean.txt", "clean\n", "A clean commit")
+        r.push("HEAD:refs/heads/feature", want="ok")  # by name
+        url_push = r.git("push", "-q", str(r.remote), "HEAD:refs/heads/by-url")
+        r.seen.append(url_push.stderr)
+        if url_push.returncode:
+            r.bad.append(f"a push by the URL of a configured remote read the history the remote has: {url_push.stderr.strip()[-200:]}")
+        other = Path(tmp) / "other.git"
+        r.git("init", "-q", "--bare", str(other), cwd=Path(tmp))
+        stranger = r.git("push", "-q", str(other), "HEAD:refs/heads/main")
+        r.seen.append(stranger.stderr)
+        if stranger.returncode == 0 or "legacy.txt:1 aws-access-key-id" not in stranger.stderr:
+            r.bad.append("a push to a repository that no remote names must read the whole history of a new ref")
+        r.commit("k.txt", f"key = {FAKE['slack-token']}\n", "A key")
+        code, lines = secrets.pre_push("https://user:hunter2@example.invalid/x.git", [f"refs/heads/k {r.head()} refs/heads/k {'0' * 40}"], r.work, "block")
+        shown = "\n".join(lines)
+        if code != 1 or "hunter2" in shown or "https://example.invalid/x.git" not in shown:
+            r.bad.append(f"a URL login must not reach the output: exit {code}, {shown[:200]}")
+        return r.finish()
+
+
+@test
+def secrets_hook_masks_an_error_with_the_patterns_of_the_scan():
+    token = "acme_" + "0123456789abcdef0123"
+    config = json.dumps({"rules": {"security.secrets": {"options": {"patterns": {"acme-token": [r"\bacme_[0-9a-f]{20}\b", "acme_****"]}}}}})
+    secrets.Scan(Path("."), lambda path: config if path == "gate/gate.json" else None)
+    try:
+        text = secrets.error_text(RuntimeError(f"git failed on {token} and {FAKE['sk-key']} at https://user:{FAKE['github-token']}@example.org/r.git"))
+    finally:
+        secrets.ACTIVE_KINDS[:] = []
+    return [f"unmasked: {w}" for w in (token, FAKE["sk-key"], FAKE["github-token"]) if w in text]
 
 
 # ---------------------------------------------------------------- quarantine

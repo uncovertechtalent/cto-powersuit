@@ -14,12 +14,14 @@ Exit codes: 0 clean (or tier warn), 1 hits, 2 a scan that could not run, a broke
 Standard library only, Python 3.9+.
 """
 import argparse
+import contextlib
 import fnmatch
 import hashlib
 import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -63,6 +65,9 @@ HOOK_MARK = "secrets {} hook"
 DISPATCH_MARK = "powersuit hook dispatcher"
 PRIVATE_TERMS_MARK = "private-terms pre-push hook"
 MAX_SHOWN = 50
+SCAN_SECONDS = 60  # per commit; SECRETS_HOOK_SECONDS overrides it, 0 turns the limit off
+POLICY_NOTE = "secrets: note: this push changes {} which set what the hook reads; a reviewer should read that change."
+ACTIVE_KINDS = []  # the patterns of the scan in progress, so that an error message is masked with them too
 
 
 class ConfigError(Exception):
@@ -72,12 +77,37 @@ class ConfigError(Exception):
 # ---------- patterns, allow file, masking ----------
 def compile_patterns(patterns):
     kinds = []
+    if not patterns:
+        raise ConfigError("gate/gate.json: option patterns is empty, which would turn the patterns off")
     for kind, spec in patterns.items():
         try:
             kinds.append((kind, re.compile(spec[0]), spec[1]))
         except (re.error, TypeError, IndexError):
             raise ConfigError(f"gate/gate.json: pattern {kind} is not a [regular expression, shown prefix] pair") from None
     return kinds
+
+
+@contextlib.contextmanager
+def time_budget():
+    """Stop a scan step that runs too long, such as a pattern from gate/gate.json that backtracks without end. Unix only."""
+    try:
+        seconds = int(os.environ.get("SECRETS_HOOK_SECONDS", SCAN_SECONDS))
+    except ValueError:
+        seconds = SCAN_SECONDS
+    if seconds <= 0 or not hasattr(signal, "SIGALRM"):
+        yield
+        return
+
+    def stop(signum, frame):
+        raise ScanError(f"a scan step took longer than {seconds} seconds; a pattern in gate/gate.json may backtrack too much, or the push is very large")
+
+    old = signal.signal(signal.SIGALRM, stop)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old)
 
 
 def digest_of(value):
@@ -306,6 +336,8 @@ class Scan:
         self.cwd = cwd
         cfg = self.load_config(read("gate/gate.json"))
         self.kinds = compile_patterns(cfg["patterns"])
+        ACTIVE_KINDS[:] = self.kinds
+        self.policy_changed = False  # the scanned change touches the files that set what the hook reads
         self.env_files, self.exclude = cfg["env_files"], cfg["exclude"]
         self.allow_file = cfg["allow_file"]
         self.entries, self.problems = load_allow(read(self.allow_file) or "")
@@ -367,9 +399,13 @@ class Scan:
                 keep = [x for x in keep if (x[0], x[2]) in seen]
                 new &= names
         out = []
+        policy = (self.allow_file, "gate/gate.json")
+        if any(p in policy for p in new or ()) or any(p in policy for p, _, _ in keep or ()):
+            self.policy_changed = True
         for path in sorted(new or ()):
             if excluded(self.exclude, path):
                 continue
+            out += self.text_findings(label, path, path, 0)  # a file named like a key
             if self.env_files and ENV_FILE.search(path) and not ENV_TEMPLATE.search(path) and not allowed(self.entries, path, "env-file", None):
                 out.append((label, path, None, "env-file", ".env file in the change; keep it out of git", None))
         for path, n, text in keep or ():
@@ -380,8 +416,19 @@ class Scan:
     def commit(self, sha):
         short = sha[:12]
         parents = git_text(["rev-list", "--parents", "-n", "1", sha], self.cwd).split()[1:]
-        out = self.text_findings(short, "commit-message", git_text(["log", "-1", "--format=%B", sha], self.cwd))
-        return out + self.change(short, parents or [empty_tree(self.cwd)], sha)
+        with time_budget():
+            out = self.text_findings(short, "commit-message", git_text(["log", "-1", "--format=%B", sha], self.cwd))
+            return out + self.change(short, parents or [empty_tree(self.cwd)], sha)
+
+    def notes(self):
+        """Lines that tell a person what the allow file and the config did in this scan. They change no exit code."""
+        out = []
+        if self.policy_changed:
+            out.append(POLICY_NOTE.format(f"{self.allow_file} or gate/gate.json"))
+        used = sum(e["used"] for e in self.entries)
+        if used:
+            out.append(f"secrets: note: {used} hits in this scan are allowed by {self.allow_file} or by the allow options of gate/gate.json.")
+        return out
 
 
 def describe(scan, f):
@@ -407,9 +454,26 @@ def report(scan, found, what, tier):
 
 
 # ---------- pre-push ----------
+def remote_name(remote, cwd):
+    """The configured remote that git means by its argument: the argument itself when it names a remote, else the remote with that
+    URL (git passes the URL when someone pushes to one), else None."""
+    names = git_text(["remote"], cwd).split()
+    if remote in names:
+        return remote
+    want = git_text(["ls-remote", "--get-url", remote], cwd).strip()
+    for name in names:
+        urls = git_text(["remote", "get-url", "--all", name], cwd).split() + git_text(["remote", "get-url", "--push", "--all", name], cwd).split()
+        if want and want in urls:
+            return name
+    return None
+
+
 def pushed_commits(remote, local_sha, remote_sha, cwd):
-    """Commits the push sends: reachable from local_sha and from no ref of the remote."""
-    args = ["rev-list", local_sha, "--not", f"--remotes={remote}"]
+    """Commits the push sends: reachable from local_sha and from no ref of the remote, and from the ref's old tip when the clone has it."""
+    args = ["rev-list", local_sha, "--not"]
+    name = remote_name(remote, cwd)
+    if name:
+        args.append(f"--remotes={name}")
     if not ZERO.match(remote_sha) and git_run(["cat-file", "-e", remote_sha + "^{commit}"], cwd).returncode == 0:
         args.append(remote_sha)
     return git_text(args, cwd).split()
@@ -417,6 +481,26 @@ def pushed_commits(remote, local_sha, remote_sha, cwd):
 
 def object_type(sha, cwd):
     return git_text(["cat-file", "-t", sha], cwd).strip()
+
+
+def tag_messages(sha, cwd):
+    """The messages of the tag objects on the way from sha to the commit: a tag can point to a tag, and each travels with the push."""
+    out = []
+    for _ in range(64):
+        if object_type(sha, cwd) != "tag":
+            break
+        head, _, message = git_text(["cat-file", "-p", sha], cwd).partition("\n\n")
+        out.append(message)
+        target = re.match(r"object ([0-9a-f]{40,64})", head)
+        if not target:
+            raise ScanError("a tag object has no target")
+        sha = target.group(1)
+    return out
+
+
+def clean_url(text):
+    """text without the user and password part of a URL, which a remote can carry."""
+    return re.sub(r"(//)[^/@\s]*@", r"\1", text)
 
 
 def pre_push(remote, refs, cwd, tier):
@@ -435,16 +519,16 @@ def pre_push(remote, refs, cwd, tier):
             raise ScanError(f"ref {scan.mask(remote_ref)} points to a {peeled}, not a commit; the scanner reads commits only")
         found += scan.problem_findings()
         found += scan.text_findings("ref", "ref-name", remote_ref)
-        if kind == "tag":
-            body = git_text(["cat-file", "-p", local_sha], cwd).split("\n\n", 1)  # header, then the message
-            found += scan.text_findings("tag", "tag-message", body[1] if len(body) > 1 else "")
+        for message in tag_messages(local_sha, cwd):
+            found += scan.text_findings("tag", "tag-message", message)
         for sha in pushed_commits(remote, local_sha, remote_sha, cwd):
             commits += 1
             found += scan.commit(sha)
+    notes = [n for scan in scans for n in scan.notes()]
     if not found:
-        return 0, []
-    lines = report(scans[0], found, f"push to {remote} ({commits} commits)", tier)
-    return (1 if tier == "block" else 0), lines
+        return 0, notes
+    lines = report(scans[0], found, f"push to {clean_url(remote)} ({commits} commits)", tier)
+    return (1 if tier == "block" else 0), lines + notes
 
 
 def current_ref(cwd):
@@ -461,10 +545,11 @@ def pre_commit(cwd, tier):
     merge = git_run(["rev-parse", "-q", "--verify", "MERGE_HEAD"], cwd)
     if merge.returncode == 0:
         bases.append(merge.stdout.decode().strip())
-    found = scan.problem_findings() + scan.change("staged", bases, None)
+    with time_budget():
+        found = scan.problem_findings() + scan.change("staged", bases, None)
     if not found:
-        return 0, []
-    return (1 if tier == "block" else 0), report(scan, found, "commit", tier)
+        return 0, scan.notes()
+    return (1 if tier == "block" else 0), report(scan, found, "commit", tier) + scan.notes()
 
 
 # ---------- history ----------
@@ -545,6 +630,14 @@ def install_hook(into, tier=DEFAULT_TIER, with_commit=False):
 
 
 # ---------- command line ----------
+def error_text(e):
+    """An error message without a value: masked with the default patterns and with those of the scan in progress, URL logins cut."""
+    text = clean_url(str(e))
+    for kinds in (compile_patterns(DEFAULTS["patterns"]), list(ACTIVE_KINDS)):
+        text = mask(text, kinds)
+    return text
+
+
 def tier_arg(p):
     p.add_argument("--tier", choices=TIERS, default=DEFAULT_TIER,
                    help="block stops the push or the commit on a hit; warn reports it and goes on (default %(default)s)")
@@ -595,7 +688,7 @@ def main(argv):
     except (ConfigError, ScanError) as e:
         code, lines = 2, [f"secrets: {e}"]
     except (RuntimeError, OSError) as e:
-        code, lines = 2, [f"secrets: the scan failed ({type(e).__name__}): {mask(str(e), compile_patterns(DEFAULTS['patterns']))}"]
+        code, lines = 2, [f"secrets: the scan failed ({type(e).__name__}): {error_text(e)}"]
     if code == 2 and tier == "warn" and a.cmd in ("pre-push", "pre-commit"):
         lines.append("secrets: tier warn, nothing was checked and the push goes on" if a.cmd == "pre-push" else "secrets: tier warn, nothing was checked and the commit goes on")
         code = 0
