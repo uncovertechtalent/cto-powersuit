@@ -2,10 +2,10 @@
 name: runs-without-me
 description: >
   Plan and log a test that proves the named owner runs the platform from the
-  docs alone: scenarios such as a deploy, a blocked gate, an incident, a cost
-  spike, a docs review and a new decision, each run by the new owner with no
-  help, with the time taken, the docs used and the gaps found, and every gap
-  turned into a ticket. Use when the person who built a platform is about to
+  docs alone: scenarios such as a deploy, a blocked gate, an incident, a
+  restore, a cost spike, a docs review, and a new decision, each run by the new
+  owner with no help, with the time taken, the docs used, and the gaps found,
+  and every gap turned into a ticket. Use when the person who built a platform is about to
   leave, or to test whether the docs are enough to operate it. Activates on
   "/runs-without-me", "does it run without me", "handover test", "test the
   runbooks with the new owner", "game day for the handover".
@@ -37,17 +37,19 @@ A test plan for the handover. The new owner runs each scenario from the docs alo
    | A deploy | A real change merged to the main line | The change is live, the gate run passed, the changelog entry and the rollback line exist | sdlc, gate |
    | A blocked gate | A commit on a branch that breaks one rule on purpose | The owner finds the rule from the gate summary, fixes the cause, the rerun passes and the finding closes | gate |
    | An incident | A staged failure in a non-production environment, or a game day | Declared, status page updated, service restored, postmortem written with action items ticketed | reliability, observability |
+   | A restore | One data store from `docs/sre/backups.md`, the one with no restore test or the oldest one, restored from its out-of-reach copy into a target with no production traffic, by the store's restore runbook | The runbook's checks pass, the owner used no production administrator credentials, the minutes are in the run log and in the restore test log of `docs/sre/backups.md`, and the time is at or below the store's target | reliability |
    | A cost spike | A staged line in a copy of a billing export, or a real spike | The cause and its owner are found from the cost pages, and the action is ticketed | finops |
    | A docs review | The page with the oldest `review_by` | The page is checked against the system it describes, fixed, and its review dates updated | docs |
    | A new decision | A real open question | An RFC or ADR is written, reviewed by the right people and listed in the index | decisions |
 
-   Drop a scenario whose modules are not installed and say so in the report. Add scenarios for other installed modules with the same columns. Write the plan with its time boxes into the "Runs without me" section.
+   Drop a scenario whose modules are not installed and say so in the report. The restore scenario also needs `docs/sre/backups.md` with at least one data store and a restore runbook for it: without them, run `/reliability:backup-inventory` first and say so in the report. Add scenarios for other installed modules with the same columns. Write the plan with its time boxes into the "Runs without me" section.
 3. **Set the run rules** before the first run:
    - The person handing over is not in the room or the chat. A question to them counts as help, ends the "no help" condition and is written down word for word.
    - The new owner uses only the docs, the repository and the tools. Search engines and assistants are allowed; a private conversation with a colleague who built the system counts as help.
    - Staged failures run only in a non-production environment, or in production with the user's go and a rollback ready. Stop the run when users are at risk, and log it as help needed.
+   - A restore goes into a target that holds no production traffic, and the owner deletes the restored copy when the checks are done. A step that needs production administrator credentials is a gap: the copy is within reach of an intruder who holds them.
 4. **Run each scenario.** The new owner starts a timer at the trigger and stops it when the pass condition holds or the time box ends.
-5. **Log the run** as one row in the "Runs without me" table: date, scenario, who ran it, help needed (none, or the question), time taken in minutes, the docs pages used, and the gaps found (a missing step, a wrong command, a page that was out of date, an access the owner lacked).
+5. **Log the run** as one row in the "Runs without me" table: date, scenario, who ran it, help needed (none, or the question), time taken in minutes, the docs pages used, and the gaps found (a missing step, a wrong command, a page that was out of date, an access the owner lacked). For a restore, the owner also gives the date, the backup restored, the minutes, and the result for the restore test log of `docs/sre/backups.md`, and the store's fields are updated with `/reliability:backup-inventory`.
 6. **Turn every gap into a ticket.** With the sdlc module installed, use `/sdlc:ticket`; otherwise give the user the ticket text: the scenario, the gap, the page to fix and the acceptance criterion "the next run of this scenario needs no help at this step". Label each ticket `handover`. Write the ticket ids into the log row.
 7. **Repeat** a scenario after its tickets are closed, until a run passes with no help. Keep every earlier row.
 8. **Hand the result to the exit criteria.** Run `/handover:exit-criteria`, which reads the log.
