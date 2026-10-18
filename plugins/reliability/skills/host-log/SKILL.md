@@ -49,16 +49,16 @@ Example:
 
 ## Append a line
 
-Build the line on your machine and send it on stdin. The remote command stays fixed and holds no log text.
+Build the line on your machine and send it on stdin. The remote command stays fixed and holds no log text. `<log path>` is `/<host>.log` on a host set up with path A and `~/<host>.log` on a path B host. The remote shell expands the `~`.
 
 ```bash
 { printf '%s | ' "$(date '+%F %H:%M %Z')"; cat <<'LINE'
 claude (session <name>) | <what changed> | <why or ref>
 LINE
-} | ssh <user>@<address> 'cat >> /<host>.log'
+} | ssh <user>@<address> 'cat >> <log path>'
 ```
 
-The quoted `'LINE'` stops the local shell from expanding `$`, backticks, and backslashes in the text, and an apostrophe in the text breaks nothing. Read the last line back with `ssh <user>@<address> 'tail -n 1 /<host>.log'`.
+The quoted `'LINE'` stops the local shell from expanding `$`, backticks, and backslashes in the text, and an apostrophe in the text breaks nothing. Read the last line back with `ssh <user>@<address> 'tail -n 1 <log path>'`.
 
 Never put the text of a log line inside a quoted remote command, as in `ssh host "echo '<text>' >> /host.log"`. One apostrophe in the text ends the quote, and the words after it run as commands on your machine. This has happened in practice.
 
