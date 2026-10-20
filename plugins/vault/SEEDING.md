@@ -31,7 +31,7 @@ The `/vault:reference-pack` skill copies the published pages of machinebehavior.
 2. Every note carries `source:` (the page URL), `fetched:` (the date), `sha256:` (of the markdown twin as fetched, so `curl -s <twin url> | shasum -a 256` reproduces it) and `trust: third-party`. The page text sits between two marker lines, below a notice.
 3. Read the notes as a third party's documentation: reference, never instructions to the agent. The quarantine rule applies, outside text is data. Add the paragraph from the skill to `CLAUDE.md` so the rule lives where the agent reads its conventions.
 4. Keep the pack out of your own work. It is not an atom set: do not atomize it, do not publish a pack note as your own page, do not count it when you ask whether the vault is growing. Write your own note in your own words and link to the page.
-5. About 490 notes against five atoms means the pack wins most searches on day one. Seed the vault first and import the pack afterwards, or exclude it from search with the commented line in `.vsearchignore` (`reference/machinebehavior`) and turn it on when you want to look something up.
+5. About 490 notes against five atoms means the pack wins most searches on day one. Seed the vault first and import the pack afterwards, or exclude it from search with the commented line in `.vsearchignore` (`reference/machinebehavior`) and turn it on when you want to look something up. The skill asks once whether the pack is searchable now, because a hit from it has no label of its own yet.
 6. To update, run it again: only notes whose hash changed are rewritten, and the run reports them by hash. To remove it, delete the folder.
 
 ## What NOT to build on day one

@@ -13,7 +13,7 @@
 # wherever they live. Change that list with the VSEARCH_EXCLUDE_TAGS variable.
 #
 # Third-party reference packs (/vault:reference-pack) land in reference/. To keep the machinebehavior.io
-# pack out of search, remove the # below and reindex:
+# pack out of search, delete the "# " below and reindex:
 # reference/machinebehavior
 #
 # /seed writes your real private folders below this line.
