@@ -10,7 +10,8 @@
 #   work/clients/*
 #
 # Atoms tagged `private`, `status/private` or `status/sensitive` are excluded
-# wherever they live. Change that list with the VSEARCH_EXCLUDE_TAGS variable.
+# wherever they live, and so are atoms marked `trust: external` (raw text nobody reviewed). Change that
+# list with the VSEARCH_EXCLUDE_TAGS variable.
 #
 # Third-party reference packs (/vault:reference-pack) land in reference/. To keep the machinebehavior.io
 # pack out of search, delete the "# " below and reindex:

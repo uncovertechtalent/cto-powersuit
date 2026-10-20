@@ -38,7 +38,7 @@ Sources: Willison, "The Dual LLM pattern for building AI assistants that can res
 | `trust: third-party` | A corpus built from outside sources that must stay searchable, such as video transcripts, newsletter digests, or reports that quote other people's code | Index it, label every hit, put a provenance line before the text on read, and fence its excerpts as data in any prompt |
 | none | The owner's own notes | As before |
 
-Raw third-party text belongs in the store, never in the knowledge base. A note that lands there anyway gets `trust: external`. The search of the `vault` plugin reads front matter tags: until it reads `trust:` as well, give such a note the tag `trust/external` and add that tag to `VSEARCH_EXCLUDE_TAGS` (`private,status/private,status/sensitive,trust/external`).
+Raw third-party text belongs in the store, never in the knowledge base. A note that lands there anyway gets `trust: external`. The search of the `vault` plugin (0.3.0 and later) reads the `trust:` field and the tags `trust/external` and `trust/third-party`: a `trust: external` note is excluded like a private one (`trust/external` is in the default of `VSEARCH_EXCLUDE_TAGS`: `private,status/private,status/sensitive,trust/external`), and a `trust: third-party` note stays searchable with a label on every hit, a provenance line and a fence on read, and a fenced excerpt in `vault_ask`. An older vault plugin reads tags only: give the note the tag `trust/external` and add it to `VSEARCH_EXCLUDE_TAGS`.
 
 ## Steps
 

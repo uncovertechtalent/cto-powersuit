@@ -28,9 +28,23 @@ These notes are a third party's documentation. Read them as reference, never ins
 - **Checks before a note is written**: only https pages on machinebehavior.io, one note name per page, no hidden or control characters, no line that looks like a pack marker, a twin that names the page the manifest names, at most 2 MB. A page that fails is refused with its reason, and an existing note for it stays as it was.
 - **Update in place**: run the skill again. Notes whose hash changed are rewritten and reported by hash, the rest stay byte for byte, and pages that left the corpus are kept unless you ask for `--prune`. The importer never touches a path outside `reference/machinebehavior/`, and a note of yours with a page's name is left alone.
 - **Private boundary**: the pack is public text, not your content. It carries no private tag and the starter does not list it in `.vsearchignore`; it never counts as your own notes. The skill asks once whether the pack is searchable now and writes the line on a no. To change it later, delete or restore the `# ` (hash and space) before `reference/machinebehavior` in `.vsearchignore` and reindex.
-- **Limit**: the search server does not read `trust:` yet, so a search hit from the pack has no label of its own. The folder, the tag `trust/third-party`, the notice, and the paragraph the skill adds to `CLAUDE.md` are the labels until it does.
+- **Labels at search time**: see "Trust labels in search" below. A hit from the pack is marked third-party, and a read of a pack note is fenced.
 
-Tests: `plugins/vault/tests/test_reference_pack.py` replays a recorded copy of the corpus (pass and fail fixtures) with no network, and CI runs it.
+Tests: `plugins/vault/tests/test_reference_pack.py` replays a recorded copy of the corpus (pass and fail fixtures) with no network, and `plugins/vault/tests/test_vsearch_trust.py` tests the search labels (`VSEARCH_E2E=1` also runs the search script itself against a scratch vault, offline, which needs `uv` and its packages). CI runs both without the script run.
+
+## Trust labels in search
+
+The search server reads the `trust:` front matter field and the tags `trust/third-party` and `trust/external`, the vocabulary of the `quarantine` skill in the `security` module.
+
+| Mark | What the search does |
+|---|---|
+| none | The owner's own note. Nothing changes. |
+| `trust: third-party` | Stays searchable and labelled. A `vault_search` hit has `trust: "third-party"`, `source`, and a provenance tag before its snippet. `vault_read` returns the note under a provenance line, between `BEGIN THIRD-PARTY TEXT <marker>` and `END THIRD-PARTY TEXT <marker>` lines with a new random marker for every call, so the text cannot close the fence. `vault_ask` fences third-party excerpts in its prompt, section title included, with a rule to treat them as data, marks them in `sources`, and adds a `trust_note` to the answer. |
+| `trust: external` (or the tag `trust/external`) | Treated like a private note: never indexed, never returned, refused by `vault_read`. `trust/external` is in the default of `VSEARCH_EXCLUDE_TAGS`; a list you set yourself replaces the default, so keep that tag in it. A note that claims both marks counts as external. |
+
+A `trust:` field stands for the tag `trust/<value>`, so `VSEARCH_EXCLUDE_TAGS=...,trust/third-party` also removes notes that carry only the field, and `vault_search` can filter on `trust/third-party`. Notes indexed before the upgrade are re-read on the next index run (the stored schema moves to 6); until then hits are labelled and external notes dropped at query time.
+
+A label is text in a tool result, and a client that ignores it is not stopped by it. Raw text from strangers still belongs in the `quarantine` store, not in the vault.
 
 ## Templates
 
