@@ -1,0 +1,22 @@
+{
+ "generated": "2026-10-20T14:55Z",
+ "site": "https://machinebehavior.io",
+ "source": "machinebehavior.io, Stefan Coetzee",
+ "tokenizer": "nfkd-lower-alnum-v1",
+ "pages": [
+  {
+   "u": "https://machinebehavior.io/map/",
+   "t": "Map of the Work",
+   "d": "2026-10-08",
+   "p": "",
+   "m": "https://machinebehavior.io/map/index.html.md"
+  },
+  {
+   "u": "https://evil.example/pwn/",
+   "t": "Off site",
+   "d": "2026-10-08",
+   "p": "",
+   "m": "https://evil.example/pwn/index.html.md"
+  }
+ ]
+}
