@@ -193,7 +193,7 @@ Hooks: a Stop hook scans each reply (`vestige-scan.js`) and checks the paths it 
 
 For a vault somewhere else, set the plugin option: `/plugin configure vault@cto-powersuit` in Claude Code, or `claude plugin install vault@cto-powersuit --config vault_path=/path/to/vault`. Restart Claude Code after changing it.
 
-The private boundary: folders listed in `.vsearchignore` at the vault root, and notes tagged `private`, `status/private` or `status/sensitive`, are never indexed, never returned and refused by `vault_read`. The first search run downloads about 130 MB of embedding weights. Details: [vault-kit](https://github.com/uncovertechtalent/vault-kit).
+The private boundary: folders listed in `.vsearchignore` at the vault root, and notes tagged `private`, `status/private`, `status/sensitive` or `trust/external` (or with `trust: external` in the front matter), are never indexed, never returned and refused by `vault_read`. Notes marked `trust: third-party` stay searchable, with a label on every hit and a fence around what `vault_read` returns. The first search run downloads about 130 MB of embedding weights. Details: [vault-kit](https://github.com/uncovertechtalent/vault-kit).
 
 ## stance
 

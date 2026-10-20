@@ -197,7 +197,7 @@ Hooks: Ein Stop-Hook prüft jede Antwort (`vestige-scan.js`) und die Pfade, die 
 
 Für einen Vault an einem anderen Ort setzt du die Plugin-Option: `/plugin configure vault@cto-powersuit` in Claude Code oder `claude plugin install vault@cto-powersuit --config vault_path=/path/to/vault`. Starte Claude Code nach der Änderung neu.
 
-Die private Grenze: Ordner, die in `.vsearchignore` im Stammordner des Vaults stehen, und Notizen mit den Tags `private`, `status/private` oder `status/sensitive` werden nie indexiert und nie zurückgegeben, und `vault_read` lehnt sie ab. Der erste Suchlauf lädt etwa 130 MB Embedding-Gewichte herunter. Details: [vault-kit](https://github.com/uncovertechtalent/vault-kit).
+Die private Grenze: Ordner, die in `.vsearchignore` im Stammordner des Vaults stehen, und Notizen mit den Tags `private`, `status/private`, `status/sensitive` oder `trust/external` (oder mit `trust: external` im Front Matter) werden nie indexiert und nie zurückgegeben, und `vault_read` lehnt sie ab. Notizen mit `trust: third-party` bleiben durchsuchbar, mit einer Markierung an jedem Treffer und einem Rahmen um das, was `vault_read` zurückgibt. Der erste Suchlauf lädt etwa 130 MB Embedding-Gewichte herunter. Details: [vault-kit](https://github.com/uncovertechtalent/vault-kit).
 
 ## stance
 

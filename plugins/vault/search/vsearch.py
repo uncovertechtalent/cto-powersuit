@@ -1180,6 +1180,9 @@ def _ask(question: str, k: int = 6, tags: list[str] | None = None) -> dict:
                 sources = json.loads(row[2] or "[]")
             except json.JSONDecodeError:
                 sources = []
+            # An answer cached before the upgrade has no labels: label it from the front matter as it is now.
+            sources = [s for s in sources if isinstance(s, dict)]
+            sources = label_sources(sources, _frontmatters(s.get("path") for s in sources))
             cached = {
                 "answer": row[0],
                 "tier": row[1],

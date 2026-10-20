@@ -249,6 +249,8 @@ def vsearch_applies_the_labels_where_text_leaves_it():
                       ("index_vault", ["trust_of"])):
         for name in names:
             assert called(fns[fn], name), f"{fn} does not call {name}"
+    ask_labels = [n for n in ast.walk(fns["_ask"]) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "label_sources"]
+    assert len(ask_labels) == 2, "a fresh answer and a cached one are both labelled"
     assert not {"trust_of", "fence", "apply_to_hits", "with_trust_tags"} & set(fns), "the rules live in vsearch_trust.py only"
     default = re.search(r'^DEFAULT_EXCLUDE_TAGS = "([^"]*)"', src, re.M).group(1).split(",")
     assert default == ["private", "status/private", "status/sensitive", "trust/external"], default
@@ -333,6 +335,19 @@ def end_to_end_against_a_scratch_vault():
         res = json.loads(out)
         assert res["tier"] == "raw" and res.get("trust_note") and any(s.get("trust") == "third-party" for s in res["sources"])
         assert all("BEGIN THIRD-PARTY TEXT" in e["body"] for e in res["excerpts"] if e.get("trust") == "third-party")
+        # an answer cached before the upgrade has unlabelled sources; a cache hit labels them from the front matter as it is now
+        import hashlib, time
+        question = "what about the older zebra answer"
+        key = hashlib.sha256(question.lower().strip().encode()).hexdigest()[:16]
+        old = json.dumps([{"path": "own/Zebra notes.md", "section": "Zebra notes"}, {"path": "reference/pass-third-party-field.md", "section": "Zebra facts"}])
+        db = sqlite3.connect(tmp / "db")
+        db.execute("INSERT INTO answer_cache(key, question, answer, tier, sources, created, hit_count) VALUES(?,?,?,?,?,?,0)",
+                   (key, question, "An older answer.", "local", old, time.time()))
+        db.commit()
+        db.close()
+        res = json.loads(run("ask", question, "--json")[1])
+        assert res.get("cached") and res["answer"] == "An older answer." and res.get("trust_note"), res
+        assert [s.get("trust") for s in res["sources"]] == [None, "third-party"]
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
