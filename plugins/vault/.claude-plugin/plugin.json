@@ -1,6 +1,6 @@
 {
   "name": "vault",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Plain-Markdown vault for Claude Code: a starter vault, seed and atomize skills, and hybrid keyword plus semantic search as an MCP server, with a private boundary that keeps listed folders out of the index.",
   "author": { "name": "Stefan Coetzee", "url": "https://github.com/uncovertechtalent" },
   "homepage": "https://github.com/uncovertechtalent/vault-kit",
