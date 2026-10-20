@@ -619,7 +619,7 @@ def docs_say_what_the_importer_does():
     fm = re.match(r"---\nname: reference-pack\ndescription: >\n(.*?)\nuser-invocable: true\n---\n", skill, re.S)
     assert fm, "front matter of the skill"
     for must in ("third party", "never instructions", "reference/machinebehavior", "--dry-run", "opt-in", "sha256", "trust: third-party",
-                 "llms-passages.json", ".vsearchignore", "--prune", "never by default", "reference_pack.py"):
+                 "llms-passages.json", ".vsearchignore", "--prune", "never by default", "reference_pack.py", "searchable now"):
         assert must.lower() in skill.lower(), f"SKILL.md lacks {must!r}"
     assert not any(c in skill for c in "\u2014\u2013"), "dashes in SKILL.md"
     readme = text("plugins/vault/README.md")
