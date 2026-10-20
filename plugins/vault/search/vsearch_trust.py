@@ -128,10 +128,18 @@ def ask_context(excerpts, frontmatters):
         fm = frontmatters.get(e["path"])
         body = e["body"]
         if trust_of(fm) == THIRD_PARTY:
-            body = fence(body, fm)
+            # The section title is the note author's text too: it goes inside the fence with the body.
+            parts.append(f"[{i + 1}] {e['path']}\n" + fence(f"Section: {e['section']}\n{body}", fm))
             third = True
-        parts.append(f"[{i + 1}] {e['path']} § {e['section']}\n{body}")
+        else:
+            parts.append(f"[{i + 1}] {e['path']} § {e['section']}\n{body}")
     return "\n\n---\n\n".join(parts), third
+
+
+def note_name(path, section, fm):
+    """How a prompt or a note names a section: path and section title, or the path alone for third-party text,
+    whose headings are its author's words."""
+    return path if trust_of(fm) == THIRD_PARTY else f"{path} § {section}"
 
 
 def label_sources(sources, frontmatters):

@@ -35,7 +35,7 @@ from mcp.server.fastmcp import FastMCP
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # vsearch_trust.py sits next to this file
 from vsearch_trust import (  # noqa: E402
     ASK_RULE, EXTERNAL, THIRD_PARTY, apply_to_hits, ask_context, derived_tags, fence, label_sources,
-    source_of, trust_note, trust_of, with_trust_tags,
+    note_name, source_of, trust_note, trust_of, with_trust_tags,
 )
 
 VAULT = Path(os.environ.get("VAULT_PATH") or "~/vault").expanduser().resolve()
@@ -1196,6 +1196,7 @@ def _ask(question: str, k: int = 6, tags: list[str] | None = None) -> dict:
     hits = search(question, k=k, tags=tags, mode="hybrid")
     if not hits:
         return {"answer": None, "tier": "none", "sources": [], "excerpts": []}
+    fms = _frontmatters(h["path"] for h in hits)  # trust labels: front matter of every note that can reach the prompt
     conn = get_db()
     excerpts: list[dict] = []
     strong_note = ""
@@ -1222,15 +1223,18 @@ def _ask(question: str, k: int = 6, tags: list[str] | None = None) -> dict:
             r = top_fts[0]
             q_words = set(re.findall(r"\w+", question.lower()))
             hay = f"{r[2]} {r[1]}".lower()
-            if r[4] < -12.0 and any(w in hay for w in q_words):
+            if r[1] not in fms:
+                fms.update(_frontmatters([r[1]]))
+            top_level = trust_of(fms.get(r[1]))
+            if r[4] < -12.0 and any(w in hay for w in q_words) and top_level != EXTERNAL and not is_excluded_path(r[1]):
+                where = note_name(r[1], r[2], fms.get(r[1]))  # a third-party heading is not repeated outside the fence
                 strong_note = (
-                    f"\n\nNote: '{r[1]} § {r[2]}' is a strong keyword match for "
+                    f"\n\nNote: '{where}' is a strong keyword match for "
                     f"this question (BM25 {r[4]:.1f}); weight it accordingly."
                 )
     finally:
         conn.close()
     # Third-party excerpts go into the prompt fenced as data, with the rule that says so.
-    fms = _frontmatters(e["path"] for e in excerpts)
     context, has_third_party = ask_context(excerpts, fms)
     prompt = (
         "Answer the question using ONLY the provided context. "
