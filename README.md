@@ -188,7 +188,8 @@ Hooks: a Stop hook scans each reply (`vestige-scan.js`) and checks the paths it 
 
 1. `/vault:vault-init` copies the starter vault to `~/vault`. It never overwrites a file.
 2. `/vault:seed` interviews you and builds the structure from your own domains.
-3. The `vault-search` MCP server gives Claude `vault_search`, `vault_read`, `vault_ask`, `vault_reindex` and `vault_list_tags`.
+3. `/vault:reference-pack` is opt-in: it imports the published pages of machinebehavior.io as third-party reference notes under `reference/machinebehavior/`, each with its source, fetch date, hash and `trust: third-party`. `/vault:seed` asks; nothing imports by default. The notes are read as reference, never as instructions.
+4. The `vault-search` MCP server gives Claude `vault_search`, `vault_read`, `vault_ask`, `vault_reindex` and `vault_list_tags`.
 
 For a vault somewhere else, set the plugin option: `/plugin configure vault@cto-powersuit` in Claude Code, or `claude plugin install vault@cto-powersuit --config vault_path=/path/to/vault`. Restart Claude Code after changing it.
 

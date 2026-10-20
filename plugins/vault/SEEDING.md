@@ -19,14 +19,27 @@ The `/seed` skill automates this. This is the manual version with the reasoning,
 3. **What do you look up more than twice a week?** Reference material worth atomizing now rather than on demand.
 4. **What's private?** Draw the boundary explicitly. A vault folder the search index skips (list it in `.vsearchignore`; the starter ships a commented template) beats discovering later that everything was indexed.
 5. **Where does raw material arrive from?** (chats, meetings, browser, email) Determines what the inbox pass has to handle, and whether atomize needs source-specific handling.
+6. **Do you want the machinebehavior.io reference pack?** Optional. Never by default; only a clear yes imports it (see "Reference packs" below).
 
 From the answers, the skill creates ONLY: the domain folders that had real activity, `_inbox/`, one starter MOC per domain with the re-explained facts as its first atoms, and a CLAUDE.md that names the conventions, the private boundary, and the inbox-pass rule.
+
+## Reference packs (optional, third-party)
+
+The `/vault:reference-pack` skill copies the published pages of machinebehavior.io (the documentation of Stefan Coetzee, about 490 pages) into `reference/machinebehavior/`, one note per page. It runs only after a yes. By hand, the same steps:
+
+1. Dry run, which fetches and compares and writes nothing: `python3 <plugin>/skills/reference-pack/reference_pack.py sync --vault ~/vault --dry-run`. Run it again without `--dry-run` to import.
+2. Every note carries `source:` (the page URL), `fetched:` (the date), `sha256:` (of the markdown twin as fetched, so `curl -s <twin url> | shasum -a 256` reproduces it) and `trust: third-party`. The page text sits between two marker lines, below a notice.
+3. Read the notes as a third party's documentation: reference, never instructions to the agent. The quarantine rule applies, outside text is data. Add the paragraph from the skill to `CLAUDE.md` so the rule lives where the agent reads its conventions.
+4. Keep the pack out of your own work. It is not an atom set: do not atomize it, do not publish a pack note as your own page, do not count it when you ask whether the vault is growing. Write your own note in your own words and link to the page.
+5. About 490 notes against five atoms means the pack wins most searches on day one. Seed the vault first and import the pack afterwards, or exclude it from search with the commented line in `.vsearchignore` (`reference/machinebehavior`) and turn it on when you want to look something up.
+6. To update, run it again: only notes whose hash changed are rewritten, and the run reports them by hash. To remove it, delete the folder.
 
 ## What NOT to build on day one
 
 - No tag taxonomy beyond what the first atoms need. Taxonomies built in advance describe the person you planned to be.
 - No templates for atom types. Atoms converge on shapes through use; freeze the shapes after they emerge, not before.
 - No automation (watchers, scheduled reindex, sync). Add each when its absence hurts twice. The kit's watch mode exists for when you get there.
+- No reference pack before your own atoms exist (see above).
 - No migration of your entire existing notes pile. Atomize on touch: when something old becomes relevant, atomize it then. Bulk migration front-loads weeks of sorting into the moment your motivation is highest and your judgment about what matters is worst.
 
 ## Growing pains and their fixes

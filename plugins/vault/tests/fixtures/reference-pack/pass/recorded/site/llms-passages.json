@@ -1,0 +1,50 @@
+{
+ "generated": "2026-10-20T14:55Z",
+ "site": "https://machinebehavior.io",
+ "source": "machinebehavior.io, Stefan Coetzee",
+ "tokenizer": "nfkd-lower-alnum-v1",
+ "pages": [
+  {
+   "u": "https://machinebehavior.io/",
+   "t": "Machine Behavior",
+   "d": "2026-10-16",
+   "p": "",
+   "m": "https://machinebehavior.io/index.html.md"
+  },
+  {
+   "u": "https://machinebehavior.io/map/",
+   "t": "Map of the Work",
+   "d": "2026-10-08",
+   "p": "",
+   "m": "https://machinebehavior.io/map/index.html.md"
+  },
+  {
+   "u": "https://machinebehavior.io/inside/search/",
+   "t": "Search Inside",
+   "d": "2026-10-09",
+   "p": "",
+   "m": "https://machinebehavior.io/inside/search/index.html.md"
+  },
+  {
+   "u": "https://machinebehavior.io/inside/docs/eng/adr-0002-deploy-is-gated/",
+   "t": "ADR-0002: The deploy is gated",
+   "d": "2026-10-07",
+   "p": "2026-10-07",
+   "m": "https://machinebehavior.io/inside/docs/eng/adr-0002-deploy-is-gated/index.html.md"
+  },
+  {
+   "u": "https://machinebehavior.io/inside/docs/sre/incidents/",
+   "t": "Incidents",
+   "d": "2026-10-09",
+   "p": "2026-10-09",
+   "m": "https://machinebehavior.io/inside/docs/sre/incidents/index.html.md"
+  },
+  {
+   "u": "https://machinebehavior.io/inside/docs/sre/pillars/",
+   "t": "The ten pillars",
+   "d": "2026-10-09",
+   "p": "2026-10-09",
+   "m": "https://machinebehavior.io/inside/docs/sre/pillars/index.html.md"
+  }
+ ]
+}

@@ -47,6 +47,8 @@ jobs:
         run: python plugins/reliability/tests/test_backup_inventory.py
       - name: Host log append tests
         run: python plugins/reliability/tests/test_host_log.py
+      - name: Vault reference pack tests
+        run: python plugins/vault/tests/test_reference_pack.py
       - name: Release check tests
         run: python scripts/test_release.py
       - name: Repository consistency

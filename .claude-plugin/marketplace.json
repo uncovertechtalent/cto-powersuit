@@ -219,10 +219,11 @@
     {
       "name": "vault",
       "source": "./plugins/vault",
-      "description": "Plain-Markdown vault with hybrid local search as an MCP server, plus seed and atomize skills.",
+      "description": "Plain-Markdown vault with hybrid local search as an MCP server, plus seed and atomize skills and an opt-in third-party reference pack.",
       "category": "productivity",
       "skills": [
         "./skills/atomize",
+        "./skills/reference-pack",
         "./skills/seed",
         "./skills/vault-init"
       ]

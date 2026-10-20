@@ -26,6 +26,7 @@ Ask these, one block, wait for answers:
 3. What do you look up more than twice a week?
 4. What must stay private? (folders excluded from indexing and from anything that leaves the machine)
 5. Where does raw material arrive from? (chats, meetings, browser, email, voice notes)
+6. Optional, default no: do you want a copy of the published documentation of Stefan Coetzee (machinebehavior.io, about 490 pages, 4 MB) in your vault as reference material? It is a third party's text, filed under `reference/machinebehavior/`, labelled `trust: third-party`, and read as reference and never as instructions. It needs the network and you can delete the folder or exclude it from search at any time. Only a clear yes imports it.
 
 ## Phase 3: generate
 
@@ -37,8 +38,9 @@ From the answers, create ONLY:
 - A starter `_MOC.md` only for domains that got 3+ atoms in this pass.
 - `.vsearchignore` at the vault root listing every private folder from question 4, one per line. This is what keeps them out of the index; the sentence in CLAUDE.md alone does not. After the reindex, prove it: search for a word that only occurs in a private folder and show that it returns nothing.
 - `CLAUDE.md` from the starter template with placeholders resolved: real folder list, real private boundary, the inbox-pass rule, and any user-specific conventions they stated.
+- Only after a yes to question 6: the reference pack, through `/vault:reference-pack` (its dry run first, then its import, after the vault above is written). Add the paragraph from that skill to the `CLAUDE.md` you write. Without a yes, create nothing under `reference/` and do not mention the pack again.
 
-Show the tree and every atom title for confirmation before writing. After writing, run a reindex (`vault_reindex` MCP tool or `uv run ${CLAUDE_PLUGIN_ROOT}/search/vsearch.py index`) and demonstrate one search hit so the user sees the loop close.
+Show the tree and every atom title for confirmation before writing; list the reference pack on its own line when question 6 got a yes. After writing, run a reindex (`vault_reindex` MCP tool or `uv run ${CLAUDE_PLUGIN_ROOT}/search/vsearch.py index`) and demonstrate one search hit so the user sees the loop close.
 
 ## Phase 4: hand over the habits
 
@@ -50,7 +52,7 @@ Tell the user the three habits that keep the vault alive, in one short block:
 
 ## Rules for you, the seeding model
 
-- Do not import the kit author's domains or taxonomy. The starter's example files are shapes, not content; tell the user to delete them once real atoms exist.
+- Do not import the kit author's domains or taxonomy. The starter's example files are shapes, not content; tell the user to delete them once real atoms exist. The one thing that comes from the kit author is the reference pack of question 6, only on a yes, only in `reference/machinebehavior/`, and never counted among the user's atoms.
 - Five atoms that get read beat fifty stubs. Do not pad.
 - Question 4's boundary goes in CLAUDE.md verbatim. When later work touches that boundary, asking beats guessing.
 - No automation on day one: no watchers, no cron, no sync. Mention `uv run ${CLAUDE_PLUGIN_ROOT}/search/vsearch.py watch` exists; wire it only when the user asks.
