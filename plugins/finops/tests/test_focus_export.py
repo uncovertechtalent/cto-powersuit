@@ -463,6 +463,8 @@ def showback_gives_the_committed_output_and_reconciles():
     if "Reconciliation: teams plus unallocated minus total = EUR 0.00" not in p.stdout:
         bad.append("the reconciliation line does not read zero")
     bad += showback_problems(p.stdout)
+    if "Cost with a `team` tag: EUR 11,290.00, 87.9% of the total." not in p.stdout:
+        bad.append("the tag coverage line should state EUR 11,290.00 and 87.9% for a total that is not zero")
     # The same month, summed here from the FOCUS rows without the script.
     rows = [r for f in FOCUS_FILES for r in focus_rows(f) if r["ChargePeriodStart"].startswith("2026-08")]
     total = sum(Decimal(r["BilledCost"]) for r in rows)
@@ -640,6 +642,9 @@ def showback_prints_zero_not_negative_zero_for_a_month_that_nets_to_nothing():
             bad += [f"{cost}: {b}" for b in showback_problems(p.stdout)]
             if "| Total |  |  |  | EUR 0.00 |" not in p.stdout or "-0.00" in p.stdout:
                 bad.append(f"{cost}: the Total row should read EUR 0.00 and no -0.00 may print")
+            coverage = next(ln for ln in p.stdout.splitlines() if ln.startswith("Cost with a `team` tag"))
+            if coverage != "Cost with a `team` tag: EUR 0.00.":
+                bad.append(f"{cost}: a printed total of zero has no share to state, got: {coverage}")
     return bad
 
 
