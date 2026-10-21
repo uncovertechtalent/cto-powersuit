@@ -578,7 +578,8 @@ def cmd_showback(args):
               + [["Unallocated", "", "", "", money(cur, unalloc_total_c), share.get(("unallocated",), "")],
                  ["Total", "", "", "", money(cur, total_c), "100.0%" if total_c else ""]])
         if team_tag:
-            print(f"Cost with a `{team_tag}` tag: {money(cur, tagged)}, {f'{tagged / total * 100:.1f}%' if total else ''} of the total.\n")
+            covered = f", {tagged / total * 100:.1f}% of the total" if total_c else ""  # no share of a printed total of zero
+            print(f"Cost with a `{team_tag}` tag: {money(cur, tagged)}{covered}.\n")
         print(f"### Unallocated, {cur}\n")
         if unalloc:
             table(["Provider", "Service", "Reason", "Amount"],
@@ -595,7 +596,7 @@ def cmd_showback(args):
         lost = total - sum(direct.values()) - split_exact - sum(unalloc.values())
         if abs(lost) >= Decimal("0.005"):
             diff += lost
-        print(f"Reconciliation: teams plus unallocated minus total = {cur} {diff:.2f}\n")
+        print(f"Reconciliation: teams plus unallocated minus total = {money(cur, diff)}\n")
 
 
 # ---------------------------------------------------------------- unit costs
