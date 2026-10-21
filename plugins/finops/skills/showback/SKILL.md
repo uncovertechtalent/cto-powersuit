@@ -80,6 +80,7 @@ The page path, cost per team per currency, unallocated cost and its share, tag c
 - Unallocated cost is its own line. It is never spread across teams without a rule the user agreed.
 - Teams plus unallocated equal the total. A page with a non-zero reconciliation is not written.
 - Amounts stay in the billed currency, one table per currency.
+- Amounts are in whole cents. The script rounds so that the printed rows add up to the printed total, with the leftover cents on the largest remainders; a row can differ by one cent from rounding it alone.
 - Every figure names its period and its source, in the front matter or on its line.
 
 ## Overlay

@@ -9,7 +9,8 @@
 - check: the example gives the committed output; bad FOCUS rows and a missing column are reported.
 - baseline: the example gives the committed output and exactly one spike (the planted 2026-08 compute month); the
   --spike threshold, a currency change and a single-month service are flagged.
-- showback: the example gives the committed output and reconciles to zero; even and weighted splits; bad allocation files.
+- showback: the example gives the committed output and reconciles to zero; even and weighted splits; bad allocation files;
+  the printed rows add up to the printed total, also for amounts with sub-cent digits (apportion rounds to whole cents).
 - unit: cost per 1000 requests, a month without a count, and more than one currency.
 - parse_amount: the number formats the script reads.
 - examples: the pages embed the committed script output, the run rates and the SaaS figures match the inputs, every
@@ -19,7 +20,7 @@
 Every input is synthetic except published-sample/focus_sample.csv. Standard library only, Python 3.9+. Usage: python3 plugins/finops/tests/test_focus_export.py [-v]
 """
 import csv, datetime, hashlib, importlib.util, json, re, statistics, subprocess, sys, tempfile
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_EVEN
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -114,7 +115,39 @@ def md_table(page, heading):
 
 
 def eur(s):
-    return Decimal(re.search(r"EUR ([\d,]+\.\d\d)", s).group(1).replace(",", ""))
+    return Decimal(re.search(r"EUR (-?[\d,]+\.\d\d)", s).group(1).replace(",", ""))
+
+
+def cells(line):
+    return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+def showback_problems(out, currency="EUR"):
+    """What a reader adds up on a showback report: direct plus shared is the row total, the rows and the
+    unallocated lines add up to the Total row, the shares add up to 100.0%, the shared costs table adds up to
+    the Shared column, and the unallocated table to the Unallocated row."""
+    block = out.split(f"## Cost per team, {currency}\n", 1)[1].split("\n\n", 1)[0]
+    rows = [cells(ln) for ln in block.splitlines() if ln.startswith("|")][2:]
+    teams = [r for r in rows if r[0] not in ("Unallocated", "Total")]
+    unalloc = next(r for r in rows if r[0] == "Unallocated")
+    total = next(r for r in rows if r[0] == "Total")
+    bad = []
+    for r in teams:
+        if eur(r[2]) + eur(r[3]) != eur(r[4]):
+            bad.append(f"{r[0]}: direct {eur(r[2])} plus shared {eur(r[3])} is not {eur(r[4])}")
+    if sum(eur(r[4]) for r in teams) + eur(unalloc[4]) != eur(total[4]):
+        bad.append(f"the rows add up to {sum(eur(r[4]) for r in teams) + eur(unalloc[4])}, the Total row says {eur(total[4])}")
+    if sum(Decimal(r[5].rstrip("%")) for r in teams + [unalloc]) != Decimal("100.0"):
+        bad.append("the Share column does not add up to 100.0%")
+    shared = out.split(f"### Shared costs, {currency}\n", 1)[1].split("\n\n", 1)[0]
+    split = [cells(ln) for ln in shared.splitlines() if ln.startswith("|")][2:]
+    if sum(eur(r[1]) for r in split if not r[2].startswith("not split")) != sum(eur(r[3]) for r in teams):
+        bad.append("the shared costs table does not add up to the Shared column")
+    lines = out.split(f"### Unallocated, {currency}\n", 1)[1].split("\n\n", 1)[0]
+    un_rows = [cells(ln) for ln in lines.splitlines() if ln.startswith("|")][2:]
+    if sum((eur(r[3]) for r in un_rows), Decimal(0)) != eur(unalloc[4]):
+        bad.append("the unallocated table does not add up to the Unallocated row")
+    return bad
 
 
 # ---------------------------------------------------------------- convert
@@ -240,12 +273,18 @@ def published_sample_is_the_file_as_published():
     rows = read_csv(EX / PUB / "focus_sample.csv")
     if len(data) != 755423 or len(rows) != 1000 or len(rows[0]) != 44:
         bad.append(f"expected 755423 bytes, 1000 rows and 44 columns, got {len(data)}, {len(rows)}, {len(rows[0])}")
-    for rel in ("README.md", PUB + "/NOTICE.md"):
-        s = text(rel)
+    notices = {"examples/README.md": text("README.md"), "NOTICE.md": text(PUB + "/NOTICE.md"),
+               "THIRD_PARTY_NOTICES.md": (FINOPS / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")}
+    for rel, s in notices.items():
         for needle in (PUB_SHA256, PUB_BLOB, PUB_COMMIT, "CC BY 4.0", "https://creativecommons.org/licenses/by/4.0/",
-                       "FinOps-Open-Cost-and-Usage-Spec/FOCUS-Sample-Data", "FOCUS-1.0/focus_sample.csv", "license.md"):
+                       "FinOps-Open-Cost-and-Usage-Spec/FOCUS-Sample-Data", "FOCUS-1.0/focus_sample.csv", "license.md",
+                       "names a creator or a copyright holder", "NOASSERTION"):
             if needle not in s:
                 bad.append(f"{rel} lacks the attribution detail '{needle[:50]}'")
+    for rel in ("README.md", "README_de.md"):
+        s = (REPO / rel).read_text(encoding="utf-8")
+        if "plugins/finops/THIRD_PARTY_NOTICES.md" not in s or "CC BY 4.0" not in s:
+            bad.append(f"{rel}: the License section does not name the finops notice and CC BY 4.0")
     return bad
 
 
@@ -421,6 +460,7 @@ def showback_gives_the_committed_output_and_reconciles():
         bad.append("the output differs from outputs/showback-2026-08.md")
     if "Reconciliation: teams plus unallocated minus total = EUR 0.00" not in p.stdout:
         bad.append("the reconciliation line does not read zero")
+    bad += showback_problems(p.stdout)
     # The same month, summed here from the FOCUS rows without the script.
     rows = [r for f in FOCUS_FILES for r in focus_rows(f) if r["ChargePeriodStart"].startswith("2026-08")]
     total = sum(Decimal(r["BilledCost"]) for r in rows)
@@ -443,11 +483,10 @@ def showback_even_and_weighted_splits():
         path = Path(tmp) / "weights.json"
         path.write_text(json.dumps(alloc))
         p = run("showback", "--alloc", path, "--month", "2026-08", *FOCUS_FILES)
-        rows = {ln.split("|")[1].strip(): [c.strip() for c in ln.split("|")[2:-1]] for ln in p.stdout.splitlines()
-                if ln.startswith("| ") and ln.split("|")[1].strip() in ("checkout", "search", "platform", "Unallocated")}
-        if (rows.get("checkout") or [""] * 4)[2] != "EUR 300.00" or (rows.get("search") or [""] * 4)[2] != "EUR 200.00" \
-                or (rows.get("platform") or [""] * 4)[2] != "EUR 0.00":
+        rows = {cells(ln)[0]: cells(ln) for ln in p.stdout.splitlines() if ln.startswith("| ") and cells(ln)[0] in ("checkout", "search", "platform")}
+        if [rows[t][3] for t in ("checkout", "search", "platform")] != ["EUR 300.00", "EUR 200.00", "EUR 0.00"]:
             bad.append(f"weights 60/40 of EUR 500.00: team rows {rows}")
+        bad += [f"weights: {b}" for b in showback_problems(p.stdout)]
         if "| Synthetic Hosting | VAT | no team tag and no rule | EUR 260.30 |" not in p.stdout:
             bad.append("VAT is no longer shared, so it should show as unallocated")
         if "= EUR 0.00" not in p.stdout:
@@ -455,8 +494,10 @@ def showback_even_and_weighted_splits():
         alloc["shared"] = [{"name": "Cloud support plan", "services": ["Support Plan"], "split": "even"}]
         path.write_text(json.dumps(alloc))
         p = run("showback", "--alloc", path, "--month", "2026-08", *FOCUS_FILES)
-        if p.stdout.count("| EUR 166.67 |") != 3 or "= EUR 0.00" not in p.stdout:
-            bad.append("an even split of EUR 500.00 over three teams should give EUR 166.67 to each and reconcile to zero")
+        shared = sorted(cells(ln)[3] for ln in p.stdout.splitlines() if ln.startswith("| ") and cells(ln)[0] in ("checkout", "search", "platform"))
+        if shared != ["EUR 166.66", "EUR 166.67", "EUR 166.67"] or "= EUR 0.00" not in p.stdout:
+            bad.append(f"an even split of EUR 500.00 over three teams should give EUR 166.67, 166.67 and 166.66 and reconcile to zero: {shared}")
+        bad += [f"even: {b}" for b in showback_problems(p.stdout)]
     return bad
 
 
@@ -475,6 +516,66 @@ def showback_refuses_a_bad_allocation_file():
             p = run("showback", "--alloc", path, "--month", "2026-08", *FOCUS_FILES)
             if p.returncode != 2 or frag not in p.stderr or p.stdout:
                 bad.append(f"{label}: exit {p.returncode}, stderr '{p.stderr.strip()[:120]}'")
+    return bad
+
+
+@test
+def showback_rows_add_up_when_amounts_have_sub_cent_digits():
+    """Real bills carry lines of a fraction of a cent. The printed rows must still add up to the printed total."""
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        paths = []
+        for rel in FOCUS_FILES:
+            rows = focus_rows(rel)
+            for n, r in enumerate(rows):
+                r["BilledCost"] = str((Decimal(r["BilledCost"]) * (1 + Decimal(n % 7) / 997)).quantize(Decimal("0.00001")))
+            paths.append(Path(tmp) / Path(rel).name)
+            write_csv(paths[-1], rows, fields_of(rel))
+        want = sum(Decimal(r["BilledCost"]) for f in paths for r in read_csv(f) if r["ChargePeriodStart"].startswith("2026-08"))
+        want = want.quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
+        alloc = json.loads(text(ALLOC))
+        variants = [("committed rules", alloc)]
+        for label, split in (("even", "even"), ("weights", {"checkout": 1, "search": 1, "platform": 1}), ("uneven weights", {"checkout": 7, "search": 3, "platform": 2})):
+            a = json.loads(json.dumps(alloc))
+            a["shared"] = [dict(x, split=split) for x in a["shared"]]
+            variants.append((label, a))
+        for label, a in variants:
+            path = Path(tmp) / "alloc.json"
+            path.write_text(json.dumps(a))
+            p = run("showback", "--alloc", path, "--month", "2026-08", *paths)
+            if p.returncode != 0:
+                bad.append(f"{label}: exit {p.returncode}: {p.stderr.strip()[:150]}")
+                continue
+            bad += [f"{label}: {b}" for b in showback_problems(p.stdout)]
+            if f"| Total |  |  |  | EUR {want:,.2f} | 100.0% |" not in p.stdout:
+                bad.append(f"{label}: the Total row is not EUR {want:,.2f}")
+            if "= EUR 0.00" not in p.stdout:
+                bad.append(f"{label}: the reconciliation does not read zero")
+    return bad
+
+
+@test
+def apportion_and_to_cents():
+    fx = load_script()
+    D = Decimal
+    bad = []
+    third = D(1) / 3
+    got = fx.apportion({"a": third, "b": third, "c": third}, D("1.00"))
+    if got != {"a": D("0.34"), "b": D("0.33"), "c": D("0.33")}:
+        bad.append(f"a third each of 1.00: {got}")
+    got = fx.apportion({"x": D("1.9"), "y": D("1.9")}, D("3"), D(1))
+    if sorted(got.values()) != [1, 2] or sum(got.values()) != 3:
+        bad.append(f"1.9 and 1.9 to a total of 3: {got}")
+    got = fx.apportion({"x": D("1.9"), "y": D("1.9")}, D("1"), D(1))
+    if sum(got.values()) != 1 or sorted(got.values()) != [0, 1]:
+        bad.append(f"a target below the rounded-down sum takes units off: {got}")
+    got = fx.apportion({"a": D("-0.004"), "b": D("10.004")}, D("10.00"))
+    if sum(got.values()) != D("10.00"):
+        bad.append(f"a negative value: {got}")
+    if fx.apportion({}, D("5")) != {}:
+        bad.append("an empty dict should give an empty dict")
+    if (fx.to_cents(D("2.675")), fx.to_cents(D("2.665")), fx.to_cents(D("-0.004"))) != (D("2.68"), D("2.66"), D("0.00")):
+        bad.append("to_cents should round half to even, as money() prints")
     return bad
 
 

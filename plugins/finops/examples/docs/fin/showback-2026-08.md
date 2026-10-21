@@ -32,8 +32,8 @@ The rules are in `finops/allocation.json`. The order of precedence is: shared co
 
 | Team | Owner | Direct | Shared | Total | Share |
 |---|---|---|---|---|---|
-| search | synthetic owner: search lead | EUR 6,740.00 | EUR 436.86 | EUR 7,176.86 | 55.9% |
-| checkout | synthetic owner: checkout lead | EUR 3,360.00 | EUR 217.78 | EUR 3,577.78 | 27.9% |
+| search | synthetic owner: search lead | EUR 6,740.00 | EUR 436.87 | EUR 7,176.87 | 55.9% |
+| checkout | synthetic owner: checkout lead | EUR 3,360.00 | EUR 217.78 | EUR 3,577.78 | 27.8% |
 | platform | synthetic owner: platform lead | EUR 1,630.00 | EUR 105.65 | EUR 1,735.65 | 13.5% |
 | Unallocated |  |  |  | EUR 356.00 | 2.8% |
 | Total |  |  |  | EUR 12,846.30 | 100.0% |
@@ -62,6 +62,8 @@ Proposed fixes, largest first. Nothing is moved to a team to make the table look
 | Hosting VAT | EUR 260.30 | proportional |
 
 Proportional means in proportion to each team's direct cost of the month, so a month with a spike moves shared cost toward the team that caused it. A team may ask for an even split instead.
+
+Amounts are in whole cents. Each shared cost is split to its own amount, and the cents left over by rounding go to the largest remainders, so the rows add up to the Total row and the Share column adds up to 100.0%. A row can differ by one cent from rounding it alone, and a share by 0.1 point: the search team's shared cost is EUR 436.87 here, where rounding it alone gives EUR 436.86.
 
 ## Tag coverage
 

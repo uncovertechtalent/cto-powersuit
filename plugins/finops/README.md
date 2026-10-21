@@ -15,7 +15,7 @@ claude plugin install finops@cto-powersuit
 | Skill | What it does |
 |---|---|
 | `/finops:cost-baseline` | Builds the monthly cost per provider and service from invoices, billing exports and FOCUS files. Reconciles each source with its own total, flags missing months, one-off charges, spikes and currency changes, and writes `docs/fin/cost-baseline.md`. |
-| `/finops:showback` | Splits one month of cost across teams from tags and `finops/allocation.json`. Shared costs follow a stated split; unallocated cost is its own line. Writes `docs/fin/showback-<YYYY-MM>.md`. Charges no team. |
+| `/finops:showback` | Splits one month of cost across teams from tags and `finops/allocation.json`. Shared costs follow a stated split; unallocated cost is its own line; the printed rows add up to the printed total. Writes `docs/fin/showback-<YYYY-MM>.md`. Charges no team. |
 | `/finops:unit-costs` | Divides monthly cost by a named count (requests, customers, deploys or another unit the team picks), with the count's source and owner, and explains the trend. Writes `docs/fin/unit-costs.md`. |
 | `/finops:saas-stack-audit` | Lists every SaaS tool from invoices, the SSO app list and expense exports, with owner, seats paid and used, overlaps and a keep, cut or replace proposal. Replace options include open-source and agent-built tools with switching cost and risk. Cancels nothing. Writes `docs/fin/saas-inventory.md`. |
 | `/finops:focus-export` | Converts billing files to FOCUS with a column map per format, validates the rows, reconciles the totals and lists the declared deviations. Check before use: FOCUS spec version. |
