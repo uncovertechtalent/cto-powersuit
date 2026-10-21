@@ -1,0 +1,17 @@
+invoice_date;invoice_no;product;item;item_type;net_amount;currency;project;team
+01.04.2026;SYN-H-202604;Dedicated Servers;Dedicated servers (2 units), monthly;recurring;1.190,00;EUR;syn-hosting-main;platform
+01.04.2026;SYN-H-202604;Backup Storage;Backup storage 2 TB, monthly;recurring;180,00;EUR;syn-hosting-main;checkout
+01.04.2026;SYN-H-202604;Dedicated Servers;Setup fee, additional server;setup;99,00;EUR;syn-hosting-main;platform
+01.04.2026;SYN-H-202604;VAT;VAT 19 %;vat;279,11;EUR;syn-hosting-main;
+01.05.2026;SYN-H-202605;Dedicated Servers;Dedicated servers (2 units), monthly;recurring;1.190,00;EUR;syn-hosting-main;platform
+01.05.2026;SYN-H-202605;Backup Storage;Backup storage 2 TB, monthly;recurring;180,00;EUR;syn-hosting-main;checkout
+01.05.2026;SYN-H-202605;VAT;VAT 19 %;vat;260,30;EUR;syn-hosting-main;
+01.07.2026;SYN-H-202607;Dedicated Servers;Dedicated servers (2 units), monthly;recurring;1.190,00;EUR;syn-hosting-main;platform
+01.07.2026;SYN-H-202607;Backup Storage;Backup storage 2 TB, monthly;recurring;180,00;EUR;syn-hosting-main;checkout
+01.07.2026;SYN-H-202607;VAT;VAT 19 %;vat;260,30;EUR;syn-hosting-main;
+01.08.2026;SYN-H-202608;Dedicated Servers;Dedicated servers (2 units), monthly;recurring;1.190,00;EUR;syn-hosting-main;platform
+01.08.2026;SYN-H-202608;Backup Storage;Backup storage 2 TB, monthly;recurring;180,00;EUR;syn-hosting-main;checkout
+01.08.2026;SYN-H-202608;VAT;VAT 19 %;vat;260,30;EUR;syn-hosting-main;
+01.09.2026;SYN-H-202609;Dedicated Servers;Dedicated servers (2 units), monthly;recurring;1.190,00;EUR;syn-hosting-main;platform
+01.09.2026;SYN-H-202609;Backup Storage;Backup storage 2 TB, monthly;recurring;180,00;EUR;syn-hosting-main;checkout
+01.09.2026;SYN-H-202609;VAT;VAT 19 %;vat;260,30;EUR;syn-hosting-main;

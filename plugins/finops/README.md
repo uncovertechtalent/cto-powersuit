@@ -84,4 +84,10 @@ Enable it with `/gate:add-rule` (path A: install a module's check). By hand, fro
 
 Run it on its own with `python3 .github/actions/gate/run.py --only finops.cost-provenance --dry-run`.
 
+## Example run
+
+[`examples/`](examples/README.md) holds one run of `cost-baseline`, `showback` and `saas-stack-audit` on synthetic inputs: two invented billing exports, an invented SSO app list and an invented SaaS bill, with the FOCUS files, the script output and the three docs pages. The baseline flags a planted spike, the SaaS inventory has keep, cut and replace rows, and `finops.cost-provenance` passes on the pages and fails on a copy without `cost_period` and `cost_source`. Every figure is labelled synthetic; no real bill was used. No skill copies the folder into a client repository.
+
+`tests/test_focus_export.py` tests `scripts/focus_export.py` on those inputs (convert, check, baseline, showback and unit, with their error cases) and checks the example pages against the inputs. Run it from the repository root with `python3 plugins/finops/tests/test_focus_export.py`; CI runs it.
+
 Demo: [machinebehavior.io/inside/docs/fin/](https://machinebehavior.io/inside/docs/fin/), the FinOps space of the platform behind machinebehavior.io.

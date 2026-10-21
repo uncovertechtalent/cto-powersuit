@@ -535,6 +535,8 @@ def cmd_showback(args):
         else:
             print("None.\n")
         diff = total - sum(direct.values()) - sum(spread.values()) - unalloc_total
+        if abs(diff) < Decimal("0.005"):  # an even split by three leaves a residue far below a cent; print zero, not -0.00
+            diff = Decimal(0)
         print(f"Reconciliation: teams plus unallocated minus total = {cur} {diff:.2f}\n")
 
 

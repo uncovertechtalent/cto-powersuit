@@ -1,0 +1,21 @@
+run.py: gate=finops-example trigger=manual sha=example overall=fail findings_open=18 warnings=0 checks=finops.cost-provenance:fail
+  FAIL finops.cost-provenance: 3 pages, 50 lines with cost figures: 32 covered by front matter, 18 hits
+       docs/fin/cost-baseline.md:22 cost figure without period and source: EUR 45,826.00
+       docs/fin/cost-baseline.md:23 cost figure without period and source: EUR 8,269.31
+       docs/fin/cost-baseline.md:29 cost figure without period and source: EUR 6,380.00
+       docs/fin/cost-baseline.md:30 cost figure without period and source: EUR 1,748.11
+       docs/fin/cost-baseline.md:36 cost figure without period and source: EUR 3,650.00
+       docs/fin/cost-baseline.md:37 cost figure without period and source: EUR 305.00
+       docs/fin/cost-baseline.md:38 cost figure without period and source: EUR 1,365.00
+       docs/fin/cost-baseline.md:39 cost figure without period and source: EUR 560.00
+       docs/fin/cost-baseline.md:40 cost figure without period and source: EUR 500.00
+       docs/fin/cost-baseline.md:41 cost figure without period and source: EUR 180.00
+       docs/fin/cost-baseline.md:42 cost figure without period and source: EUR 1,289.00
+       docs/fin/cost-baseline.md:43 cost figure without period and source: EUR 279.11
+       docs/fin/cost-baseline.md:49 cost figure without period and source: EUR 6,531.00
+       docs/fin/cost-baseline.md:50 cost figure without period and source: EUR 1,630.30
+       docs/fin/cost-baseline.md:62 cost figure without period and source: EUR 99.00
+       docs/fin/cost-baseline.md:63 cost figure without period and source: EUR 2,400.00
+       docs/fin/cost-baseline.md:64 cost figure without period and source: EUR -400.00
+       docs/fin/cost-baseline.md:70 cost figure without period and source: EUR 8,375.00
+dry run: nothing written

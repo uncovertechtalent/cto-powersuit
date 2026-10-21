@@ -1,0 +1,64 @@
+date,billing_name,description,billing_cycle,payment_method,amount,currency,seats
+2025-10-05,SYNTHCALL INC,SynthCall subscription 2025-10,monthly,card,120.00,EUR,15
+2025-10-05,SYNTHCHAT*SUBSCR,SynthChat subscription 2025-10,monthly,card,320.00,EUR,40
+2025-10-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2025-10,monthly,card,150.00,EUR,25
+2025-10-05,SYNTHFORMS,SynthForms subscription 2025-10,monthly,card,45.00,EUR,
+2025-10-05,SYNTHTICKETS EU,SynthTickets subscription 2025-10,monthly,invoice,200.00,EUR,20
+2025-11-05,SYNTHCALL INC,SynthCall subscription 2025-11,monthly,card,120.00,EUR,15
+2025-11-05,SYNTHCHAT*SUBSCR,SynthChat subscription 2025-11,monthly,card,320.00,EUR,40
+2025-11-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2025-11,monthly,card,150.00,EUR,25
+2025-11-05,SYNTHFORMS,SynthForms subscription 2025-11,monthly,card,45.00,EUR,
+2025-11-05,SYNTHTICKETS EU,SynthTickets subscription 2025-11,monthly,invoice,200.00,EUR,20
+2025-12-05,SYNTHCALL INC,SynthCall subscription 2025-12,monthly,card,120.00,EUR,15
+2025-12-05,SYNTHCHAT*SUBSCR,SynthChat subscription 2025-12,monthly,card,320.00,EUR,40
+2025-12-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2025-12,monthly,card,150.00,EUR,25
+2025-12-05,SYNTHFORMS,SynthForms subscription 2025-12,monthly,card,45.00,EUR,
+2025-12-05,SYNTHTICKETS EU,SynthTickets subscription 2025-12,monthly,invoice,200.00,EUR,20
+2025-12-15,SYNTHMEET GMBH,SynthMeet annual plan 2025-12-15 to 2026-12-14,annual,invoice,3360.00,EUR,40
+2026-01-05,SYNTHCALL INC,SynthCall subscription 2026-01,monthly,card,120.00,EUR,15
+2026-01-05,SYNTHCHAT*SUBSCR,SynthChat subscription 2026-01,monthly,card,320.00,EUR,40
+2026-01-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-01,monthly,card,150.00,EUR,25
+2026-01-05,SYNTHFORMS,SynthForms subscription 2026-01,monthly,card,45.00,EUR,
+2026-01-05,SYNTHTICKETS EU,SynthTickets subscription 2026-01,monthly,invoice,200.00,EUR,20
+2026-01-10,SYNTHSIGN BV,SynthSign annual plan 2026-01-10 to 2027-01-09,annual,invoice,720.00,EUR,5
+2026-02-01,SYNTHDOCS,SynthDocs annual plan 2026-02-01 to 2027-01-31,annual,invoice,4800.00,EUR,40
+2026-02-05,SYNTHCALL INC,SynthCall subscription 2026-02,monthly,card,120.00,EUR,15
+2026-02-05,SYNTHCHAT*SUBSCR,SynthChat subscription 2026-02,monthly,card,320.00,EUR,40
+2026-02-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-02,monthly,card,150.00,EUR,25
+2026-02-05,SYNTHFORMS,SynthForms subscription 2026-02,monthly,card,45.00,EUR,
+2026-02-05,SYNTHTICKETS EU,SynthTickets subscription 2026-02,monthly,invoice,200.00,EUR,20
+2026-03-05,SYNTHCALL INC,SynthCall subscription 2026-03,monthly,card,120.00,EUR,15
+2026-03-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-03,monthly,card,150.00,EUR,25
+2026-03-05,SYNTHFORMS,SynthForms subscription 2026-03,monthly,card,45.00,EUR,
+2026-03-05,SYNTHTICKETS EU,SynthTickets subscription 2026-03,monthly,invoice,200.00,EUR,20
+2026-03-05,SynthChat Ltd,SynthChat subscription 2026-03,monthly,card,320.00,EUR,40
+2026-04-05,SYNTHCALL INC,SynthCall subscription 2026-04,monthly,card,120.00,EUR,15
+2026-04-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-04,monthly,card,150.00,EUR,25
+2026-04-05,SYNTHFORMS,SynthForms subscription 2026-04,monthly,card,45.00,EUR,
+2026-04-05,SYNTHTICKETS EU,SynthTickets subscription 2026-04,monthly,invoice,200.00,EUR,20
+2026-04-05,SynthChat Ltd,SynthChat subscription 2026-04,monthly,card,320.00,EUR,40
+2026-05-05,SYNTHCALL INC,SynthCall subscription 2026-05,monthly,card,120.00,EUR,15
+2026-05-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-05,monthly,card,150.00,EUR,25
+2026-05-05,SYNTHFORMS,SynthForms subscription 2026-05,monthly,card,45.00,EUR,
+2026-05-05,SYNTHTICKETS EU,SynthTickets subscription 2026-05,monthly,invoice,200.00,EUR,20
+2026-05-05,SynthChat Ltd,SynthChat subscription 2026-05,monthly,card,320.00,EUR,40
+2026-06-05,SYNTHCALL INC,SynthCall subscription 2026-06,monthly,card,120.00,EUR,15
+2026-06-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-06,monthly,card,150.00,EUR,25
+2026-06-05,SYNTHFORMS,SynthForms subscription 2026-06,monthly,card,45.00,EUR,
+2026-06-05,SYNTHTICKETS EU,SynthTickets subscription 2026-06,monthly,invoice,200.00,EUR,20
+2026-06-05,SynthChat Ltd,SynthChat subscription 2026-06,monthly,card,320.00,EUR,40
+2026-07-05,SYNTHCALL INC,SynthCall subscription 2026-07,monthly,card,120.00,EUR,15
+2026-07-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-07,monthly,card,150.00,EUR,25
+2026-07-05,SYNTHFORMS,SynthForms subscription 2026-07,monthly,card,45.00,EUR,
+2026-07-05,SYNTHTICKETS EU,SynthTickets subscription 2026-07,monthly,invoice,200.00,EUR,20
+2026-07-05,SynthChat Ltd,SynthChat subscription 2026-07,monthly,card,320.00,EUR,40
+2026-08-05,SYNTHCALL INC,SynthCall subscription 2026-08,monthly,card,120.00,EUR,15
+2026-08-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-08,monthly,card,150.00,EUR,25
+2026-08-05,SYNTHFORMS,SynthForms subscription 2026-08,monthly,card,45.00,EUR,
+2026-08-05,SYNTHTICKETS EU,SynthTickets subscription 2026-08,monthly,invoice,200.00,EUR,20
+2026-08-05,SynthChat Ltd,SynthChat subscription 2026-08,monthly,card,320.00,EUR,40
+2026-09-05,SYNTHCALL INC,SynthCall subscription 2026-09,monthly,card,120.00,EUR,15
+2026-09-05,SYNTHDIAGRAM*TEAM,SynthDiagram subscription 2026-09,monthly,card,150.00,EUR,25
+2026-09-05,SYNTHFORMS,SynthForms subscription 2026-09,monthly,card,45.00,EUR,
+2026-09-05,SYNTHTICKETS EU,SynthTickets subscription 2026-09,monthly,invoice,200.00,EUR,20
+2026-09-05,SynthChat Ltd,SynthChat subscription 2026-09,monthly,card,320.00,EUR,40

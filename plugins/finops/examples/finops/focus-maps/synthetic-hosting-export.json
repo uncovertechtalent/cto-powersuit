@@ -1,0 +1,36 @@
+{
+  "about": "Column map for the synthetic hosting invoice export in inputs/. SYNTHETIC SAMPLE: the provider does not exist and every figure is invented. The export uses a semicolon, a decimal comma and dd.mm.yyyy dates, as a German hosting invoice export often does.",
+  "source": "SYNTHETIC Synthetic Hosting invoice export 2026-04 to 2026-09",
+  "delimiter": ";",
+  "decimal": ",",
+  "date_format": "%d.%m.%Y",
+  "granularity": "month",
+  "columns": {
+    "ChargePeriodStart": "invoice_date",
+    "BilledCost": "net_amount",
+    "BillingCurrency": "currency",
+    "ServiceName": "product",
+    "ChargeDescription": "item",
+    "ChargeCategory": "item_type",
+    "SubAccountId": "project"
+  },
+  "constants": {
+    "ServiceProviderName": "Synthetic Hosting",
+    "HostProviderName": "Synthetic Hosting",
+    "InvoiceIssuerName": "Synthetic Hosting",
+    "ChargeCategory": "Usage"
+  },
+  "values": {
+    "ChargeCategory": {
+      "recurring": "Usage",
+      "setup": "Purchase",
+      "vat": "Tax"
+    }
+  },
+  "tags": {
+    "team": "team"
+  },
+  "extra": {
+    "x_InvoiceId": "invoice_no"
+  }
+}

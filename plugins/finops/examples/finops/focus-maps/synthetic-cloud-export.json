@@ -1,0 +1,39 @@
+{
+  "about": "Column map for the synthetic cloud billing export in inputs/. SYNTHETIC SAMPLE: the provider does not exist and every figure is invented. Read by scripts/focus_export.py convert; see the template in templates/finops/focus-maps/example.json for what each key does.",
+  "source": "SYNTHETIC Synthetic Cloud billing export 2026-04 to 2026-09",
+  "delimiter": ",",
+  "decimal": ".",
+  "date_format": "iso",
+  "granularity": "month",
+  "columns": {
+    "ChargePeriodStart": "usage_month",
+    "BilledCost": "amount",
+    "BillingCurrency": "currency",
+    "ServiceName": "product",
+    "ChargeDescription": "description",
+    "ChargeCategory": "line_type",
+    "SubAccountId": "account_id",
+    "SubAccountName": "account_name",
+    "PricingQuantity": "quantity",
+    "PricingUnit": "unit"
+  },
+  "constants": {
+    "ServiceProviderName": "Synthetic Cloud",
+    "HostProviderName": "Synthetic Cloud",
+    "InvoiceIssuerName": "Synthetic Cloud",
+    "ChargeCategory": "Usage"
+  },
+  "values": {
+    "ChargeCategory": {
+      "usage": "Usage",
+      "purchase": "Purchase",
+      "credit": "Credit"
+    }
+  },
+  "tags": {
+    "team": "team"
+  },
+  "extra": {
+    "x_LineId": "line_id"
+  }
+}

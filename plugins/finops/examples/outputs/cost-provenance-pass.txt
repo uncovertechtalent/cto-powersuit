@@ -1,0 +1,2 @@
+run.py: gate=finops-example trigger=manual sha=example overall=pass findings_open=0 warnings=0 checks=finops.cost-provenance:pass
+dry run: nothing written
