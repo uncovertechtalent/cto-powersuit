@@ -86,7 +86,7 @@ Run it on its own with `python3 .github/actions/gate/run.py --only finops.cost-p
 
 ## Example run
 
-[`examples/`](examples/README.md) holds one run of `cost-baseline`, `showback` and `saas-stack-audit` on synthetic inputs: two invented billing exports, an invented SSO app list and an invented SaaS bill, with the FOCUS files, the script output and the three docs pages. The baseline flags a planted spike, the SaaS inventory has keep, cut and replace rows, and `finops.cost-provenance` passes on the pages and fails on a copy without `cost_period` and `cost_source`. Every figure is labelled synthetic; no real bill was used. No skill copies the folder into a client repository.
+[`examples/`](examples/README.md) holds one run of `cost-baseline`, `showback` and `saas-stack-audit` on synthetic inputs: two invented billing exports, an invented SSO app list and an invented SaaS bill, with the FOCUS files, the script output and the three docs pages. The baseline flags a planted spike, the SaaS inventory has keep, cut and replace rows, and `finops.cost-provenance` passes on the pages and fails on a copy without `cost_period` and `cost_source`. Every figure is labelled synthetic; no real bill was used. One published FOCUS 1.0 sample file (CC BY 4.0, with its attribution) shows the converter on a file the module did not generate. No skill copies the folder into a client repository.
 
 `tests/test_focus_export.py` tests `scripts/focus_export.py` on those inputs (convert, check, baseline, showback and unit, with their error cases) and checks the example pages against the inputs. Run it from the repository root with `python3 plugins/finops/tests/test_focus_export.py`; CI runs it.
 

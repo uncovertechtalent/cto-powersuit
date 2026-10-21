@@ -1,6 +1,6 @@
 # finops example: a run you can watch
 
-**Everything in this folder is synthetic.** The providers (Synthetic Cloud, Synthetic Hosting), the SaaS tools (every name starts with "Synth"), the teams, the owners, the account ids and every figure are invented. No real company's billing data was used, and no figure here is a result of any real organisation. Each file, page and output says so: the raw files start with `synthetic-`, every FOCUS row has an `x_Source` that starts with `SYNTHETIC`, every report prints that source, and every page opens with a "Synthetic sample" line.
+**Everything in this folder is synthetic, except `published-sample/`,** which holds one published sample file, unchanged, with its attribution (see [A published sample](#a-published-sample)). The providers (Synthetic Cloud, Synthetic Hosting), the SaaS tools (every name starts with "Synth"), the teams, the owners, the account ids and every figure outside `published-sample/` are invented. No real company's billing data was used, and no figure here is a result of any real organisation. Each synthetic file, page and output says so: the raw files start with `synthetic-`, every FOCUS row has an `x_Source` that starts with `SYNTHETIC`, every report prints that source, and every page opens with a "Synthetic sample" line. Figures from the published file are labelled "sample" and its reports print a source that starts with `SAMPLE`.
 
 The folder is one run of three skills on those inputs: `/finops:cost-baseline` (with `/finops:focus-export` as its first step), `/finops:showback` and `/finops:saas-stack-audit`. The layout is the one the skills create in a client repository, so a reader sees what lands where.
 
@@ -21,9 +21,31 @@ The folder is one run of three skills on those inputs: `/finops:cost-baseline` (
 | `outputs/showback-2026-08.md` | What `showback` prints for 2026-08: cost per team, the unallocated lines, the shared costs, tag coverage, and a reconciliation line that reads zero. |
 | `outputs/cost-provenance-pass.txt` | The gate check `finops.cost-provenance` on the three pages: pass. |
 | `outputs/cost-provenance-fail.txt` | The same check on a copy of the baseline page without `cost_period` and `cost_source`: every line with an amount is reported. |
+| `published-sample/focus_sample.csv` | A published FOCUS 1.0 sample dataset, committed byte for byte: 1,000 rows, 44 columns, three providers, one month (2024-09), USD. Not synthetic; see the notice. |
+| `published-sample/NOTICE.md` | The attribution: source, version, hash, license and what was changed. |
+| `published-sample/focus-map.json` | The column map from the published file to the columns of `focus_export.py`. |
+| `published-sample/outputs/check.txt`, `baseline.md` | What `check` and `baseline` print for the converted published file. |
 | `docs/fin/cost-baseline.md` | The baseline page: the script tables, the run rate per provider, the flags with their causes, the method and the declared FOCUS deviations. |
 | `docs/fin/showback-2026-08.md` | The showback page: the allocation rules, cost per team, the proposed fixes for unallocated lines, and the questions for the teams. It charges no team. |
 | `docs/fin/saas-inventory.md` | The SaaS inventory: eight tools with owner, seats paid and used, cost per month, renewal and notice dates, one overlap, replace options with switching cost and risk, and actions with owners and dates. It cancels nothing. |
+
+## A published sample
+
+`published-sample/focus_sample.csv` is a published FOCUS 1.0 sample dataset, used as published.
+
+Attribution (CC BY 4.0). Source: `FOCUS-1.0/focus_sample.csv` in the repository FOCUS-Sample-Data of the GitHub organisation FinOps-Open-Cost-and-Usage-Spec, https://github.com/FinOps-Open-Cost-and-Usage-Spec/FOCUS-Sample-Data (commit `139a302bdaa2eb84a86becb82056488a5528a672`, 2024-12-10; git blob `8d7568d2c024926d086b4d232010f9a0580657d2`; 755,423 bytes; sha256 `e91e5ac7edf01ed2c9d926f37ef7dc1ae2aae97956fea8da6c9ee488b1c2839e`). License: Creative Commons Attribution 4.0 International, https://creativecommons.org/licenses/by/4.0/, as the repository's `license.md` states; GitHub's license field for the repository reads NOASSERTION. The file is committed unchanged. The map, the converted rows and the reports derived from it are changed material, made for this example. The data is provided as published, without warranty. `published-sample/NOTICE.md` repeats this.
+
+What it shows: the module runs on a file it did not generate. The file has 1,000 rows, 44 columns, three providers (AWS, Microsoft, Oracle), 33 services and hourly charge periods in one month (2024-09), all in USD. `focus-map.json` reads the FOCUS 1.0 provider columns (`ProviderName`, `PublisherName`) into the script's `ServiceProviderName` and `HostProviderName`, turns the file's `NULL` text into empty cells, and keeps the file's `Id` as `x_Id`. `convert` writes 1,000 rows with 0 invalid, and their `BilledCost` adds up to USD 20.52 (sample). `outputs/baseline.md` lists the credit and the two adjustments as one-off charges. The converted file is not committed: it is a re-run away, and the tests compare it with the source.
+
+```bash
+cd published-sample
+S=../../templates/scripts/focus_export.py
+python3 $S convert --in focus_sample.csv --map focus-map.json --out /tmp/focus-published-sample.csv
+python3 $S check /tmp/focus-published-sample.csv
+python3 $S baseline /tmp/focus-published-sample.csv
+```
+
+Limits: the file covers one month, and the skill asks for at least three, so there is no run rate and the spike check cannot run; the spike demo stays with the synthetic bill. No showback was run on it: 289 of the 1,000 rows have no tags, and the rows that do carry 301 different `business_unit` values, so a showback by that tag is a table of 301 rows.
 
 ## What a video can show
 

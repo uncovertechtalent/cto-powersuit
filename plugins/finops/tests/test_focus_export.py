@@ -4,6 +4,8 @@
 - convert: both example exports give the committed FOCUS files byte for byte, and the BilledCost total of each equals
   the sum of the raw file computed here without the script; the --start/--end window, invalid rows (nothing written,
   or the valid rows with --skip-invalid) and a map with a placeholder behave as the skills say.
+- published sample: focus_sample.csv is the published file byte for byte (sha256 and git blob hash), its attribution is in
+  the README and the notice, and it converts without losing a row or a cent; the reports match the committed output.
 - check: the example gives the committed output; bad FOCUS rows and a missing column are reported.
 - baseline: the example gives the committed output and exactly one spike (the planted 2026-08 compute month); the
   --spike threshold, a currency change and a single-month service are flagged.
@@ -14,9 +16,9 @@
   output and file carries the synthetic label, and finops.cost-provenance passes on the pages and fails on a copy of
   the baseline page without cost_period and cost_source.
 
-Every input is synthetic. Standard library only, Python 3.9+. Usage: python3 plugins/finops/tests/test_focus_export.py [-v]
+Every input is synthetic except published-sample/focus_sample.csv. Standard library only, Python 3.9+. Usage: python3 plugins/finops/tests/test_focus_export.py [-v]
 """
-import csv, datetime, importlib.util, json, re, statistics, subprocess, sys, tempfile
+import csv, datetime, hashlib, importlib.util, json, re, statistics, subprocess, sys, tempfile
 from decimal import Decimal
 from pathlib import Path
 
@@ -37,6 +39,11 @@ CLOUD_FOCUS = "finops/focus/synthetic-cloud-2026-04-to-2026-09.csv"
 HOSTING_FOCUS = "finops/focus/synthetic-hosting-2026-04-to-2026-09.csv"
 FOCUS_FILES = [CLOUD_FOCUS, HOSTING_FOCUS]
 ALLOC = "finops/allocation.json"
+PUB = "published-sample"
+# The published FOCUS 1.0 sample file, committed byte for byte (see examples/published-sample/NOTICE.md).
+PUB_SHA256 = "e91e5ac7edf01ed2c9d926f37ef7dc1ae2aae97956fea8da6c9ee488b1c2839e"
+PUB_BLOB = "8d7568d2c024926d086b4d232010f9a0580657d2"
+PUB_COMMIT = "139a302bdaa2eb84a86becb82056488a5528a672"
 # The control totals of the sample: the sums of the raw files, set when the files were made (see examples/README.md).
 CONTROL = {"cloud": Decimal("45826.00"), "hosting": Decimal("8269.31")}
 TESTS = []
@@ -201,6 +208,86 @@ def convert_refuses_a_map_with_a_placeholder_or_a_missing_column():
         p = run("convert", "--in", CLOUD_RAW, "--map", mpath, "--out", out)
         if p.returncode != 2 or "x_ prefix" not in p.stderr:
             bad.append(f"extra column without x_: exit {p.returncode}, stderr '{p.stderr.strip()[:120]}'")
+    return bad
+
+
+@test
+def convert_writes_small_amounts_without_an_exponent():
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        rows = read_csv(EX / CLOUD_RAW)[:3]
+        for r, amount in zip(rows, ("8E-7", "0.00000080000", "-4.5E-9")):
+            r["amount"] = amount
+        raw, out = Path(tmp) / "raw.csv", Path(tmp) / "out.csv"
+        write_csv(raw, rows, list(rows[0]))
+        p = run("convert", "--in", raw, "--map", CLOUD_MAP, "--out", out)
+        got = [r["BilledCost"] for r in read_csv(out)] if p.returncode == 0 else p.stderr
+        if got != ["0.0000008", "0.00000080000", "-0.0000000045"]:
+            bad.append(f"BilledCost values: {got}")
+    return bad
+
+
+# ---------------------------------------------------------------- the published sample
+
+@test
+def published_sample_is_the_file_as_published():
+    data = (EX / PUB / "focus_sample.csv").read_bytes()
+    bad = []
+    if hashlib.sha256(data).hexdigest() != PUB_SHA256:
+        bad.append("the sha256 of focus_sample.csv is not the published one")
+    if hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest() != PUB_BLOB:
+        bad.append("the git blob hash of focus_sample.csv is not the published one")
+    rows = read_csv(EX / PUB / "focus_sample.csv")
+    if len(data) != 755423 or len(rows) != 1000 or len(rows[0]) != 44:
+        bad.append(f"expected 755423 bytes, 1000 rows and 44 columns, got {len(data)}, {len(rows)}, {len(rows[0])}")
+    for rel in ("README.md", PUB + "/NOTICE.md"):
+        s = text(rel)
+        for needle in (PUB_SHA256, PUB_BLOB, PUB_COMMIT, "CC BY 4.0", "https://creativecommons.org/licenses/by/4.0/",
+                       "FinOps-Open-Cost-and-Usage-Spec/FOCUS-Sample-Data", "FOCUS-1.0/focus_sample.csv", "license.md"):
+            if needle not in s:
+                bad.append(f"{rel} lacks the attribution detail '{needle[:50]}'")
+    return bad
+
+
+@test
+def published_sample_converts_without_losing_a_row_or_a_cent():
+    bad = []
+    src = read_csv(EX / PUB / "focus_sample.csv")
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "focus.csv"
+        p = run("convert", "--in", "focus_sample.csv", "--map", "focus-map.json", "--out", out, cwd=EX / PUB)
+        if p.returncode != 0:
+            return [f"convert: exit {p.returncode}: {p.stderr.strip()[:200]}"]
+        if "1000 rows written, 0 outside --start/--end, 0 invalid rows skipped" not in p.stdout or "BilledCost USD 20.52" not in p.stdout:
+            bad.append(f"convert summary: {p.stdout.strip()}")
+        dst = read_csv(out)
+        if len(dst) != len(src):
+            bad.append(f"{len(src)} rows in, {len(dst)} rows out")
+        else:
+            if sum(Decimal(r["BilledCost"]) for r in dst) != sum(Decimal(r["BilledCost"]) for r in src):
+                bad.append("the BilledCost totals of the source and the converted file differ")
+            for a, b in zip(src, dst):
+                if (b["x_Id"], b["ServiceProviderName"], b["HostProviderName"]) != (a["Id"], a["ProviderName"], a["PublisherName"]):
+                    bad.append(f"row Id {a['Id']}: Id, ProviderName or PublisherName did not carry over")
+                    break
+            if any(v == "NULL" for r in dst for v in r.values()):
+                bad.append("a NULL text is left in the converted file")
+            if sum(1 for r in dst if not r["Tags"]) != sum(1 for r in src if r["Tags"] == "NULL") or \
+                    any(a["Tags"] != b["Tags"] for a, b in zip(src, dst) if a["Tags"] != "NULL"):
+                bad.append("Tags: NULL should become empty and other tags stay as they are")
+            if any(re.search(r"[eE]", r[c]) for r in dst for c in ("BilledCost", "ContractedCost", "EffectiveCost", "ListCost", "PricingQuantity", "ConsumedQuantity")):
+                bad.append("a numeric column holds an exponent")
+            if not all(r["x_Source"].startswith("SAMPLE published") for r in dst):
+                bad.append("a converted row does not carry the SAMPLE source label")
+        for cmd, golden in (("check", PUB + "/outputs/check.txt"), ("baseline", PUB + "/outputs/baseline.md")):
+            q = run(cmd, out, cwd=EX / PUB)
+            if q.returncode != 0 or q.stdout != text(golden):
+                bad.append(f"{cmd}: exit {q.returncode}, or the output differs from {golden}")
+        flags = run("baseline", out, cwd=EX / PUB).stdout
+        if len([ln for ln in flags.splitlines() if re.search(r"\| (Credit|Adjustment) \|", ln)]) != 3:
+            bad.append("the baseline should list one credit and two adjustments as one-off charges")
+        if "### Spikes and single months\n\nNone." not in flags:
+            bad.append("one month cannot spike, so the spike flag should read None")
     return bad
 
 

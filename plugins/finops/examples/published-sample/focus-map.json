@@ -1,0 +1,51 @@
+{
+  "about": "Column map from the published FOCUS 1.0 sample file (focus_sample.csv in this folder) to the columns of scripts/focus_export.py. FOCUS 1.0 names the provider columns ProviderName and PublisherName; the script's columns are ServiceProviderName and HostProviderName, so the map reads them from there. The sample writes an empty value as the text NULL; the map turns it into an empty cell. Id is kept as x_Id so a converted row points back to its row in the published file. Check before use: FOCUS spec version.",
+  "source": "SAMPLE published FOCUS-Sample-Data FOCUS-1.0/focus_sample.csv (CC BY 4.0)",
+  "delimiter": ",",
+  "decimal": ".",
+  "date_format": "iso",
+  "granularity": "day",
+  "columns": {
+    "BilledCost": "BilledCost",
+    "BillingAccountId": "BillingAccountId",
+    "BillingAccountName": "BillingAccountName",
+    "BillingCurrency": "BillingCurrency",
+    "BillingPeriodStart": "BillingPeriodStart",
+    "BillingPeriodEnd": "BillingPeriodEnd",
+    "ChargeCategory": "ChargeCategory",
+    "ChargeDescription": "ChargeDescription",
+    "ChargePeriodStart": "ChargePeriodStart",
+    "ChargePeriodEnd": "ChargePeriodEnd",
+    "ContractedCost": "ContractedCost",
+    "EffectiveCost": "EffectiveCost",
+    "HostProviderName": "PublisherName",
+    "InvoiceIssuerName": "InvoiceIssuerName",
+    "ListCost": "ListCost",
+    "PricingQuantity": "PricingQuantity",
+    "PricingUnit": "PricingUnit",
+    "ResourceId": "ResourceId",
+    "ResourceName": "ResourceName",
+    "ServiceCategory": "ServiceCategory",
+    "ServiceName": "ServiceName",
+    "ServiceProviderName": "ProviderName",
+    "SkuId": "SkuId",
+    "SkuPriceId": "SkuPriceId",
+    "SubAccountId": "SubAccountId",
+    "SubAccountName": "SubAccountName",
+    "ConsumedQuantity": "ConsumedQuantity",
+    "ConsumedUnit": "ConsumedUnit",
+    "Tags": "Tags"
+  },
+  "values": {
+    "ContractedCost": {"NULL": ""},
+    "ResourceId": {"NULL": ""},
+    "ResourceName": {"NULL": ""},
+    "SkuPriceId": {"NULL": ""},
+    "ConsumedQuantity": {"NULL": ""},
+    "ConsumedUnit": {"NULL": ""},
+    "Tags": {"NULL": ""}
+  },
+  "extra": {
+    "x_Id": "Id"
+  }
+}

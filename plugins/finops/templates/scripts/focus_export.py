@@ -301,7 +301,7 @@ def cmd_convert(args):
             try:
                 for c in NUMBERS:
                     if row[c]:
-                        row[c] = str(parse_amount(row[c], mark))
+                        row[c] = format(parse_amount(row[c], mark), "f")  # no exponent: 0.0000008, not 8E-7
                 start = parse_time(row["ChargePeriodStart"], fmt)
                 if row["ChargePeriodEnd"]:
                     end = parse_time(row["ChargePeriodEnd"], fmt)
