@@ -33,6 +33,8 @@ jobs:
         run: python plugins/gate/tests/test_run_tests.py
       - name: Security module tests
         run: python plugins/security/tests/test_security.py
+      - name: FinOps module tests (focus_export.py and the synthetic example)
+        run: python plugins/finops/tests/test_focus_export.py
       - name: Repo clinic lint cases
         run: python plugins/fit/skills/repo-clinic/test_lint.py
       - name: File findings tests

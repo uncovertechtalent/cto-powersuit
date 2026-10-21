@@ -290,4 +290,4 @@ Zwei Fälle laufen nur mit dem Plugin, weil ein Baseline-Arm nichts zu bewerten 
 
 ## Lizenz
 
-MIT. `plugins/stance/THIRD_PARTY_NOTICES.md` listet den Code auf, der aus caveman übernommen wurde.
+MIT. `plugins/stance/THIRD_PARTY_NOTICES.md` listet den Code auf, der aus caveman übernommen wurde. `plugins/finops/THIRD_PARTY_NOTICES.md` listet die eine veröffentlichte Datendatei in `plugins/finops/examples/published-sample/` auf; sie steht unter CC BY 4.0, nicht unter MIT.

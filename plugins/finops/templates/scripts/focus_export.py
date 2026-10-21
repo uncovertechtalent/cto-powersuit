@@ -21,6 +21,8 @@ Examples, from the repository root:
   python3 scripts/focus_export.py showback --alloc finops/allocation.json --month 2026-09 finops/focus/*.csv
   python3 scripts/focus_export.py unit --counts finops/units/requests.csv --unit request finops/focus/*.csv
 
+Showback amounts are whole cents. Each shared cost is split to its own rounded amount, and the rounding left over goes to the
+largest remainders, so the printed rows add up to the printed total; a row can differ by one cent from rounding it alone.
 Every row carries x_Source, the file or export it came from. Amounts are never converted between currencies:
 every report groups by BillingCurrency. Reports print Markdown to stdout, ready for a docs page, with the
 cost_period and cost_source values for its front matter.
@@ -128,6 +130,30 @@ def unit_money(currency, value):
         return money(currency, value)
     places = max(2, 2 - abs(value).adjusted())
     return money(currency, value, places)
+
+
+CENT = Decimal("0.01")
+
+
+def to_cents(x):
+    """x rounded to two decimals the way money() prints it."""
+    return x.quantize(CENT, rounding=decimal.ROUND_HALF_EVEN)
+
+
+def apportion(values, target, step=CENT):
+    """Round a dict of Decimals to multiples of step so that they add up to target, a multiple of step.
+    Each value is rounded down; the units still missing go to the largest remainders, ties by key. A target
+    below the rounded-down sum takes units off the smallest remainders."""
+    if not values:
+        return {}
+    keys = sorted(values, key=str)
+    units = {k: (values[k] / step).to_integral_value(rounding=decimal.ROUND_FLOOR) for k in keys}
+    rest = int(target / step) - int(sum(units.values()))
+    order = sorted(keys, key=lambda k: (-(values[k] / step - units[k]), str(k)))
+    for i in range(abs(rest)):
+        k = order[i % len(order)] if rest > 0 else order[-1 - i % len(order)]
+        units[k] += 1 if rest > 0 else -1
+    return {k: units[k] * step for k in keys}
 
 
 # ---------------------------------------------------------------- validation and loading
@@ -301,7 +327,7 @@ def cmd_convert(args):
             try:
                 for c in NUMBERS:
                     if row[c]:
-                        row[c] = str(parse_amount(row[c], mark))
+                        row[c] = format(parse_amount(row[c], mark), "f")  # no exponent: 0.0000008, not 8E-7
                 start = parse_time(row["ChargePeriodStart"], fmt)
                 if row["ChargePeriodEnd"]:
                     end = parse_time(row["ChargePeriodEnd"], fmt)
@@ -493,8 +519,9 @@ def cmd_showback(args):
                 reason = f"no {team_tag} tag and no rule" if team_tag else "no rule"
                 unalloc[(r["ServiceProviderName"], r["ServiceName"], reason)] += v
         base = {t: v for t, v in direct.items() if v > 0}
-        spread = defaultdict(Decimal)
+        spread = defaultdict(Decimal)  # shared cost per team, in whole cents
         split_rows = []
+        split_exact = Decimal(0)
         for s in shared:
             amount = pool.get(s["name"], Decimal(0))
             if not amount:
@@ -504,29 +531,44 @@ def cmd_showback(args):
             total_w = sum(Decimal(str(w)) for w in weights.values()) if isinstance(weights, dict) else 0
             if not total_w:
                 unalloc[("shared", s["name"], "no team to split to")] += amount
-                split_rows.append([s["name"], money(cur, amount), "not split: no team to split to"])
+                split_rows.append([s["name"], money(cur, to_cents(amount)), "not split: no team to split to"])
                 continue
-            for t, w in weights.items():
-                spread[t] += amount * Decimal(str(w)) / total_w
+            parts = apportion({t: amount * Decimal(str(w)) / total_w for t, w in weights.items()}, to_cents(amount))
+            for t, v in parts.items():
+                spread[t] += v
+            split_exact += amount
             label = how if isinstance(how, str) else ", ".join(f"{t} {w}" for t, w in how.items())
-            split_rows.append([s["name"], money(cur, amount), label])
+            split_rows.append([s["name"], money(cur, to_cents(amount)), label])
 
+        # Whole cents, so that the printed rows add up to the printed total: each shared cost is split to its own
+        # rounded amount above; direct cost and the unallocated lines take the rest, the largest remainders first.
         total = sum(Decimal(r["BilledCost"]) for r in part)
-        names = sorted(set(direct) | set(spread), key=lambda t: -(direct[t] + spread[t]))
-        unalloc_total = sum(unalloc.values())
-        pct = (lambda v: f"{v / total * 100:.1f}%") if total else (lambda v: "")
+        total_c = to_cents(total)
+        atoms = {("team", t): v for t, v in direct.items()}
+        atoms.update({("line",) + k: v for k, v in unalloc.items()})
+        whole = apportion(atoms, total_c - sum(spread.values()))
+        direct_c = {t: whole[("team", t)] for t in direct}
+        unalloc_c = {k: whole[("line",) + k] for k in unalloc}
+        team_c = {t: direct_c.get(t, Decimal(0)) + spread.get(t, Decimal(0)) for t in set(direct_c) | set(spread)}
+        names = sorted(team_c, key=lambda t: (-team_c[t], t))
+        unalloc_total_c = sum(unalloc_c.values())
+        share = {}
+        if total_c:
+            exact = {("team", t): team_c[t] / total_c * 1000 for t in names}
+            exact[("unallocated",)] = unalloc_total_c / total_c * 1000
+            share = {k: f"{v / 10:.1f}%" for k, v in apportion(exact, Decimal(1000), Decimal(1)).items()}
         print(f"## Cost per team, {cur}\n")
         table(["Team", "Owner", "Direct", "Shared", "Total", "Share"],
-              [[t, teams.get(t, "not in the teams list"), money(cur, direct[t]), money(cur, spread[t]),
-                money(cur, direct[t] + spread[t]), pct(direct[t] + spread[t])] for t in names]
-              + [["Unallocated", "", "", "", money(cur, unalloc_total), pct(unalloc_total)],
-                 ["Total", "", "", "", money(cur, total), pct(total)]])
+              [[t, teams.get(t, "not in the teams list"), money(cur, direct_c.get(t, Decimal(0))), money(cur, spread.get(t, Decimal(0))),
+                money(cur, team_c[t]), share.get(("team", t), "")] for t in names]
+              + [["Unallocated", "", "", "", money(cur, unalloc_total_c), share.get(("unallocated",), "")],
+                 ["Total", "", "", "", money(cur, total_c), "100.0%" if total_c else ""]])
         if team_tag:
-            print(f"Cost with a `{team_tag}` tag: {money(cur, tagged)}, {pct(tagged)} of the total.\n")
+            print(f"Cost with a `{team_tag}` tag: {money(cur, tagged)}, {f'{tagged / total * 100:.1f}%' if total else ''} of the total.\n")
         print(f"### Unallocated, {cur}\n")
         if unalloc:
             table(["Provider", "Service", "Reason", "Amount"],
-                  [[p, s, why, money(cur, v)] for (p, s, why), v in sorted(unalloc.items(), key=lambda kv: -kv[1])])
+                  [[p, s, why, money(cur, v)] for (p, s, why), v in sorted(unalloc_c.items(), key=lambda kv: (-kv[1], kv[0]))])
         else:
             print("None.\n")
         print(f"### Shared costs, {cur}\n")
@@ -534,7 +576,11 @@ def cmd_showback(args):
             table(["Shared cost", "Amount", "Split"], split_rows)
         else:
             print("None.\n")
-        diff = total - sum(direct.values()) - sum(spread.values()) - unalloc_total
+        # The printed rows against the printed total; a line that went nowhere or twice would show in the exact check too.
+        diff = sum(team_c.values()) + unalloc_total_c - total_c
+        lost = total - sum(direct.values()) - split_exact - sum(unalloc.values())
+        if abs(lost) >= Decimal("0.005"):
+            diff += lost
         print(f"Reconciliation: teams plus unallocated minus total = {cur} {diff:.2f}\n")
 
 

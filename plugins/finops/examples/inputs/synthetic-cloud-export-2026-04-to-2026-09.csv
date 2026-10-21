@@ -1,0 +1,76 @@
+line_id,usage_month,account_id,account_name,product,description,line_type,quantity,unit,amount,currency,team
+SYN-C-0001,2026-04-01,acct-syn-prod,synthetic prod,Compute,"Compute, checkout services",usage,22750,hour,1820.00,EUR,checkout
+SYN-C-0002,2026-04-01,acct-syn-prod,synthetic prod,Compute,"Compute, search cluster",usage,15125,hour,1210.00,EUR,search
+SYN-C-0003,2026-04-01,acct-syn-prod,synthetic prod,Compute,"Compute, untagged instances",usage,3000,hour,240.00,EUR,
+SYN-C-0004,2026-04-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress",usage,2471,GB,210.00,EUR,checkout
+SYN-C-0005,2026-04-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress (untagged)",usage,1118,GB,95.00,EUR,
+SYN-C-0006,2026-04-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, orders",usage,2600,hour,910.00,EUR,checkout
+SYN-C-0007,2026-04-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, search index",usage,1300,hour,455.00,EUR,search
+SYN-C-0008,2026-04-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, checkout assets",usage,5714,GB-month,120.00,EUR,checkout
+SYN-C-0009,2026-04-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, search snapshots",usage,18095,GB-month,380.00,EUR,search
+SYN-C-0010,2026-04-01,acct-syn-prod,synthetic prod,Support Plan,"Support plan, business tier",usage,500,plan-month,500.00,EUR,
+SYN-C-0011,2026-04-01,acct-syn-dev,synthetic dev,Compute,"Compute, dev environment",usage,4750,hour,380.00,EUR,
+SYN-C-0012,2026-04-01,acct-syn-dev,synthetic dev,Object Storage,"Object storage, dev buckets",usage,2857,GB-month,60.00,EUR,
+SYN-C-0013,2026-05-01,acct-syn-prod,synthetic prod,Compute,"Compute, checkout services",usage,22938,hour,1835.00,EUR,checkout
+SYN-C-0014,2026-05-01,acct-syn-prod,synthetic prod,Compute,"Compute, search cluster",usage,15313,hour,1225.00,EUR,search
+SYN-C-0015,2026-05-01,acct-syn-prod,synthetic prod,Compute,"Compute, untagged instances",usage,3000,hour,240.00,EUR,
+SYN-C-0016,2026-05-01,acct-syn-prod,synthetic prod,Compute,"Reserved capacity, 12-month upfront (one time)",purchase,1,reservation,2400.00,EUR,platform
+SYN-C-0017,2026-05-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress",usage,2529,GB,215.00,EUR,checkout
+SYN-C-0018,2026-05-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress (untagged)",usage,1176,GB,100.00,EUR,
+SYN-C-0019,2026-05-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, orders",usage,2614,hour,915.00,EUR,checkout
+SYN-C-0020,2026-05-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, search index",usage,1314,hour,460.00,EUR,search
+SYN-C-0021,2026-05-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, checkout assets",usage,5714,GB-month,120.00,EUR,checkout
+SYN-C-0022,2026-05-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, search snapshots",usage,18333,GB-month,385.00,EUR,search
+SYN-C-0023,2026-05-01,acct-syn-prod,synthetic prod,Support Plan,"Support plan, business tier",usage,500,plan-month,500.00,EUR,
+SYN-C-0024,2026-05-01,acct-syn-dev,synthetic dev,Compute,"Compute, dev environment",usage,4875,hour,390.00,EUR,
+SYN-C-0025,2026-05-01,acct-syn-dev,synthetic dev,Object Storage,"Object storage, dev buckets",usage,2619,GB-month,55.00,EUR,
+SYN-C-0026,2026-06-01,acct-syn-prod,synthetic prod,Compute,"Compute, checkout services",usage,23125,hour,1850.00,EUR,checkout
+SYN-C-0027,2026-06-01,acct-syn-prod,synthetic prod,Compute,"Compute, search cluster",usage,15375,hour,1230.00,EUR,search
+SYN-C-0028,2026-06-01,acct-syn-prod,synthetic prod,Compute,"Compute, untagged instances",usage,3188,hour,255.00,EUR,
+SYN-C-0029,2026-06-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress",usage,2588,GB,220.00,EUR,checkout
+SYN-C-0030,2026-06-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress (untagged)",usage,1153,GB,98.00,EUR,
+SYN-C-0031,2026-06-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, orders",usage,2643,hour,925.00,EUR,checkout
+SYN-C-0032,2026-06-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, search index",usage,1343,hour,470.00,EUR,search
+SYN-C-0033,2026-06-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, checkout assets",usage,5952,GB-month,125.00,EUR,checkout
+SYN-C-0034,2026-06-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, search snapshots",usage,18571,GB-month,390.00,EUR,search
+SYN-C-0035,2026-06-01,acct-syn-prod,synthetic prod,Support Plan,"Support plan, business tier",usage,500,plan-month,500.00,EUR,
+SYN-C-0036,2026-06-01,acct-syn-dev,synthetic dev,Compute,"Compute, dev environment",usage,4625,hour,370.00,EUR,
+SYN-C-0037,2026-06-01,acct-syn-dev,synthetic dev,Object Storage,"Object storage, dev buckets",usage,3095,GB-month,65.00,EUR,
+SYN-C-0038,2026-07-01,acct-syn-prod,synthetic prod,Compute,"Compute, checkout services",usage,23375,hour,1870.00,EUR,checkout
+SYN-C-0039,2026-07-01,acct-syn-prod,synthetic prod,Compute,"Compute, search cluster",usage,15625,hour,1250.00,EUR,search
+SYN-C-0040,2026-07-01,acct-syn-prod,synthetic prod,Compute,"Compute, untagged instances",usage,3125,hour,250.00,EUR,
+SYN-C-0041,2026-07-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress",usage,2647,GB,225.00,EUR,checkout
+SYN-C-0042,2026-07-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress (untagged)",usage,1224,GB,104.00,EUR,
+SYN-C-0043,2026-07-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, orders",usage,2657,hour,930.00,EUR,checkout
+SYN-C-0044,2026-07-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, search index",usage,1343,hour,470.00,EUR,search
+SYN-C-0045,2026-07-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, checkout assets",usage,5952,GB-month,125.00,EUR,checkout
+SYN-C-0046,2026-07-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, search snapshots",usage,18810,GB-month,395.00,EUR,search
+SYN-C-0047,2026-07-01,acct-syn-prod,synthetic prod,Support Plan,"Support plan, business tier",usage,500,plan-month,500.00,EUR,
+SYN-C-0048,2026-07-01,acct-syn-dev,synthetic dev,Compute,"Compute, dev environment",usage,4813,hour,385.00,EUR,
+SYN-C-0049,2026-07-01,acct-syn-dev,synthetic dev,Compute,Promotional credit,credit,1,credit,-400.00,EUR,
+SYN-C-0050,2026-07-01,acct-syn-dev,synthetic dev,Object Storage,"Object storage, dev buckets",usage,2857,GB-month,60.00,EUR,
+SYN-C-0051,2026-08-01,acct-syn-prod,synthetic prod,Compute,"Compute, checkout services",usage,23500,hour,1880.00,EUR,checkout
+SYN-C-0052,2026-08-01,acct-syn-prod,synthetic prod,Compute,"Compute, search cluster",usage,15750,hour,1260.00,EUR,search
+SYN-C-0053,2026-08-01,acct-syn-prod,synthetic prod,Compute,"Compute, search load test (temporary cluster)",usage,57500,hour,4600.00,EUR,search
+SYN-C-0054,2026-08-01,acct-syn-prod,synthetic prod,Compute,"Compute, untagged instances",usage,3188,hour,255.00,EUR,
+SYN-C-0055,2026-08-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress",usage,2706,GB,230.00,EUR,checkout
+SYN-C-0056,2026-08-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress (untagged)",usage,1188,GB,101.00,EUR,
+SYN-C-0057,2026-08-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, orders",usage,2686,hour,940.00,EUR,checkout
+SYN-C-0058,2026-08-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, search index",usage,1371,hour,480.00,EUR,search
+SYN-C-0059,2026-08-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, checkout assets",usage,6190,GB-month,130.00,EUR,checkout
+SYN-C-0060,2026-08-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, search snapshots",usage,19048,GB-month,400.00,EUR,search
+SYN-C-0061,2026-08-01,acct-syn-prod,synthetic prod,Support Plan,"Support plan, business tier",usage,500,plan-month,500.00,EUR,
+SYN-C-0062,2026-08-01,acct-syn-dev,synthetic dev,Compute,"Compute, dev environment",usage,4750,hour,380.00,EUR,
+SYN-C-0063,2026-08-01,acct-syn-dev,synthetic dev,Object Storage,"Object storage, dev buckets",usage,2857,GB-month,60.00,EUR,
+SYN-C-0064,2026-09-01,acct-syn-prod,synthetic prod,Compute,"Compute, checkout services",usage,23875,hour,1910.00,EUR,checkout
+SYN-C-0065,2026-09-01,acct-syn-prod,synthetic prod,Compute,"Compute, search cluster",usage,15938,hour,1275.00,EUR,search
+SYN-C-0066,2026-09-01,acct-syn-prod,synthetic prod,Compute,"Compute, untagged instances",usage,3250,hour,260.00,EUR,
+SYN-C-0067,2026-09-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress",usage,2824,GB,240.00,EUR,checkout
+SYN-C-0068,2026-09-01,acct-syn-prod,synthetic prod,Data Transfer,"Data transfer, internet egress (untagged)",usage,1271,GB,108.00,EUR,
+SYN-C-0069,2026-09-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, orders",usage,2714,hour,950.00,EUR,checkout
+SYN-C-0070,2026-09-01,acct-syn-prod,synthetic prod,Managed Database,"Managed database, search index",usage,1386,hour,485.00,EUR,search
+SYN-C-0071,2026-09-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, checkout assets",usage,6190,GB-month,130.00,EUR,checkout
+SYN-C-0072,2026-09-01,acct-syn-prod,synthetic prod,Object Storage,"Object storage, search snapshots",usage,19524,GB-month,410.00,EUR,search
+SYN-C-0073,2026-09-01,acct-syn-prod,synthetic prod,Support Plan,"Support plan, business tier",usage,500,plan-month,500.00,EUR,
+SYN-C-0074,2026-09-01,acct-syn-dev,synthetic dev,Compute,"Compute, dev environment",usage,4938,hour,395.00,EUR,
+SYN-C-0075,2026-09-01,acct-syn-dev,synthetic dev,Object Storage,"Object storage, dev buckets",usage,3095,GB-month,65.00,EUR,

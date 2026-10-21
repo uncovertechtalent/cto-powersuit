@@ -1,0 +1,9 @@
+tool,job,owner,billing_cycle,renewal,notice_days,terms_source
+SynthChat,chat,synthetic owner: IT lead,monthly,monthly on the 5th,,synthetic web terms: cancel any time; ends at the next cycle
+SynthMeet,video calls,synthetic owner: IT lead,annual,2026-12-15,30,synthetic order form
+SynthCall,video calls,,monthly,monthly on the 5th,,synthetic web terms: cancel any time; ends at the next cycle
+SynthDocs,documents,synthetic owner: head of operations,annual,2027-02-01,60,synthetic order form
+SynthDiagram,diagrams,synthetic owner: engineering lead,monthly,monthly on the 5th,,synthetic web terms: plan minimum 25 seats; cancel any time
+SynthForms,forms,synthetic owner: marketing lead,monthly,monthly on the 5th,,synthetic web terms: cancel any time; ends at the next cycle
+SynthSign,e-signature,synthetic owner: office manager,annual,2027-01-10,30,synthetic order form
+SynthTickets,tickets,synthetic owner: engineering lead,monthly,monthly on the 5th,,no contract in hand

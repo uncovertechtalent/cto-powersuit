@@ -15,7 +15,7 @@ claude plugin install finops@cto-powersuit
 | Skill | What it does |
 |---|---|
 | `/finops:cost-baseline` | Builds the monthly cost per provider and service from invoices, billing exports and FOCUS files. Reconciles each source with its own total, flags missing months, one-off charges, spikes and currency changes, and writes `docs/fin/cost-baseline.md`. |
-| `/finops:showback` | Splits one month of cost across teams from tags and `finops/allocation.json`. Shared costs follow a stated split; unallocated cost is its own line. Writes `docs/fin/showback-<YYYY-MM>.md`. Charges no team. |
+| `/finops:showback` | Splits one month of cost across teams from tags and `finops/allocation.json`. Shared costs follow a stated split; unallocated cost is its own line; the printed rows add up to the printed total. Writes `docs/fin/showback-<YYYY-MM>.md`. Charges no team. |
 | `/finops:unit-costs` | Divides monthly cost by a named count (requests, customers, deploys or another unit the team picks), with the count's source and owner, and explains the trend. Writes `docs/fin/unit-costs.md`. |
 | `/finops:saas-stack-audit` | Lists every SaaS tool from invoices, the SSO app list and expense exports, with owner, seats paid and used, overlaps and a keep, cut or replace proposal. Replace options include open-source and agent-built tools with switching cost and risk. Cancels nothing. Writes `docs/fin/saas-inventory.md`. |
 | `/finops:focus-export` | Converts billing files to FOCUS with a column map per format, validates the rows, reconciles the totals and lists the declared deviations. Check before use: FOCUS spec version. |
@@ -83,5 +83,11 @@ Enable it with `/gate:add-rule` (path A: install a module's check). By hand, fro
 4. Move it to `"tier": "block"` once the fixtures are in place and a false-positive test over your own pages is recorded under the rule as `"false_positive_test": {"date": ..., "corpus": ..., "hits": ..., "legitimate": ..., "decision": ...}`. The rule `gate.rule-fixtures`, which `/gate:gate-init` installs, checks both.
 
 Run it on its own with `python3 .github/actions/gate/run.py --only finops.cost-provenance --dry-run`.
+
+## Example run
+
+[`examples/`](examples/README.md) holds one run of `cost-baseline`, `showback` and `saas-stack-audit` on synthetic inputs: two invented billing exports, an invented SSO app list and an invented SaaS bill, with the FOCUS files, the script output and the three docs pages. The baseline flags a planted spike, the SaaS inventory has keep, cut and replace rows, and `finops.cost-provenance` passes on the pages and fails on a copy without `cost_period` and `cost_source`. Every figure is labelled synthetic; no real bill was used. One published FOCUS 1.0 sample file (CC BY 4.0, with its attribution) shows the converter on a file the module did not generate. No skill copies the folder into a client repository.
+
+`tests/test_focus_export.py` tests `scripts/focus_export.py` on those inputs (convert, check, baseline, showback and unit, with their error cases) and checks the example pages against the inputs. Run it from the repository root with `python3 plugins/finops/tests/test_focus_export.py`; CI runs it.
 
 Demo: [machinebehavior.io/inside/docs/fin/](https://machinebehavior.io/inside/docs/fin/), the FinOps space of the platform behind machinebehavior.io.

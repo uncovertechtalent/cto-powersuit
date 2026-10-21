@@ -1,0 +1,8 @@
+91 rows in 2 files, months 2026-04 to 2026-09
+| Provider | Rows | BilledCost |
+|---|---|---|
+| Synthetic Cloud | 75 | EUR 45,826.00 |
+| Synthetic Hosting | 16 | EUR 8,269.31 |
+
+Sources: SYNTHETIC Synthetic Cloud billing export 2026-04 to 2026-09; SYNTHETIC Synthetic Hosting invoice export 2026-04 to 2026-09
+check: ok

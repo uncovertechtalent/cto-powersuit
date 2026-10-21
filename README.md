@@ -286,4 +286,4 @@ Two cases run with the plugin only, because a baseline arm has nothing to grade 
 
 ## License
 
-MIT. `plugins/stance/THIRD_PARTY_NOTICES.md` lists the code adapted from caveman.
+MIT. `plugins/stance/THIRD_PARTY_NOTICES.md` lists the code adapted from caveman. `plugins/finops/THIRD_PARTY_NOTICES.md` lists the one published data file in `plugins/finops/examples/published-sample/`; it is licensed CC BY 4.0, not MIT.

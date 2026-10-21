@@ -1,0 +1,16 @@
+{
+  "about": "Allocation rules for the synthetic showback. SYNTHETIC SAMPLE: the teams, owners and rules are invented. Order of precedence: shared costs first, then rules from top to bottom (the first match wins), then the value of the team_tag tag. A row that matches nothing is unallocated and shows as its own line.",
+  "team_tag": "team",
+  "teams": [
+    {"team": "checkout", "owner": "synthetic owner: checkout lead"},
+    {"team": "search", "owner": "synthetic owner: search lead"},
+    {"team": "platform", "owner": "synthetic owner: platform lead"}
+  ],
+  "rules": [
+    {"team": "platform", "sub_accounts": ["acct-syn-dev"]}
+  ],
+  "shared": [
+    {"name": "Cloud support plan", "services": ["Support Plan"], "split": "proportional"},
+    {"name": "Hosting VAT", "services": ["VAT"], "split": "proportional"}
+  ]
+}

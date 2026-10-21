@@ -1,0 +1,9 @@
+1000 rows in 1 files, months 2024-09 to 2024-09
+| Provider | Rows | BilledCost |
+|---|---|---|
+| AWS | 942 | USD 18.01 |
+| Microsoft | 51 | USD 1.98 |
+| Oracle | 7 | USD 0.54 |
+
+Sources: SAMPLE published FOCUS-Sample-Data FOCUS-1.0/focus_sample.csv (CC BY 4.0)
+check: ok
