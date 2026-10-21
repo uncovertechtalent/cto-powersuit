@@ -1,5 +1,5 @@
 {
-  "about": "Column map from the published FOCUS 1.0 sample file (focus_sample.csv in this folder) to the columns of scripts/focus_export.py. FOCUS 1.0 names the provider columns ProviderName and PublisherName; the script's columns are ServiceProviderName and HostProviderName, so the map reads them from there. The sample writes an empty value as the text NULL; the map turns it into an empty cell. Id is kept as x_Id so a converted row points back to its row in the published file. Check before use: FOCUS spec version.",
+  "about": "Column map from the published FOCUS 1.0 sample file (focus_sample.csv in this folder) to the columns of scripts/focus_export.py. ProviderName is read into ServiceProviderName. PublisherName holds the legal entity that sold or produced the service (for example Amazon Web Services Canada, Inc., or Red Hat Inc. for a marketplace service on AWS), which is not the host of the infrastructure, so the map keeps it as x_PublisherName and leaves HostProviderName empty: the file has no host provider column. The sample writes an empty value as the text NULL; the map turns it into an empty cell. Id is kept as x_Id so a converted row points back to its row in the published file. Check before use: FOCUS spec version.",
   "source": "SAMPLE published FOCUS-Sample-Data FOCUS-1.0/focus_sample.csv (CC BY 4.0)",
   "delimiter": ",",
   "decimal": ".",
@@ -18,7 +18,6 @@
     "ChargePeriodEnd": "ChargePeriodEnd",
     "ContractedCost": "ContractedCost",
     "EffectiveCost": "EffectiveCost",
-    "HostProviderName": "PublisherName",
     "InvoiceIssuerName": "InvoiceIssuerName",
     "ListCost": "ListCost",
     "PricingQuantity": "PricingQuantity",
@@ -46,6 +45,7 @@
     "Tags": {"NULL": ""}
   },
   "extra": {
-    "x_Id": "Id"
+    "x_Id": "Id",
+    "x_PublisherName": "PublisherName"
   }
 }

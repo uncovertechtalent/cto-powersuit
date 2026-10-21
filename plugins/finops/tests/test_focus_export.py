@@ -132,12 +132,14 @@ def showback_problems(out, currency="EUR"):
     unalloc = next(r for r in rows if r[0] == "Unallocated")
     total = next(r for r in rows if r[0] == "Total")
     bad = []
+    if re.search(r"EUR -0\.00\b", out):
+        bad.append("a negative zero is printed")
     for r in teams:
         if eur(r[2]) + eur(r[3]) != eur(r[4]):
             bad.append(f"{r[0]}: direct {eur(r[2])} plus shared {eur(r[3])} is not {eur(r[4])}")
     if sum(eur(r[4]) for r in teams) + eur(unalloc[4]) != eur(total[4]):
         bad.append(f"the rows add up to {sum(eur(r[4]) for r in teams) + eur(unalloc[4])}, the Total row says {eur(total[4])}")
-    if sum(Decimal(r[5].rstrip("%")) for r in teams + [unalloc]) != Decimal("100.0"):
+    if eur(total[4]) and sum(Decimal(r[5].rstrip("%")) for r in teams + [unalloc]) != Decimal("100.0"):
         bad.append("the Share column does not add up to 100.0%")
     shared = out.split(f"### Shared costs, {currency}\n", 1)[1].split("\n\n", 1)[0]
     split = [cells(ln) for ln in shared.splitlines() if ln.startswith("|")][2:]
@@ -306,8 +308,8 @@ def published_sample_converts_without_losing_a_row_or_a_cent():
             if sum(Decimal(r["BilledCost"]) for r in dst) != sum(Decimal(r["BilledCost"]) for r in src):
                 bad.append("the BilledCost totals of the source and the converted file differ")
             for a, b in zip(src, dst):
-                if (b["x_Id"], b["ServiceProviderName"], b["HostProviderName"]) != (a["Id"], a["ProviderName"], a["PublisherName"]):
-                    bad.append(f"row Id {a['Id']}: Id, ProviderName or PublisherName did not carry over")
+                if (b["x_Id"], b["ServiceProviderName"], b["x_PublisherName"], b["HostProviderName"]) != (a["Id"], a["ProviderName"], a["PublisherName"], ""):
+                    bad.append(f"row Id {a['Id']}: Id, ProviderName or PublisherName did not carry over, or HostProviderName is not empty")
                     break
             if any(v == "NULL" for r in dst for v in r.values()):
                 bad.append("a NULL text is left in the converted file")
@@ -576,6 +578,68 @@ def apportion_and_to_cents():
         bad.append("an empty dict should give an empty dict")
     if (fx.to_cents(D("2.675")), fx.to_cents(D("2.665")), fx.to_cents(D("-0.004"))) != (D("2.68"), D("2.66"), D("0.00")):
         bad.append("to_cents should round half to even, as money() prints")
+    # == cannot tell -0.00 from 0.00, so compare the text
+    if str(fx.to_cents(D("-0.004"))) != "0.00" or fx.money("EUR", fx.to_cents(D("-0.004"))) != "EUR 0.00":
+        bad.append(f"to_cents(-0.004) must print as 0.00, got {fx.money('EUR', fx.to_cents(D('-0.004')))}")
+    if (fx.money("EUR", D("-0.004")), fx.money("EUR", D("-0.005")), fx.money("EUR", D("-0.015")), fx.money("USD", D("-1234.5"))) != \
+            ("EUR 0.00", "EUR 0.00", "EUR -0.02", "USD -1,234.50"):
+        bad.append("money(): an amount that rounds to zero prints 0.00; other negatives keep their sign")
+    got = fx.apportion({"a": D("-0E-11"), "b": D("0.01")}, D("0.01"))
+    if str(got["a"]) != "0.00":
+        bad.append(f"apportion must not return a negative zero, got {got['a']}")
+    return bad
+
+
+def one_currency_file(tmp, specs):
+    """A FOCUS file of the example's Aug rows with the given (ServiceName, BilledCost, team tag) and nothing else."""
+    base = next(r for r in focus_rows(CLOUD_FOCUS) if r["ServiceName"] == "Compute" and r["ChargePeriodStart"].startswith("2026-08"))
+    rows = []
+    for service, cost, team in specs:
+        r = dict(base, ServiceName=service, BilledCost=cost, SubAccountId="acct-syn-prod", Tags=json.dumps({"team": team}) if team else "")
+        rows.append(r)
+    path = Path(tmp) / "edge.csv"
+    write_csv(path, rows, fields_of(CLOUD_FOCUS))
+    return path
+
+
+@test
+def showback_adds_up_when_a_currency_holds_only_shared_cost():
+    """Two pools of 100.004 are 100.00 each alone, but the month is 200.01. The pools must share that cent."""
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        path = one_currency_file(tmp, [("Support Plan", "100.004", ""), ("VAT", "100.004", "")])
+        for label, split in (("weights", {"checkout": 1, "search": 1}), ("even", "even"), ("proportional", "proportional")):
+            alloc = json.loads(text(ALLOC))
+            alloc["shared"] = [dict(x, split=split) for x in alloc["shared"]]
+            apath = Path(tmp) / "alloc.json"
+            apath.write_text(json.dumps(alloc))
+            p = run("showback", "--alloc", apath, "--month", "2026-08", path)
+            if p.returncode != 0:
+                bad.append(f"{label}: exit {p.returncode}: {p.stderr.strip()[:150]}")
+                continue
+            bad += [f"{label}: {b}" for b in showback_problems(p.stdout)]
+            if "| Total |  |  |  | EUR 200.01 | 100.0% |" not in p.stdout or "= EUR 0.00" not in p.stdout:
+                bad.append(f"{label}: the Total row should be EUR 200.01 and the reconciliation zero")
+            if label == "weights":
+                amounts = sorted(eur(cells(ln)[1]) for ln in p.stdout.split("### Shared costs, EUR\n", 1)[1].split("\n\n", 1)[0].splitlines()[3:])
+                if amounts != [Decimal("100.00"), Decimal("100.01")]:
+                    bad.append(f"weights: the two shared costs should be EUR 100.00 and EUR 100.01, got {amounts}")
+    return bad
+
+
+@test
+def showback_prints_zero_not_negative_zero_for_a_month_that_nets_to_nothing():
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for cost in ("-0.004", "0.004", "0"):
+            path = one_currency_file(tmp, [("Compute", cost, "checkout")])
+            p = run("showback", "--alloc", ALLOC, "--month", "2026-08", path)
+            if p.returncode != 0:
+                bad.append(f"{cost}: exit {p.returncode}: {p.stderr.strip()[:150]}")
+                continue
+            bad += [f"{cost}: {b}" for b in showback_problems(p.stdout)]
+            if "| Total |  |  |  | EUR 0.00 |" not in p.stdout or "-0.00" in p.stdout:
+                bad.append(f"{cost}: the Total row should read EUR 0.00 and no -0.00 may print")
     return bad
 
 

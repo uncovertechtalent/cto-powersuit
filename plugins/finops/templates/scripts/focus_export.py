@@ -121,7 +121,10 @@ def parse_amount(value, decimal_mark="."):
 
 
 def money(currency, value, places=2):
-    return f"{currency} {value:,.{places}f}"
+    text = f"{value:,.{places}f}"
+    if text.startswith("-") and not text.strip("-0.,"):  # -0.004 rounds to zero: print 0.00, not -0.00
+        text = text[1:]
+    return f"{currency} {text}"
 
 
 def unit_money(currency, value):
@@ -136,8 +139,8 @@ CENT = Decimal("0.01")
 
 
 def to_cents(x):
-    """x rounded to two decimals the way money() prints it."""
-    return x.quantize(CENT, rounding=decimal.ROUND_HALF_EVEN)
+    """x rounded to two decimals the way money() prints it. A result of zero is +0.00, never -0.00."""
+    return x.quantize(CENT, rounding=decimal.ROUND_HALF_EVEN) + 0
 
 
 def apportion(values, target, step=CENT):
@@ -153,7 +156,7 @@ def apportion(values, target, step=CENT):
     for i in range(abs(rest)):
         k = order[i % len(order)] if rest > 0 else order[-1 - i % len(order)]
         units[k] += 1 if rest > 0 else -1
-    return {k: units[k] * step for k in keys}
+    return {k: units[k] * step + 0 for k in keys}  # + 0: a zero is +0.00, never -0.00
 
 
 # ---------------------------------------------------------------- validation and loading
@@ -520,8 +523,7 @@ def cmd_showback(args):
                 unalloc[(r["ServiceProviderName"], r["ServiceName"], reason)] += v
         base = {t: v for t, v in direct.items() if v > 0}
         spread = defaultdict(Decimal)  # shared cost per team, in whole cents
-        split_rows = []
-        split_exact = Decimal(0)
+        pools = []  # (shared cost, amount, weights or None when there is no team to split to)
         for s in shared:
             amount = pool.get(s["name"], Decimal(0))
             if not amount:
@@ -531,19 +533,31 @@ def cmd_showback(args):
             total_w = sum(Decimal(str(w)) for w in weights.values()) if isinstance(weights, dict) else 0
             if not total_w:
                 unalloc[("shared", s["name"], "no team to split to")] += amount
-                split_rows.append([s["name"], money(cur, to_cents(amount)), "not split: no team to split to"])
-                continue
-            parts = apportion({t: amount * Decimal(str(w)) / total_w for t, w in weights.items()}, to_cents(amount))
-            for t, v in parts.items():
-                spread[t] += v
-            split_exact += amount
-            label = how if isinstance(how, str) else ", ".join(f"{t} {w}" for t, w in how.items())
-            split_rows.append([s["name"], money(cur, to_cents(amount)), label])
+                weights = None
+            pools.append((s, amount, weights))
 
-        # Whole cents, so that the printed rows add up to the printed total: each shared cost is split to its own
-        # rounded amount above; direct cost and the unallocated lines take the rest, the largest remainders first.
+        # Whole cents, so that the printed rows add up to the printed total. Each shared cost is split to its own
+        # rounded amount; direct cost and the unallocated lines take the rest, the largest remainders first. When
+        # a currency holds nothing but shared cost to split, the shared costs take the rest among themselves.
         total = sum(Decimal(r["BilledCost"]) for r in part)
         total_c = to_cents(total)
+        split = [(n, amount) for n, (s, amount, weights) in enumerate(pools) if weights]
+        if direct or unalloc:
+            pool_c = {n: to_cents(amount) for n, amount in split}
+        else:
+            pool_c = apportion(dict(split), total_c)
+        split_rows = []
+        for n, (s, amount, weights) in enumerate(pools):
+            if not weights:
+                split_rows.append([s["name"], money(cur, to_cents(amount)), "not split: no team to split to"])
+                continue
+            total_w = sum(Decimal(str(w)) for w in weights.values())
+            for t, v in apportion({t: amount * Decimal(str(w)) / total_w for t, w in weights.items()}, pool_c[n]).items():
+                spread[t] += v
+            how = s.get("split", "proportional")
+            label = how if isinstance(how, str) else ", ".join(f"{t} {w}" for t, w in how.items())
+            split_rows.append([s["name"], money(cur, pool_c[n]), label])
+        split_exact = sum((amount for n, amount in split), Decimal(0))
         atoms = {("team", t): v for t, v in direct.items()}
         atoms.update({("line",) + k: v for k, v in unalloc.items()})
         whole = apportion(atoms, total_c - sum(spread.values()))
