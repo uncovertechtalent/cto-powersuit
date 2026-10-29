@@ -4,7 +4,8 @@
 - provenance.py: every recorded case in cases/provenance/ gives its risk grade and exactly its red and amber signals;
   the recommendation follows the archive install path and the data scope; attested release assets are counted per asset;
   an archive in the tree is weighed against the code GitHub counts, red with README-only commits at the archive-lure
-  thresholds; collect() reads the tree breadth first up to its folder cap and treats an empty repository as no files.
+  thresholds, and a truncated tree listing is named in the recommendation; collect() reads the tree in one recursive request
+  at the head commit, keeps files only, treats an empty repository as no files, and names a failed tree or languages read.
 - access_review.py: every case in cases/access-review/ gives exactly its red and amber flags; the MFA section reads the
   organisation's two-factor requirement from recorded answers, or says the caller could not read it.
 - intake.py: fix-by dates from the default windows, the policy template and a custom policy; dedupe; tracked issues.
@@ -209,61 +210,87 @@ def provenance_archive_in_tree():
     if s.get("archive-in-tree", {}).get("level") != "amber" or ev != (
             "dist/example-sync-windows.7z (293 KB, the largest of 2 archives or executables) in the tree, against 210 KB of code (Go, Makefile)"):
         bad.append(f"a 7z larger than the code beside a source tree: {r['signals']}")
+
+    for name, c, want in (("small exe, tree truncated", dict(small, tree=small["tree"][:-2], tree_truncated=True), True),
+                          ("small exe, tree read in full", dict(small, tree=small["tree"][:-2]), False),
+                          ("observations recorded before tree_truncated", {k: v for k, v in young.items() if k != "tree_truncated"}, False)):
+        r = provenance.assess(c, day)
+        if ("truncated the tree listing" in " ".join(r["recommendation"])) != want:
+            bad.append(f"{name}: risk {r['risk']}, recommendation {r['recommendation']}")
+        if name.startswith("small") and r["risk"] != "low":
+            bad.append(f"{name}: risk {r['risk']}, want low with the truncation named")
     return bad
 
 
 @test
 def provenance_collect_reads_the_tree():
-    """collect() lists the top level, then folders breadth first up to TREE_DIRS listings; an empty repository answers 404."""
-    bad, calls = [], []
+    """collect() reads the tree in one recursive request at the head commit, or the default branch when no commit was read:
+    files only, the truncated flag, 404 and 409 as no files, and a failed tree or languages read named in the error."""
+    bad, calls, errors = [], [], {}
+    head = "4040409" + "f" * 33  # an HTTP status in the path must not count as the answer
+    at_head, at_branch = f"repos/o/r/git/trees/{head}?recursive=1", "repos/o/r/git/trees/release%2F2.x?recursive=1"
     answers = {
-        "repos/o/r": {"full_name": "o/r", "owner": {"login": "o", "type": "User"}, "created_at": "2025-01-01T00:00:00Z"},
+        "repos/o/r": {"full_name": "o/r", "owner": {"login": "o", "type": "User"}, "created_at": "2025-01-01T00:00:00Z",
+                      "default_branch": "release/2.x"},
         "users/o": {"created_at": "2020-01-01T00:00:00Z"},
-        "repos/o/r/commits?per_page=1": [],
+        "repos/o/r/commits?per_page=1": [{"sha": head, "commit": {"author": {"date": "2026-10-01T00:00:00Z"}, "message": "m"}}],
+        f"repos/o/r/commits/{head}": {"files": [{"filename": "a b/x.py"}]},
         "repos/o/r/releases?per_page=10": [],
         "repos/o/r/languages": {"Python": 120},
-        "repos/o/r/contents": [{"type": "file", "path": "README.md", "size": 10}, {"type": "dir", "path": "a b", "size": 0},
-                               {"type": "dir", "path": "z", "size": 0}, {"type": "file", "path": "tool.zip", "size": 5000},
-                               {"type": "symlink", "path": "link.zip", "size": 9}, {"type": "submodule", "path": "vendor"}],
-        "repos/o/r/contents/a%20b": [{"type": "file", "path": "a b/x.py", "size": 120}, {"type": "dir", "path": "a b/deep"}],
-        "repos/o/r/contents/z": [{"type": "file", "path": "z/y.exe"}],
-        "repos/o/r/contents/a%20b/deep": [{"type": "file", "path": "a b/deep/w.7z", "size": 1}],
+        at_head: {"truncated": True, "tree": [
+            {"path": "README.md", "mode": "100644", "type": "blob", "size": 10},
+            {"path": "a b", "mode": "040000", "type": "tree"},
+            {"path": "a b/x.py", "mode": "100644", "type": "blob", "size": 120},
+            {"path": "link.zip", "mode": "120000", "type": "blob", "size": 9},
+            {"path": "tool.zip", "mode": "100644", "type": "blob", "size": 5000},
+            {"path": "vendor.zip", "mode": "160000", "type": "commit"},
+            {"path": "z/y.exe", "mode": "100755", "type": "blob"}]},
     }
 
     def fake_gh(path, raw=False):
         calls.append(path)
         if raw:
             raise RuntimeError("no readme")
-        if path not in answers:
-            raise RuntimeError(f"gh api {path}: HTTP 404: Not Found")
+        if path in errors:
+            raise RuntimeError(f"gh api {path}: {errors[path]}")
         return answers[path]
 
-    real, cap = provenance.gh, provenance.TREE_DIRS
-    provenance.gh = fake_gh
-    try:
-        provenance.TREE_DIRS = 2
-        obs = provenance.collect("o/r", 1)
-        want = [{"path": "README.md", "size": 10}, {"path": "tool.zip", "size": 5000}, {"path": "a b/x.py", "size": 120},
-                {"path": "z/y.exe", "size": 0}]
-        if obs["tree"] != want or obs["tree_unread"] != 1 or obs["languages"] != {"Python": 120}:
-            bad.append(f"cap 2: tree {obs['tree']}, unread {obs['tree_unread']}, languages {obs['languages']}")
-        if "repos/o/r/contents/a%20b/deep" in calls or any("vendor" in c or "link" in c for c in calls):
-            bad.append(f"read past the cap, or into a submodule or a symlink: {calls}")
-        provenance.TREE_DIRS = 10
-        if provenance.collect("o/r", 1)["tree_unread"] != 0:
-            bad.append("cap 10: a folder was left unread")
-        del answers["repos/o/r/contents"]
-        obs = provenance.collect("o/r", 1)
-        if obs["tree"] != [] or obs["tree_unread"] != 0:
-            bad.append(f"empty repository: tree {obs['tree']}")
-        answers["repos/o/r/contents"] = [{"type": "dir", "path": "gone"}]
+    def fails(text):
         try:
             provenance.collect("o/r", 1)
-            bad.append("a 404 on a folder listing must raise, not pass as an empty folder")
-        except RuntimeError:
-            pass
+        except RuntimeError as e:
+            return str(e)
+        return f"no error for {text}"
+
+    real = provenance.gh
+    provenance.gh = fake_gh
+    try:
+        obs = provenance.collect("o/r", 1)
+        want = [{"path": "README.md", "size": 10}, {"path": "a b/x.py", "size": 120}, {"path": "tool.zip", "size": 5000},
+                {"path": "z/y.exe", "size": 0}]
+        if obs["tree"] != want or obs["tree_truncated"] is not True or obs["languages"] != {"Python": 120}:
+            bad.append(f"tree {obs['tree']}, truncated {obs['tree_truncated']}, languages {obs['languages']}")
+        if [c for c in calls if "/git/trees/" in c or "/contents" in c] != [at_head]:
+            bad.append(f"want one tree request at the head commit: {calls}")
+        errors[at_head] = "gh: API rate limit exceeded (HTTP 403)"
+        e = fails("a 403 on the tree")
+        if not e.startswith("the tree listing for archive-in-tree could not be read") or "run again after it resets" not in e:
+            bad.append(f"a 403 on the tree must raise and name the tree read: {e}")
+        errors.clear()
+        errors["repos/o/r/languages"] = "gh: API rate limit exceeded (HTTP 403)"
+        e = fails("a 403 on the languages")
+        if not e.startswith("the languages map for archive-in-tree could not be read") or "rate limit" not in e:
+            bad.append(f"a 403 on the languages must raise and name the languages read: {e}")
+        errors.clear()
+        answers["repos/o/r/commits?per_page=1"] = []
+        for answer in ("gh: Not Found (HTTP 404)", "gh: Git Repository is empty. (HTTP 409)"):
+            errors[at_branch] = answer
+            del calls[:]
+            obs = provenance.collect("o/r", 1)
+            if obs["tree"] != [] or obs["tree_truncated"] is not False or at_branch not in calls:
+                bad.append(f"no commit read and {answer}: tree {obs['tree']}, calls {calls}")
     finally:
-        provenance.gh, provenance.TREE_DIRS = real, cap
+        provenance.gh = real
     return bad
 
 
@@ -273,7 +300,8 @@ def provenance_collect_looks_up_attestations():
     bad, calls = [], []
     attested, missing, failing = "sha256:" + "a" * 64, "sha256:" + "b" * 64, "sha256:" + "c" * 64
     answers = {
-        "repos/o/r": {"full_name": "o/r", "owner": {"login": "o", "type": "User"}, "created_at": "2025-01-01T00:00:00Z"},
+        "repos/o/r": {"full_name": "o/r", "owner": {"login": "o", "type": "User"}, "created_at": "2025-01-01T00:00:00Z",
+                      "default_branch": "main"},
         "users/o": {"created_at": "2020-01-01T00:00:00Z"},
         "repos/o/r/commits?per_page=1": [],
         "repos/o/r/releases?per_page=10": [
@@ -282,7 +310,7 @@ def provenance_collect_looks_up_attestations():
             {"assets": [{"name": "r-2-copy.tar.gz", "digest": attested}]},
         ],
         f"repos/o/r/attestations/{attested}": {"attestations": [{"bundle": {}}]},
-        "repos/o/r/contents": [],
+        "repos/o/r/git/trees/main?recursive=1": {"truncated": False, "tree": []},
         "repos/o/r/languages": {},
     }
     errors = {f"repos/o/r/attestations/{missing}": "gh api: HTTP 404: Not Found",

@@ -80,7 +80,7 @@
    "size": 3145728
   }
  ],
- "tree_unread": 0,
+ "tree_truncated": false,
  "languages": {},
  "today": "2026-10-29",
  "expect": {

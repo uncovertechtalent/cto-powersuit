@@ -25,7 +25,6 @@ Standard library only, Python 3.9+.
 """
 import argparse, collections, datetime, json, re, subprocess, sys, urllib.parse
 
-TREE_DIRS = 10  # folder listings read after the top level of the tree; deeper folders are not read
 THRESHOLDS = {
     "account_days": 90,       # an account younger than this is amber
     "repo_days": 30,          # a repository younger than this is amber
@@ -41,6 +40,7 @@ BINARY_ASSET = re.compile(r"\.(zip|rar|7z|exe|msi|dmg|pkg|tar\.gz|tgz|tar\.xz|vs
 EXPOSURE = {"none": "low", "repo": "medium", "home": "high", "agent-data": "high", "secrets": "high", "unknown": "unknown"}
 SCOPE_TEXT = {"home": "files across the home folder", "agent-data": "agent transcripts, settings or memory",
               "secrets": "credentials, tokens or keys"}
+RERUN = "if the API rate limit is used up, run again after it resets (gh api rate_limit shows when)"
 
 
 def gh(path, raw=False):
@@ -76,7 +76,11 @@ def collect(slug, n_commits):
     assets = [a for r in gh(f"repos/{slug}/releases?per_page=10") for a in r.get("assets", [])]
     seen = {}
     looked_up = [(a["name"], attested_in(slug, a.get("digest"), seen)) for a in assets if BINARY_ASSET.search(a["name"])]
-    tree, unread = tree_of(slug)
+    tree, truncated = tree_of(slug, commits[0]["sha"] if commits else repo["default_branch"])
+    try:
+        languages = gh(f"repos/{slug}/languages")
+    except RuntimeError as e:
+        raise RuntimeError(f"the languages map for archive-in-tree could not be read: {e}; {RERUN}") from None
     return {
         "repo": repo["full_name"], "owner": owner, "owner_type": repo["owner"]["type"],
         "created_at": repo["created_at"], "pushed_at": repo.get("pushed_at"), "archived": repo.get("archived", False),
@@ -85,30 +89,23 @@ def collect(slug, n_commits):
         "account_created_at": account["created_at"], "commits": commits, "readme": readme,
         "release_assets": [a["name"] for a in assets], "attested_assets": [n for n, ok in looked_up if ok],
         "attestation_unknown": sum(ok is None for _, ok in looked_up),
-        "tree": tree, "tree_unread": unread, "languages": gh(f"repos/{slug}/languages"),
+        "tree": tree, "tree_truncated": truncated, "languages": languages,
     }
 
 
-def tree_of(slug):
-    """The files of the default branch with their sizes, from the contents listing: the top level, then folders breadth
-    first up to TREE_DIRS listings. Returns the files and the number of folders left unread. An empty repository
-    answers 404 and has no files. Lists names and sizes only; no file content is fetched."""
-    files, queue, listed = [], [""], 0
-    while queue and listed <= TREE_DIRS:
-        path = queue.pop(0)
-        try:
-            entries = gh(f"repos/{slug}/contents/{urllib.parse.quote(path)}" if path else f"repos/{slug}/contents")
-        except RuntimeError as e:
-            if path or "404" not in str(e):
-                raise
-            entries = []
-        listed += 1
-        for e in entries:
-            if e.get("type") == "dir":
-                queue.append(e["path"])
-            elif e.get("type") == "file":
-                files.append({"path": e["path"], "size": e.get("size") or 0})
-    return files, len(queue)
+def tree_of(slug, ref):
+    """The files of the tree at ref (the head commit) with their sizes, from one recursive git trees request, and whether
+    GitHub truncated the listing. Folders, submodules (type commit) and symbolic links (mode 120000) are left out. An
+    empty repository (409) or a missing ref (404) has no files. Paths and sizes only; no file content is fetched."""
+    try:
+        t = gh(f"repos/{slug}/git/trees/{urllib.parse.quote(ref, safe='')}?recursive=1")
+    except RuntimeError as e:
+        if re.search(r"HTTP 40[49]\b", str(e)):
+            return [], False
+        raise RuntimeError(f"the tree listing for archive-in-tree could not be read: {e}; {RERUN}") from None
+    files = [{"path": e["path"], "size": e.get("size") or 0} for e in t.get("tree", [])
+             if e.get("type") == "blob" and e.get("mode") != "120000"]
+    return files, bool(t.get("truncated"))
 
 
 def size_text(n):
@@ -215,6 +212,9 @@ def assess(obs, today, t=THRESHOLDS):
     if risk != "high" and any(i == "archive-in-tree" for _, i, _ in s):
         rec.append("Install from a tagged release or a build from a pinned commit, never from an archive or executable in the tree: "
                    "what it holds shows in no diff and no code view. Ask the owner for the source tree.")
+    if obs.get("tree_truncated"):
+        rec.append("GitHub truncated the tree listing (over 100,000 entries or 7 MB), so archive-in-tree did not read all of the "
+                   "tree: an archive or executable in the part left out is not graded.")
     if attested:
         rec.append(f"{len(attested)} release assets carry a build provenance attestation from this repository. Check a file "
                    f"before you use it: gh attestation verify <file> --repo {obs['repo']}")
