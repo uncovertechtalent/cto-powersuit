@@ -287,9 +287,12 @@ def docs_and_version_say_what_the_search_does_now():
     assert "BEGIN THIRD-PARTY TEXT" in readme and "trust: external" in readme
     version = json.loads(text("plugins/vault/.claude-plugin/plugin.json"))["version"]
     assert tuple(int(x) for x in version.split(".")) >= (0, 3, 0), version
-    # The entry sits under Unreleased until a release moves it under a version heading.
-    entries = [l for l in text("CHANGELOG.md").splitlines() if l.startswith(f"- `vault` {version}:")]
-    assert entries and any("vsearch_trust.py" in l for l in entries), f"CHANGELOG entry for vault {version} names vsearch_trust.py"
+    # The entry that introduced the trust rules names the module; it sits under Unreleased until a release
+    # moves it under a version heading, and later vault versions need no entry of their own for it.
+    entries = [l for l in text("CHANGELOG.md").splitlines() if l.startswith("- `vault` ") and "vsearch_trust.py" in l]
+    assert entries, "a CHANGELOG entry of the vault plugin names vsearch_trust.py"
+    logged = max(tuple(int(x) for x in l.split("`vault` ", 1)[1].split(":", 1)[0].split(".")) for l in entries)
+    assert tuple(int(x) for x in version.split(".")) >= logged, (version, logged)
     assert "plugins/vault/tests/test_vsearch_trust.py" in text(".github/workflows/checks.yml")
     assert not any(c in "\n".join(entries) + skill + readme for c in "—–"), "dashes in the text"
 
