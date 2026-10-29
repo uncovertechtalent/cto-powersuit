@@ -105,8 +105,8 @@ Each release is a git tag `v<version>` on `main` with an entry in [CHANGELOG.md]
 The install commands above follow `main`. To pin a release, add its tag to the source:
 
 ```bash
-claude plugin marketplace add uncovertechtalent/cto-powersuit#v0.4.0
-npx skills add uncovertechtalent/cto-powersuit#v0.4.0
+claude plugin marketplace add uncovertechtalent/cto-powersuit#v0.5.0
+npx skills add uncovertechtalent/cto-powersuit#v0.5.0
 ```
 
 Both installers pass the ref to `git clone --branch`, so a tag or a branch name works and a commit SHA does not. `claude plugin marketplace update` stays on the pinned tag. The skills CLI writes the ref to `skills-lock.json`, and `npx skills update` keeps it.
