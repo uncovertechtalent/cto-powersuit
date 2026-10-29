@@ -22,7 +22,6 @@
 
 Standard library only, Python 3.9+. Usage: python3 plugins/vault/tests/test_vsearch_trust.py [-v]
 """
-import re
 import ast, importlib.util, json, os, re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
