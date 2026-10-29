@@ -130,6 +130,7 @@ A coding agent asked to find an MCP server can surface such a repository and quo
 | `readme-only-commits` | red at 50% or more of the recent commits (at least 3), amber at 25% (at least 2) | Commits that change only README files, the main FakeGit sign |
 | `archive-lure` | red | README-only commits and an archive download link together: the FakeGit pattern of re-pointing a download button |
 | `download-link` | amber | The README links to an archive or executable (`.zip`, `.vsix`, `.tgz`, `.7z`, `.exe`, `.msi`, `.dmg`, and others) or to a release asset download |
+| `archive-in-tree` | amber; red together with README-only commits | The tree holds an archive or executable (the extensions of `download-link`) and GitHub finds no code in the repository, or that file is larger than all the code GitHub counts. Read from the contents listing (the top level, then up to 10 folders) and the languages endpoint. Together with README-only commits: the FakeGit pattern without a download link |
 | `owner-unverified` | amber | No expected owner was given |
 | `fork` | amber | A fork of another repository |
 | `young-account`, `young-repo` | amber | Account younger than 90 days, repository younger than 30 days |
@@ -138,6 +139,7 @@ A coding agent asked to find an MCP server can surface such a repository and quo
 | `archived` | amber | The repository is archived and gets no fixes |
 
 Any red signal gives source risk `high`, any amber signal `medium`, none `low`. Exit codes 0, 1 and 2 follow the source risk; 3 means the metadata could not be read. Age is amber only, because taken-over accounts are old. A download link alone is amber, because honest projects ship release archives too; together with README-only commits it is red.
+An archive committed to the tree is the same shape without the link, because the visitor takes the file itself or GitHub's Download ZIP of the tree, and what it holds shows in no diff, so it is graded the same way.
 
 Exposure comes from the data scope: `none` gives low, `repo` medium, and `home`, `agent-data` and `secrets` high. Without `--data-scope` the exposure is `unknown`, and the recommendation asks for it.
 

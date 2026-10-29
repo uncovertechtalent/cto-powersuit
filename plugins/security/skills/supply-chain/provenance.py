@@ -4,7 +4,8 @@
 Reads public metadata with `gh api` (read only, nothing is downloaded or run) and grades it on two axes.
 Source risk (low, medium, high) comes from the signals: owner against the owner the registry or the
 vendor names, fork status, account and repository age, copied history, the share of recent commits that
-touch only the README, README links to archives or executables, and release assets. A release asset with a
+touch only the README, README links to archives or executables, archives or executables committed to the tree
+with little or no code beside them, and release assets. A release asset with a
 build provenance attestation in the same repository (looked up by the asset's sha256 digest) does not count
 as an unverified binary. Any red signal gives high, any amber signal medium, none low. Exposure (low,
 medium, high) comes from --data-scope, what the tool will read once installed. Both go into the
@@ -22,8 +23,9 @@ unknown (the default).
 Exit codes: 0 low, 1 medium, 2 high source risk, 3 the metadata could not be read.
 Standard library only, Python 3.9+.
 """
-import argparse, collections, datetime, json, re, subprocess, sys
+import argparse, collections, datetime, json, re, subprocess, sys, urllib.parse
 
+TREE_DIRS = 10  # folder listings read after the top level of the tree; deeper folders are not read
 THRESHOLDS = {
     "account_days": 90,       # an account younger than this is amber
     "repo_days": 30,          # a repository younger than this is amber
@@ -74,6 +76,7 @@ def collect(slug, n_commits):
     assets = [a for r in gh(f"repos/{slug}/releases?per_page=10") for a in r.get("assets", [])]
     seen = {}
     looked_up = [(a["name"], attested_in(slug, a.get("digest"), seen)) for a in assets if BINARY_ASSET.search(a["name"])]
+    tree, unread = tree_of(slug)
     return {
         "repo": repo["full_name"], "owner": owner, "owner_type": repo["owner"]["type"],
         "created_at": repo["created_at"], "pushed_at": repo.get("pushed_at"), "archived": repo.get("archived", False),
@@ -82,7 +85,34 @@ def collect(slug, n_commits):
         "account_created_at": account["created_at"], "commits": commits, "readme": readme,
         "release_assets": [a["name"] for a in assets], "attested_assets": [n for n, ok in looked_up if ok],
         "attestation_unknown": sum(ok is None for _, ok in looked_up),
+        "tree": tree, "tree_unread": unread, "languages": gh(f"repos/{slug}/languages"),
     }
+
+
+def tree_of(slug):
+    """The files of the default branch with their sizes, from the contents listing: the top level, then folders breadth
+    first up to TREE_DIRS listings. Returns the files and the number of folders left unread. An empty repository
+    answers 404 and has no files. Lists names and sizes only; no file content is fetched."""
+    files, queue, listed = [], [""], 0
+    while queue and listed <= TREE_DIRS:
+        path = queue.pop(0)
+        try:
+            entries = gh(f"repos/{slug}/contents/{urllib.parse.quote(path)}" if path else f"repos/{slug}/contents")
+        except RuntimeError as e:
+            if path or "404" not in str(e):
+                raise
+            entries = []
+        listed += 1
+        for e in entries:
+            if e.get("type") == "dir":
+                queue.append(e["path"])
+            elif e.get("type") == "file":
+                files.append({"path": e["path"], "size": e.get("size") or 0})
+    return files, len(queue)
+
+
+def size_text(n):
+    return f"{n} bytes" if n < 1024 else f"{n / 1024:.0f} KB" if n < 1024 ** 2 else f"{n / 1024 ** 2:.1f} MB"
 
 
 def attested_in(slug, digest, seen):
@@ -142,6 +172,19 @@ def assess(obs, today, t=THRESHOLDS):
         s.append(("amber", "download-link", f"README links to {len(downloads)} archive or executable downloads: {', '.join(downloads[:3])}"))
         if any(i == "readme-only-commits" for _, i, _ in s):
             s.append(("red", "archive-lure", "README-only commits and an archive download link together: the FakeGit pattern"))
+    langs = obs.get("languages")
+    packed = sorted((f for f in obs.get("tree") or [] if ARCHIVE.search(f["path"])), key=lambda f: -(f.get("size") or 0))
+    if packed and langs is not None:
+        big, code = packed[0], sum(langs.values())
+        if not langs or (big.get("size") or 0) > code:
+            ev = (f"{big['path']} ({size_text(big.get('size') or 0)}"
+                  + (f", the largest of {len(packed)} archives or executables" if len(packed) > 1 else "") + ") in the tree, "
+                  + ("and GitHub finds no code in the repository" if not langs else
+                     f"against {size_text(code)} of code ({', '.join(sorted(langs, key=langs.get, reverse=True)[:3])})"))
+            if any(i == "readme-only-commits" for _, i, _ in s):
+                s.append(("red", "archive-in-tree", ev + "; with README-only commits: the FakeGit pattern without a download link"))
+            else:
+                s.append(("amber", "archive-in-tree", ev))
     attested = obs.get("attested_assets", [])
     binaries = list((collections.Counter(a for a in obs.get("release_assets", []) if BINARY_ASSET.search(a))
                      - collections.Counter(attested)).elements())
@@ -169,6 +212,9 @@ def assess(obs, today, t=THRESHOLDS):
         rec.append("Prefer the marketplace or registry install, or a build from a pinned commit, over release archives: an archive "
                    "can be swapped in a fork, through a link in a comment, or in a compromised release. A marketplace install is no "
                    "guarantee either, so pin the version.")
+    if risk != "high" and any(i == "archive-in-tree" for _, i, _ in s):
+        rec.append("Install from a tagged release or a build from a pinned commit, never from an archive or executable in the tree: "
+                   "what it holds shows in no diff and no code view. Ask the owner for the source tree.")
     if attested:
         rec.append(f"{len(attested)} release assets carry a build provenance attestation from this repository. Check a file "
                    f"before you use it: gh attestation verify <file> --repo {obs['repo']}")
