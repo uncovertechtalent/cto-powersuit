@@ -22,6 +22,7 @@
 
 Standard library only, Python 3.9+. Usage: python3 plugins/vault/tests/test_vsearch_trust.py [-v]
 """
+import re
 import ast, importlib.util, json, os, re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
@@ -294,7 +295,12 @@ def docs_and_version_say_what_the_search_does_now():
     logged = max(tuple(int(x) for x in l.split("`vault` ", 1)[1].split(":", 1)[0].split(".")) for l in entries)
     assert tuple(int(x) for x in version.split(".")) >= logged, (version, logged)
     assert "plugins/vault/tests/test_vsearch_trust.py" in text(".github/workflows/checks.yml")
-    assert not any(c in "\n".join(entries) + skill + readme for c in "—–"), "dashes in the text"
+    # The published text: the Unreleased section plus the newest release section, read as release.yml reads it.
+    log = text("CHANGELOG.md")
+    unreleased = log.split("## Unreleased", 1)[1].split("\n## [", 1)[0]
+    newest = re.search(r"^## \[\d+\.\d+\.\d+\] - .*?$\n(.*?)(?=^## |\Z)", log, re.M | re.S)
+    published = unreleased + (newest.group(1) if newest else "")
+    assert not any(c in published + skill + readme for c in "—–"), "dashes in the text"
 
 
 # ---------------------------------------------------------------- the script itself (optional)
