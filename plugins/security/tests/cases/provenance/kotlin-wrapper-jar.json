@@ -1,0 +1,111 @@
+{
+ "owner_type": "User",
+ "archived": false,
+ "fork": false,
+ "parent": null,
+ "default_branch": "main",
+ "stars": 15,
+ "repo": "example-dev/example-notes-mcp",
+ "owner": "example-dev",
+ "expected_owner": "example-dev",
+ "created_at": "2025-11-01T00:00:00Z",
+ "account_created_at": "2018-04-01T00:00:00Z",
+ "commits": [
+  {
+   "sha": "0000000000000000000000000000000000000001",
+   "date": "2026-10-20T10:00:00Z",
+   "subject": "List notes by tag",
+   "files": [
+    "src/main/kotlin/Notes.kt"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000002",
+   "date": "2026-09-14T10:00:00Z",
+   "subject": "Read the notes folder from an argument",
+   "files": [
+    "src/main/kotlin/Main.kt",
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000003",
+   "date": "2026-06-02T10:00:00Z",
+   "subject": "Update the Gradle wrapper",
+   "files": [
+    "gradle/wrapper/gradle-wrapper.jar",
+    "gradle/wrapper/gradle-wrapper.properties",
+    "gradlew",
+    "gradlew.bat"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000004",
+   "date": "2025-11-01T10:00:00Z",
+   "subject": "Initial commit",
+   "files": [
+    "build.gradle.kts",
+    "settings.gradle.kts",
+    "src/main/kotlin/Main.kt",
+    "src/main/kotlin/Notes.kt",
+    "README.md"
+   ]
+  }
+ ],
+ "readme": "# example-notes-mcp\n\nAn MCP server for a folder of notes. Build with `./gradlew build`.\n",
+ "release_assets": [],
+ "tree": [
+  {
+   "path": ".gitignore",
+   "size": 120
+  },
+  {
+   "path": "README.md",
+   "size": 640
+  },
+  {
+   "path": "build.gradle.kts",
+   "size": 1180
+  },
+  {
+   "path": "gradle/wrapper/gradle-wrapper.jar",
+   "size": 43583
+  },
+  {
+   "path": "gradle/wrapper/gradle-wrapper.properties",
+   "size": 252
+  },
+  {
+   "path": "gradlew",
+   "size": 8762
+  },
+  {
+   "path": "gradlew.bat",
+   "size": 2966
+  },
+  {
+   "path": "settings.gradle.kts",
+   "size": 96
+  },
+  {
+   "path": "src/main/kotlin/Main.kt",
+   "size": 3420
+  },
+  {
+   "path": "src/main/kotlin/Notes.kt",
+   "size": 7604
+  }
+ ],
+ "tree_truncated": false,
+ "languages": {
+  "Kotlin": 12300
+ },
+ "today": "2026-10-29",
+ "expect": {
+  "risk": "medium",
+  "red": [],
+  "amber": [
+   "archive-in-tree"
+  ]
+ }
+}

@@ -37,6 +37,7 @@ LINK = re.compile(r"""(https?://[^\s)"'<>\]]+)|\]\(([^)\s]+)\)|href=["']([^"']+)
 ARCHIVE = re.compile(r"\.(zip|rar|7z|tgz|tar\.gz|vsix|exe|msi|dmg|pkg|scr|bat|cmd|ps1|vbs|jar|apk)(\?[^\s)\"'<>]*)?$", re.I)
 ASSET_DOWNLOAD = re.compile(r"/releases/(latest/)?download/", re.I)
 BINARY_ASSET = re.compile(r"\.(zip|rar|7z|exe|msi|dmg|pkg|tar\.gz|tgz|tar\.xz|vsix|appimage|deb|rpm|jar)$", re.I)
+WRAPPERS = {"gradle/wrapper/gradle-wrapper.jar": "Gradle", ".mvn/wrapper/maven-wrapper.jar": "Maven"}  # committed build tool wrappers
 EXPOSURE = {"none": "low", "repo": "medium", "home": "high", "agent-data": "high", "secrets": "high", "unknown": "unknown"}
 SCOPE_TEXT = {"home": "files across the home folder", "agent-data": "agent transcripts, settings or memory",
               "secrets": "credentials, tokens or keys"}
@@ -178,6 +179,9 @@ def assess(obs, today, t=THRESHOLDS):
                   + (f", the largest of {len(packed)} archives or executables" if len(packed) > 1 else "") + ") in the tree, "
                   + ("and GitHub finds no code in the repository" if not langs else
                      f"against {size_text(code)} of code ({', '.join(sorted(langs, key=langs.get, reverse=True)[:3])})"))
+            tool = next((t for p, t in WRAPPERS.items() if f"/{big['path']}".endswith(f"/{p}")), None)
+            if tool:
+                ev += f"; it is the {tool} wrapper: check it against the wrapper checksum {tool} publishes for that version"
             if any(i == "readme-only-commits" for _, i, _ in s):
                 s.append(("red", "archive-in-tree", ev + "; with README-only commits: the FakeGit pattern without a download link"))
             else:

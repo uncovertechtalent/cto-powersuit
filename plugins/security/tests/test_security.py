@@ -102,7 +102,8 @@ def provenance_cases():
 def provenance_exit_codes_from_observations():
     bad = []
     for name, code in (("vendor-official", 0), ("unverified-owner", 1), ("fakegit-throwaway", 2), ("new-tool-archive-install", 1),
-                       ("archive-in-tree-new-project", 1), ("archive-in-tree-lure", 2), ("source-with-small-exe", 0)):
+                       ("archive-in-tree-new-project", 1), ("archive-in-tree-lure", 2), ("source-with-small-exe", 0),
+                       ("kotlin-wrapper-jar", 1)):
         p = subprocess.run([sys.executable, str(MODULE / "skills/supply-chain/provenance.py"), "--from-observations",
                             str(CASES / "provenance" / f"{name}.json")], capture_output=True, text=True)
         if p.returncode != code:
@@ -210,6 +211,20 @@ def provenance_archive_in_tree():
     if s.get("archive-in-tree", {}).get("level") != "amber" or ev != (
             "dist/example-sync-windows.7z (293 KB, the largest of 2 archives or executables) in the tree, against 210 KB of code (Go, Makefile)"):
         bad.append(f"a 7z larger than the code beside a source tree: {r['signals']}")
+
+    kotlin = json.loads((CASES / "provenance/kotlin-wrapper-jar.json").read_text())
+    ev = sig(kotlin)[1].get("archive-in-tree", {}).get("evidence", "")
+    if ev != ("gradle/wrapper/gradle-wrapper.jar (43 KB, the largest of 2 archives or executables) in the tree, against 12 KB of code "
+              "(Kotlin); it is the Gradle wrapper: check it against the wrapper checksum Gradle publishes for that version"):
+        bad.append(f"a Gradle wrapper jar larger than the code: {ev!r}")
+    jar = next(f for f in kotlin["tree"] if f["path"].endswith(".jar"))
+    for path, want in ((".mvn/wrapper/maven-wrapper.jar", "it is the Maven wrapper"),
+                       ("android/gradle/wrapper/gradle-wrapper.jar", "it is the Gradle wrapper"),
+                       ("libs/gradle-wrapper.jar", None), ("mygradle/wrapper/gradle-wrapper.jar", None)):
+        jar["path"] = path
+        ev = sig(kotlin)[1].get("archive-in-tree", {}).get("evidence", "")
+        if not ev.startswith(path) or (want and want not in ev) or (not want and "wrapper:" in ev):
+            bad.append(f"{path}: {ev!r}")
 
     for name, c, want in (("small exe, tree truncated", dict(small, tree=small["tree"][:-2], tree_truncated=True), True),
                           ("small exe, tree read in full", dict(small, tree=small["tree"][:-2]), False),
