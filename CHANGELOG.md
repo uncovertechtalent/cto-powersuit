@@ -12,7 +12,7 @@ Three modules moved. `vault` 0.3.0 adds `/vault:reference-pack`, an opt-in impor
 
 Plugin versions: ai-ops 0.2.0, aieo 0.1.0, compliance 0.1.1, decisions 0.1.0, direction 0.1.1, docs 0.1.0, finops 0.1.1, fit 0.3.1, gate 0.3.0, handover 0.1.4, hiring 0.1.0, observability 0.1.0, red-team 0.1.0, reliability 0.3.0, sdlc 0.2.4, security 0.6.0, stance 0.1.0, vault 0.3.0, vestige 0.1.0.
 
-To roll back, pin v0.4.0 again: remove the marketplace, add it at `#v0.4.0`, and install the plugins again ([Versions and rollback](https://github.com/uncovertechtalent/cto-powersuit#versions-and-rollback)). Before rolling back to a release before 0.5.0, give every `trust: external` note the tag `trust/external` and add that tag to `VSEARCH_EXCLUDE_TAGS`: the `vault` plugin before 0.3.0 reads tags only, so a note marked only with the `trust:` field becomes searchable again.
+To roll back, pin v0.4.0 again: remove the marketplace, add it at `#v0.4.0`, and install the plugins again ([Versions and rollback](https://github.com/uncovertechtalent/cto-powersuit#versions-and-rollback)). Before rolling back to a release before 0.5.0, give every `trust: external` note the tag `trust/external` and set `VSEARCH_EXCLUDE_TAGS=private,status/private,status/sensitive,trust/external`, or add `trust/external` to the list you already set (a value you set replaces the default, it does not add to it): the `vault` plugin before 0.3.0 reads tags only, so a note marked only with the `trust:` field becomes searchable again.
 
 ### Added
 
