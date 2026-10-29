@@ -649,9 +649,9 @@ def skill_is_listed_and_versioned():
     assert "./skills/reference-pack" in vault["skills"], vault["skills"]
     version = json.loads(text("plugins/vault/.claude-plugin/plugin.json"))["version"]
     assert tuple(int(x) for x in version.split(".")) > (0, 1, 0), version
-    log = text("CHANGELOG.md")
-    unreleased = log.split("## Unreleased", 1)[1].split("\n## [", 1)[0]
-    assert f"`vault` {version}" in unreleased and "reference-pack" in unreleased, "CHANGELOG Unreleased entry"
+    # The entry sits under Unreleased until a release moves it under a version heading.
+    entries = [l for l in text("CHANGELOG.md").splitlines() if l.startswith(f"- `vault` {version}:")]
+    assert entries and any("reference-pack" in l for l in entries), f"CHANGELOG entry for vault {version} names reference-pack"
     assert "plugins/vault/tests/test_reference_pack.py" in text(".github/workflows/checks.yml")
 
 
