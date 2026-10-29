@@ -115,7 +115,7 @@ npx skills add uncovertechtalent/cto-powersuit#v0.5.0
 
 Beide Installer geben die Ref an `git clone --branch` weiter. Ein Tag oder ein Branch-Name funktioniert, ein Commit-SHA nicht. `claude plugin marketplace update` bleibt auf dem festgehaltenen Tag. Die skills-CLI schreibt die Ref in `skills-lock.json`, und `npx skills update` behält sie bei.
 
-Für ein Rollback oder einen Wechsel auf ein anderes Release entfernst du den Marketplace, fügst ihn mit dem gewünschten Release wieder hinzu und installierst die Plugins neu. Das Entfernen des Marketplace deinstalliert seine Plugins und löscht ihre gespeicherten Optionen. Notiere dir deshalb vorher Optionen wie den `vault`-Pfad. Die `ref` in `settings.json` von Hand zu ändern, verschiebt den Pin nicht: In einem Test mit Claude Code 2.1.286 fehlte der Marketplace danach.
+Für ein Rollback oder einen Wechsel auf ein anderes Release entfernst du den Marketplace, fügst ihn mit dem gewünschten Release wieder hinzu und installierst die Plugins neu. Das Entfernen des Marketplace deinstalliert seine Plugins und löscht ihre gespeicherten Optionen. Notiere dir deshalb vorher Optionen wie den `vault`-Pfad. Die `ref` in `settings.json` von Hand zu ändern, verschiebt den Pin nicht: In einem Test mit Claude Code 2.1.286 fehlte der Marketplace danach. Vor einem Rollback auf eine Version vor 0.5.0 bekommt jede Notiz mit `trust: external` zusätzlich den Tag `trust/external`, und der Tag kommt in `VSEARCH_EXCLUDE_TAGS`: das `vault`-Plugin vor 0.3.0 liest nur Tags, eine Notiz nur mit dem Feld `trust:` wird sonst wieder durchsuchbar.
 
 ```bash
 claude plugin marketplace remove cto-powersuit
