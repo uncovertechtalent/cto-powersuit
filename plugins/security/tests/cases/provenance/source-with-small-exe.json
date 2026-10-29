@@ -1,0 +1,111 @@
+{
+ "owner_type": "Organization",
+ "archived": false,
+ "fork": false,
+ "parent": null,
+ "default_branch": "main",
+ "stars": 120,
+ "repo": "example-vendor/example-sync",
+ "owner": "example-vendor",
+ "expected_owner": "example-vendor",
+ "created_at": "2024-03-01T00:00:00Z",
+ "account_created_at": "2019-03-01T00:00:00Z",
+ "commits": [
+  {
+   "sha": "0000000000000000000000000000000000000001",
+   "date": "2026-10-27T10:00:00Z",
+   "subject": "Retry a sync after a timeout",
+   "files": [
+    "internal/sync/sync.go",
+    "internal/sync/sync_test.go"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000002",
+   "date": "2026-10-20T10:00:00Z",
+   "subject": "Add the signing helper for Windows builds",
+   "files": [
+    "tools/codesign-helper.exe",
+    "Makefile"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000003",
+   "date": "2026-10-14T10:00:00Z",
+   "subject": "Read the target from a flag",
+   "files": [
+    "cmd/example-sync/main.go",
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000004",
+   "date": "2026-10-07T10:00:00Z",
+   "subject": "Update dependencies",
+   "files": [
+    "go.mod",
+    "go.sum"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000005",
+   "date": "2026-09-30T10:00:00Z",
+   "subject": "Sync deletions",
+   "files": [
+    "internal/sync/sync.go",
+    "internal/sync/sync_test.go"
+   ]
+  }
+ ],
+ "readme": "# example-sync\n\nBuild with `go build ./cmd/example-sync`.\n",
+ "release_assets": [],
+ "tree": [
+  {
+   "path": "LICENSE",
+   "size": 1071
+  },
+  {
+   "path": "Makefile",
+   "size": 840
+  },
+  {
+   "path": "README.md",
+   "size": 62
+  },
+  {
+   "path": "go.mod",
+   "size": 412
+  },
+  {
+   "path": "go.sum",
+   "size": 3880
+  },
+  {
+   "path": "tools/codesign-helper.exe",
+   "size": 48128
+  },
+  {
+   "path": "cmd/example-sync/main.go",
+   "size": 6144
+  },
+  {
+   "path": "internal/sync/sync.go",
+   "size": 150000
+  },
+  {
+   "path": "internal/sync/sync_test.go",
+   "size": 57872
+  }
+ ],
+ "tree_truncated": false,
+ "languages": {
+  "Go": 214016,
+  "Makefile": 840
+ },
+ "today": "2026-10-29",
+ "expect": {
+  "risk": "low",
+  "red": [],
+  "amber": []
+ }
+}

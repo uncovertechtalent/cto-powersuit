@@ -108,6 +108,7 @@ A coding agent asked to find an MCP server can surface such a repository and quo
       - Source risk `low`: install pinned to the commit SHA the script prints, or to an exact package version, never to a branch.
       - Exposure `high`: read the code that reads that data before installing, and give the tool the narrowest access possible.
       - Release archives as the install path (`download-link` or `release-binaries`): recommend the marketplace or registry install, or a build from a pinned commit. A marketplace install is no guarantee either, so pin the version there too.
+      - An archive or executable in the tree (`archive-in-tree`): recommend a tagged release or a build from a pinned commit, never a file from the tree, and ask the owner for the source tree. When the output says GitHub truncated the tree listing, the check did not read the whole tree; tell the user.
       - Release assets with a build provenance attestation: before the user installs from one, run `gh attestation verify <file> --repo <owner/repo>` on the downloaded file. The script only reads that an attestation exists; the verify command checks its signature and the workflow that built the file.
    4. **For a server shipped as a package**, read the package's own repository link and publisher, then run the check on that repository and compare the owners:
 
@@ -130,6 +131,7 @@ A coding agent asked to find an MCP server can surface such a repository and quo
 | `readme-only-commits` | red at 50% or more of the recent commits (at least 3), amber at 25% (at least 2) | Commits that change only README files, the main FakeGit sign |
 | `archive-lure` | red | README-only commits and an archive download link together: the FakeGit pattern of re-pointing a download button |
 | `download-link` | amber | The README links to an archive or executable (`.zip`, `.vsix`, `.tgz`, `.7z`, `.exe`, `.msi`, `.dmg`, and others) or to a release asset download |
+| `archive-in-tree` | amber; red together with README-only commits | The tree holds an archive or executable (the extensions of `download-link`) and GitHub finds no code in the repository, or that file is larger than all the code GitHub counts. Read from one recursive tree listing of the head commit and the languages endpoint; when GitHub truncates the listing, the recommendation says so. A file kept in Git LFS is weighed at the size of its pointer (about 130 bytes), so beside any code it does not fire. The check never grades the extensions only `release-binaries` lists (`.tar.xz`, `.AppImage`, `.deb`, `.rpm`), split archives (`.z01`, `.001`), payloads under another name (`.bin`, `.dat`), or code padded past the archive's size. A small Java or Kotlin project with a committed build tool wrapper (`gradle/wrapper/gradle-wrapper.jar`, about 43 to 63 KB, or `.mvn/wrapper/maven-wrapper.jar`) fires amber, and so does a small library with one large test fixture; the evidence names a wrapper, and the check is to compare the jar with the wrapper checksum Gradle publishes per version (or run Gradle's wrapper-validation action), or with the checksum of the `maven-wrapper` artifact on Maven Central. Together with README-only commits: the FakeGit pattern without a download link |
 | `owner-unverified` | amber | No expected owner was given |
 | `fork` | amber | A fork of another repository |
 | `young-account`, `young-repo` | amber | Account younger than 90 days, repository younger than 30 days |
@@ -138,6 +140,7 @@ A coding agent asked to find an MCP server can surface such a repository and quo
 | `archived` | amber | The repository is archived and gets no fixes |
 
 Any red signal gives source risk `high`, any amber signal `medium`, none `low`. Exit codes 0, 1 and 2 follow the source risk; 3 means the metadata could not be read. Age is amber only, because taken-over accounts are old. A download link alone is amber, because honest projects ship release archives too; together with README-only commits it is red.
+An archive committed to the tree is the same shape without the link, because the visitor takes the file itself or GitHub's Download ZIP of the tree, and what it holds shows in no diff, so it is graded the same way.
 
 Exposure comes from the data scope: `none` gives low, `repo` medium, and `home`, `agent-data` and `secrets` high. Without `--data-scope` the exposure is `unknown`, and the recommendation asks for it.
 

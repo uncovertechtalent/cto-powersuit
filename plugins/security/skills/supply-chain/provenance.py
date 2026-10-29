@@ -4,7 +4,8 @@
 Reads public metadata with `gh api` (read only, nothing is downloaded or run) and grades it on two axes.
 Source risk (low, medium, high) comes from the signals: owner against the owner the registry or the
 vendor names, fork status, account and repository age, copied history, the share of recent commits that
-touch only the README, README links to archives or executables, and release assets. A release asset with a
+touch only the README, README links to archives or executables, archives or executables committed to the tree
+with little or no code beside them, and release assets. A release asset with a
 build provenance attestation in the same repository (looked up by the asset's sha256 digest) does not count
 as an unverified binary. Any red signal gives high, any amber signal medium, none low. Exposure (low,
 medium, high) comes from --data-scope, what the tool will read once installed. Both go into the
@@ -22,7 +23,7 @@ unknown (the default).
 Exit codes: 0 low, 1 medium, 2 high source risk, 3 the metadata could not be read.
 Standard library only, Python 3.9+.
 """
-import argparse, collections, datetime, json, re, subprocess, sys
+import argparse, collections, datetime, json, re, subprocess, sys, urllib.parse
 
 THRESHOLDS = {
     "account_days": 90,       # an account younger than this is amber
@@ -36,9 +37,11 @@ LINK = re.compile(r"""(https?://[^\s)"'<>\]]+)|\]\(([^)\s]+)\)|href=["']([^"']+)
 ARCHIVE = re.compile(r"\.(zip|rar|7z|tgz|tar\.gz|vsix|exe|msi|dmg|pkg|scr|bat|cmd|ps1|vbs|jar|apk)(\?[^\s)\"'<>]*)?$", re.I)
 ASSET_DOWNLOAD = re.compile(r"/releases/(latest/)?download/", re.I)
 BINARY_ASSET = re.compile(r"\.(zip|rar|7z|exe|msi|dmg|pkg|tar\.gz|tgz|tar\.xz|vsix|appimage|deb|rpm|jar)$", re.I)
+WRAPPERS = {"gradle/wrapper/gradle-wrapper.jar": "Gradle", ".mvn/wrapper/maven-wrapper.jar": "Maven"}  # committed build tool wrappers
 EXPOSURE = {"none": "low", "repo": "medium", "home": "high", "agent-data": "high", "secrets": "high", "unknown": "unknown"}
 SCOPE_TEXT = {"home": "files across the home folder", "agent-data": "agent transcripts, settings or memory",
               "secrets": "credentials, tokens or keys"}
+RERUN = "if the API rate limit is used up, run again after it resets (gh api rate_limit shows when)"
 
 
 def gh(path, raw=False):
@@ -74,6 +77,11 @@ def collect(slug, n_commits):
     assets = [a for r in gh(f"repos/{slug}/releases?per_page=10") for a in r.get("assets", [])]
     seen = {}
     looked_up = [(a["name"], attested_in(slug, a.get("digest"), seen)) for a in assets if BINARY_ASSET.search(a["name"])]
+    tree, truncated = tree_of(slug, commits[0]["sha"] if commits else repo["default_branch"])
+    try:
+        languages = gh(f"repos/{slug}/languages")
+    except RuntimeError as e:
+        raise RuntimeError(f"the languages map for archive-in-tree could not be read: {e}; {RERUN}") from None
     return {
         "repo": repo["full_name"], "owner": owner, "owner_type": repo["owner"]["type"],
         "created_at": repo["created_at"], "pushed_at": repo.get("pushed_at"), "archived": repo.get("archived", False),
@@ -82,7 +90,27 @@ def collect(slug, n_commits):
         "account_created_at": account["created_at"], "commits": commits, "readme": readme,
         "release_assets": [a["name"] for a in assets], "attested_assets": [n for n, ok in looked_up if ok],
         "attestation_unknown": sum(ok is None for _, ok in looked_up),
+        "tree": tree, "tree_truncated": truncated, "languages": languages,
     }
+
+
+def tree_of(slug, ref):
+    """The files of the tree at ref (the head commit) with their sizes, from one recursive git trees request, and whether
+    GitHub truncated the listing. Folders, submodules (type commit) and symbolic links (mode 120000) are left out. An
+    empty repository (409) or a missing ref (404) has no files. Paths and sizes only; no file content is fetched."""
+    try:
+        t = gh(f"repos/{slug}/git/trees/{urllib.parse.quote(ref, safe='')}?recursive=1")
+    except RuntimeError as e:
+        if re.search(r"HTTP 40[49]\b", str(e)):
+            return [], False
+        raise RuntimeError(f"the tree listing for archive-in-tree could not be read: {e}; {RERUN}") from None
+    files = [{"path": e["path"], "size": e.get("size") or 0} for e in t.get("tree", [])
+             if e.get("type") == "blob" and e.get("mode") != "120000"]
+    return files, bool(t.get("truncated"))
+
+
+def size_text(n):
+    return f"{n} bytes" if n < 1024 else f"{n / 1024:.0f} KB" if n < 1024 ** 2 else f"{n / 1024 ** 2:.1f} MB"
 
 
 def attested_in(slug, digest, seen):
@@ -142,6 +170,22 @@ def assess(obs, today, t=THRESHOLDS):
         s.append(("amber", "download-link", f"README links to {len(downloads)} archive or executable downloads: {', '.join(downloads[:3])}"))
         if any(i == "readme-only-commits" for _, i, _ in s):
             s.append(("red", "archive-lure", "README-only commits and an archive download link together: the FakeGit pattern"))
+    langs = obs.get("languages")
+    packed = sorted((f for f in obs.get("tree") or [] if ARCHIVE.search(f["path"])), key=lambda f: -(f.get("size") or 0))
+    if packed and langs is not None:
+        big, code = packed[0], sum(langs.values())
+        if not langs or (big.get("size") or 0) > code:
+            ev = (f"{big['path']} ({size_text(big.get('size') or 0)}"
+                  + (f", the largest of {len(packed)} archives or executables" if len(packed) > 1 else "") + ") in the tree, "
+                  + ("and GitHub finds no code in the repository" if not langs else
+                     f"against {size_text(code)} of code ({', '.join(sorted(langs, key=langs.get, reverse=True)[:3])})"))
+            tool = next((t for p, t in WRAPPERS.items() if f"/{big['path']}".endswith(f"/{p}")), None)
+            if tool:
+                ev += f"; it is the {tool} wrapper: check it against the wrapper checksum {tool} publishes for that version"
+            if any(i == "readme-only-commits" for _, i, _ in s):
+                s.append(("red", "archive-in-tree", ev + "; with README-only commits: the FakeGit pattern without a download link"))
+            else:
+                s.append(("amber", "archive-in-tree", ev))
     attested = obs.get("attested_assets", [])
     binaries = list((collections.Counter(a for a in obs.get("release_assets", []) if BINARY_ASSET.search(a))
                      - collections.Counter(attested)).elements())
@@ -169,6 +213,12 @@ def assess(obs, today, t=THRESHOLDS):
         rec.append("Prefer the marketplace or registry install, or a build from a pinned commit, over release archives: an archive "
                    "can be swapped in a fork, through a link in a comment, or in a compromised release. A marketplace install is no "
                    "guarantee either, so pin the version.")
+    if risk != "high" and any(i == "archive-in-tree" for _, i, _ in s):
+        rec.append("Install from a tagged release or a build from a pinned commit, never from an archive or executable in the tree: "
+                   "what it holds shows in no diff and no code view. Ask the owner for the source tree.")
+    if obs.get("tree_truncated"):
+        rec.append("GitHub truncated the tree listing (over 100,000 entries or 7 MB), so archive-in-tree did not read all of the "
+                   "tree: an archive or executable in the part left out is not graded.")
     if attested:
         rec.append(f"{len(attested)} release assets carry a build provenance attestation from this repository. Check a file "
                    f"before you use it: gh attestation verify <file> --repo {obs['repo']}")

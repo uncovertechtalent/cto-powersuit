@@ -2,7 +2,10 @@
 """Tests for the security module: the gate checks beyond their fixture runs, and the scripts.
 
 - provenance.py: every recorded case in cases/provenance/ gives its risk grade and exactly its red and amber signals;
-  the recommendation follows the archive install path and the data scope; attested release assets are counted per asset.
+  the recommendation follows the archive install path and the data scope; attested release assets are counted per asset;
+  an archive in the tree is weighed against the code GitHub counts, red with README-only commits at the archive-lure
+  thresholds, and a truncated tree listing is named in the recommendation; collect() reads the tree in one recursive request
+  at the head commit, keeps files only, treats an empty repository as no files, and names a failed tree or languages read.
 - access_review.py: every case in cases/access-review/ gives exactly its red and amber flags; the MFA section reads the
   organisation's two-factor requirement from recorded answers, or says the caller could not read it.
 - intake.py: fix-by dates from the default windows, the policy template and a custom policy; dedupe; tracked issues.
@@ -98,7 +101,9 @@ def provenance_cases():
 @test
 def provenance_exit_codes_from_observations():
     bad = []
-    for name, code in (("vendor-official", 0), ("unverified-owner", 1), ("fakegit-throwaway", 2), ("new-tool-archive-install", 1)):
+    for name, code in (("vendor-official", 0), ("unverified-owner", 1), ("fakegit-throwaway", 2), ("new-tool-archive-install", 1),
+                       ("archive-in-tree-new-project", 1), ("archive-in-tree-lure", 2), ("source-with-small-exe", 0),
+                       ("kotlin-wrapper-jar", 1)):
         p = subprocess.run([sys.executable, str(MODULE / "skills/supply-chain/provenance.py"), "--from-observations",
                             str(CASES / "provenance" / f"{name}.json")], capture_output=True, text=True)
         if p.returncode != code:
@@ -156,12 +161,162 @@ def provenance_attested_assets():
 
 
 @test
+def provenance_archive_in_tree():
+    """Red with README-only commits at either of their levels, like archive-lure; amber alone; weighed against the code GitHub counts."""
+    bad, day = [], datetime.date(2026, 10, 29)
+
+    def sig(c):
+        r = provenance.assess(c, day)
+        return r, {s["id"]: s for s in r["signals"]}
+
+    lure = json.loads((CASES / "provenance/archive-in-tree-lure.json").read_text())
+    r, s = sig(lure)
+    ev = s.get("archive-in-tree", {}).get("evidence", "")
+    if "example-mcp-server.zip (3.0 MB)" not in ev or "finds no code" not in ev or "without a download link" not in ev:
+        bad.append(f"lure evidence: {ev!r}")
+    if "tagged release" in " ".join(r["recommendation"]):
+        bad.append(f"high risk: the recommendation must not name an install path from this source: {r['recommendation']}")
+    readme_only = [c for c in lure["commits"] if c["files"] == ["README.md"]]
+    lure["commits"] = readme_only[:2] + [c for c in lure["commits"] if c not in readme_only] + [
+        {"sha": "c" * 40, "date": "2026-10-19T00:00:00Z", "files": ["setup.py"]} for _ in range(3)]
+    r, s = sig(lure)
+    if s.get("readme-only-commits", {}).get("level") != "amber" or s.get("archive-in-tree", {}).get("level") != "red" or r["risk"] != "high":
+        bad.append(f"amber README-only commits with an archive in the tree: {r['risk']}, {r['signals']}")
+    lure["commits"] = lure["commits"][2:]
+    r, s = sig(lure)
+    if "readme-only-commits" in s or s.get("archive-in-tree", {}).get("level") != "amber":
+        bad.append(f"an archive in the tree without README-only commits must be amber: {r['signals']}")
+
+    young = json.loads((CASES / "provenance/archive-in-tree-new-project.json").read_text())
+    text = " ".join(sig(young)[0]["recommendation"])
+    for want in ("tagged release", "pinned commit", "never from an archive or executable in the tree", "source tree"):
+        if want not in text:
+            bad.append(f"young project: no {want!r} in the recommendation")
+    for name, change in (("observations recorded before the tree", lambda c: c.pop("tree")),
+                         ("observations recorded before the languages", lambda c: c.pop("languages")),
+                         ("code larger than the archive", lambda c: c.update(languages={"C": 1250001}))):
+        c = json.loads(json.dumps(young))
+        change(c)
+        if "archive-in-tree" in sig(c)[1]:
+            bad.append(f"{name}: archive-in-tree fired")
+    young["languages"] = {"C": 9000, "Shell": 1000}
+    ev = sig(young)[1].get("archive-in-tree", {}).get("evidence", "")
+    if ev != "example-cli-source.zip (1.2 MB) in the tree, against 10 KB of code (C, Shell)":
+        bad.append(f"archive larger than the code: {ev!r}")
+
+    small = json.loads((CASES / "provenance/source-with-small-exe.json").read_text())
+    small["tree"] += [{"path": "dist/example-sync-windows.7z", "size": 300000}, {"path": "dist/notes.txt", "size": 900000}]
+    r, s = sig(small)
+    ev = s.get("archive-in-tree", {}).get("evidence", "")
+    if s.get("archive-in-tree", {}).get("level") != "amber" or ev != (
+            "dist/example-sync-windows.7z (293 KB, the largest of 2 archives or executables) in the tree, against 210 KB of code (Go, Makefile)"):
+        bad.append(f"a 7z larger than the code beside a source tree: {r['signals']}")
+
+    kotlin = json.loads((CASES / "provenance/kotlin-wrapper-jar.json").read_text())
+    ev = sig(kotlin)[1].get("archive-in-tree", {}).get("evidence", "")
+    if ev != ("gradle/wrapper/gradle-wrapper.jar (43 KB, the largest of 2 archives or executables) in the tree, against 12 KB of code "
+              "(Kotlin); it is the Gradle wrapper: check it against the wrapper checksum Gradle publishes for that version"):
+        bad.append(f"a Gradle wrapper jar larger than the code: {ev!r}")
+    jar = next(f for f in kotlin["tree"] if f["path"].endswith(".jar"))
+    for path, want in ((".mvn/wrapper/maven-wrapper.jar", "it is the Maven wrapper"),
+                       ("android/gradle/wrapper/gradle-wrapper.jar", "it is the Gradle wrapper"),
+                       ("libs/gradle-wrapper.jar", None), ("mygradle/wrapper/gradle-wrapper.jar", None)):
+        jar["path"] = path
+        ev = sig(kotlin)[1].get("archive-in-tree", {}).get("evidence", "")
+        if not ev.startswith(path) or (want and want not in ev) or (not want and "wrapper:" in ev):
+            bad.append(f"{path}: {ev!r}")
+
+    for name, c, want in (("small exe, tree truncated", dict(small, tree=small["tree"][:-2], tree_truncated=True), True),
+                          ("small exe, tree read in full", dict(small, tree=small["tree"][:-2]), False),
+                          ("observations recorded before tree_truncated", {k: v for k, v in young.items() if k != "tree_truncated"}, False)):
+        r = provenance.assess(c, day)
+        if ("truncated the tree listing" in " ".join(r["recommendation"])) != want:
+            bad.append(f"{name}: risk {r['risk']}, recommendation {r['recommendation']}")
+        if name.startswith("small") and r["risk"] != "low":
+            bad.append(f"{name}: risk {r['risk']}, want low with the truncation named")
+    return bad
+
+
+@test
+def provenance_collect_reads_the_tree():
+    """collect() reads the tree in one recursive request at the head commit, or the default branch when no commit was read:
+    files only, the truncated flag, 404 and 409 as no files, and a failed tree or languages read named in the error."""
+    bad, calls, errors = [], [], {}
+    head = "4040409" + "f" * 33  # an HTTP status in the path must not count as the answer
+    at_head, at_branch = f"repos/o/r/git/trees/{head}?recursive=1", "repos/o/r/git/trees/release%2F2.x?recursive=1"
+    answers = {
+        "repos/o/r": {"full_name": "o/r", "owner": {"login": "o", "type": "User"}, "created_at": "2025-01-01T00:00:00Z",
+                      "default_branch": "release/2.x"},
+        "users/o": {"created_at": "2020-01-01T00:00:00Z"},
+        "repos/o/r/commits?per_page=1": [{"sha": head, "commit": {"author": {"date": "2026-10-01T00:00:00Z"}, "message": "m"}}],
+        f"repos/o/r/commits/{head}": {"files": [{"filename": "a b/x.py"}]},
+        "repos/o/r/releases?per_page=10": [],
+        "repos/o/r/languages": {"Python": 120},
+        at_head: {"truncated": True, "tree": [
+            {"path": "README.md", "mode": "100644", "type": "blob", "size": 10},
+            {"path": "a b", "mode": "040000", "type": "tree"},
+            {"path": "a b/x.py", "mode": "100644", "type": "blob", "size": 120},
+            {"path": "link.zip", "mode": "120000", "type": "blob", "size": 9},
+            {"path": "tool.zip", "mode": "100644", "type": "blob", "size": 5000},
+            {"path": "vendor.zip", "mode": "160000", "type": "commit"},
+            {"path": "z/y.exe", "mode": "100755", "type": "blob"}]},
+    }
+
+    def fake_gh(path, raw=False):
+        calls.append(path)
+        if raw:
+            raise RuntimeError("no readme")
+        if path in errors:
+            raise RuntimeError(f"gh api {path}: {errors[path]}")
+        return answers[path]
+
+    def fails(text):
+        try:
+            provenance.collect("o/r", 1)
+        except RuntimeError as e:
+            return str(e)
+        return f"no error for {text}"
+
+    real = provenance.gh
+    provenance.gh = fake_gh
+    try:
+        obs = provenance.collect("o/r", 1)
+        want = [{"path": "README.md", "size": 10}, {"path": "a b/x.py", "size": 120}, {"path": "tool.zip", "size": 5000},
+                {"path": "z/y.exe", "size": 0}]
+        if obs["tree"] != want or obs["tree_truncated"] is not True or obs["languages"] != {"Python": 120}:
+            bad.append(f"tree {obs['tree']}, truncated {obs['tree_truncated']}, languages {obs['languages']}")
+        if [c for c in calls if "/git/trees/" in c or "/contents" in c] != [at_head]:
+            bad.append(f"want one tree request at the head commit: {calls}")
+        errors[at_head] = "gh: API rate limit exceeded (HTTP 403)"
+        e = fails("a 403 on the tree")
+        if not e.startswith("the tree listing for archive-in-tree could not be read") or "run again after it resets" not in e:
+            bad.append(f"a 403 on the tree must raise and name the tree read: {e}")
+        errors.clear()
+        errors["repos/o/r/languages"] = "gh: API rate limit exceeded (HTTP 403)"
+        e = fails("a 403 on the languages")
+        if not e.startswith("the languages map for archive-in-tree could not be read") or "rate limit" not in e:
+            bad.append(f"a 403 on the languages must raise and name the languages read: {e}")
+        errors.clear()
+        answers["repos/o/r/commits?per_page=1"] = []
+        for answer in ("gh: Not Found (HTTP 404)", "gh: Git Repository is empty. (HTTP 409)"):
+            errors[at_branch] = answer
+            del calls[:]
+            obs = provenance.collect("o/r", 1)
+            if obs["tree"] != [] or obs["tree_truncated"] is not False or at_branch not in calls:
+                bad.append(f"no commit read and {answer}: tree {obs['tree']}, calls {calls}")
+    finally:
+        provenance.gh = real
+    return bad
+
+
+@test
 def provenance_collect_looks_up_attestations():
     """collect() with recorded gh answers: one lookup per digest, 404 means no attestation, any other error means unknown."""
     bad, calls = [], []
     attested, missing, failing = "sha256:" + "a" * 64, "sha256:" + "b" * 64, "sha256:" + "c" * 64
     answers = {
-        "repos/o/r": {"full_name": "o/r", "owner": {"login": "o", "type": "User"}, "created_at": "2025-01-01T00:00:00Z"},
+        "repos/o/r": {"full_name": "o/r", "owner": {"login": "o", "type": "User"}, "created_at": "2025-01-01T00:00:00Z",
+                      "default_branch": "main"},
         "users/o": {"created_at": "2020-01-01T00:00:00Z"},
         "repos/o/r/commits?per_page=1": [],
         "repos/o/r/releases?per_page=10": [
@@ -170,6 +325,8 @@ def provenance_collect_looks_up_attestations():
             {"assets": [{"name": "r-2-copy.tar.gz", "digest": attested}]},
         ],
         f"repos/o/r/attestations/{attested}": {"attestations": [{"bundle": {}}]},
+        "repos/o/r/git/trees/main?recursive=1": {"truncated": False, "tree": []},
+        "repos/o/r/languages": {},
     }
     errors = {f"repos/o/r/attestations/{missing}": "gh api: HTTP 404: Not Found",
               f"repos/o/r/attestations/{failing}": "gh api: HTTP 403: API rate limit exceeded"}

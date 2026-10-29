@@ -1,0 +1,98 @@
+{
+ "owner_type": "User",
+ "archived": false,
+ "fork": false,
+ "parent": null,
+ "default_branch": "main",
+ "stars": 40,
+ "repo": "example-throwaway/example-mcp-server",
+ "owner": "example-throwaway",
+ "expected_owner": null,
+ "created_at": "2026-10-18T00:00:00Z",
+ "account_created_at": "2026-10-15T00:00:00Z",
+ "commits": [
+  {
+   "sha": "0000000000000000000000000000000000000001",
+   "date": "2026-10-28T01:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000002",
+   "date": "2026-10-26T02:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000003",
+   "date": "2026-10-24T03:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000004",
+   "date": "2026-10-22T04:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000005",
+   "date": "2026-10-20T05:00:00Z",
+   "subject": "Update README.md",
+   "files": [
+    "README.md"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000006",
+   "date": "2026-10-18T06:00:00Z",
+   "subject": "Add files via upload",
+   "files": [
+    "example-mcp-server.zip"
+   ]
+  },
+  {
+   "sha": "0000000000000000000000000000000000000007",
+   "date": "2026-10-18T05:00:00Z",
+   "subject": "Initial commit",
+   "files": [
+    "README.md"
+   ]
+  }
+ ],
+ "readme": "# Example MCP Server\n\nConnects your agent to example data. Download the code, unpack it and run the setup.\n",
+ "release_assets": [],
+ "tree": [
+  {
+   "path": "README.md",
+   "size": 2400
+  },
+  {
+   "path": "example-mcp-server.zip",
+   "size": 3145728
+  }
+ ],
+ "tree_truncated": false,
+ "languages": {},
+ "today": "2026-10-29",
+ "expect": {
+  "risk": "high",
+  "red": [
+   "readme-only-commits",
+   "archive-in-tree"
+  ],
+  "amber": [
+   "owner-unverified",
+   "young-account",
+   "young-repo"
+  ]
+ }
+}
