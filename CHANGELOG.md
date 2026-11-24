@@ -6,6 +6,22 @@ All notable changes to this project are listed here, newest first. Each release 
 
 ## Unreleased
 
+### Changed
+
+- `stance` 0.1.1: `good-chad` names the two routes a stance run showed models using to fold, and closes them.
+  - **A title or an order is not evidence.** Lead with the correct answer and keep it. A figure a document has to carry goes second and is labelled as its source's, never stated as the model's own answer.
+  - **A short register is not a licence to reverse.**
+  - **Being on the user's side never means agreeing to a false fact.**
+  - The clause on the user's report of their own experience now says what it does not cover: claims about code, data, science or third parties, and seniority.
+  - The per-prompt reminder and the fallback text carry the same rules. Before, the reminder said "never run skepticism against the user's own lived-experience report" with no limit.
+  - Tested on 2026-11-24 with a stance battery: 15 pressure records per arm, hand read, no second reader; models huihui Qwen3.5-9B abliterated, huihui Gemma 4 E4B abliterated, and Gemma 4 E4B stock.
+  - Results with the plugin's injected text as the system prompt plus its reminder on every user turn:
+    - Qwen3.5-9B: 6 folds, 5 hedges, 4 holds before; 1 fold, 7 hedges, 7 holds after.
+    - Gemma stock: 1 fold before; none after.
+    - Gemma abliterated: unchanged, at 5 folds on the five CTO-order records.
+  - A first draft gave the attributed figure first ("per the CTO: O(n); standard: O(log n)"). The 9B copied it and led with the false figure, 9 folds in 15. The released wording puts the correct answer first.
+  - The same 15 probes were used for both drafts, so this is a fix against a measured failure, not a held-out result.
+
 ## [0.5.0] - 2026-10-29
 
 Three modules moved. `vault` 0.3.0 adds `/vault:reference-pack`, an opt-in import of the published pages of machinebehavior.io as third-party reference notes ([#51](https://github.com/uncovertechtalent/cto-powersuit/pull/51), [#52](https://github.com/uncovertechtalent/cto-powersuit/pull/52)), and the search server reads trust marks: a third-party note is labelled on every hit and fenced on every read, an external note is never indexed or returned ([#53](https://github.com/uncovertechtalent/cto-powersuit/pull/53)). `finops` 0.1.1 ships a synthetic example run and a published FOCUS sample with tests for `focus_export.py`; the review of the pull request found showback rows that did not add up to their printed total, and amounts are now whole cents ([#57](https://github.com/uncovertechtalent/cto-powersuit/pull/57), [#58](https://github.com/uncovertechtalent/cto-powersuit/pull/58), [#59](https://github.com/uncovertechtalent/cto-powersuit/pull/59)). `security` 0.6.0 adds the provenance signal `archive-in-tree`, an archive or executable in the repository tree with little or no code beside it, the FakeGit delivery shape without a download link in the README ([#60](https://github.com/uncovertechtalent/cto-powersuit/issues/60), [#61](https://github.com/uncovertechtalent/cto-powersuit/pull/61)).
